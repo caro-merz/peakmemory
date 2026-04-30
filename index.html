@@ -69,17 +69,23 @@
     }
 
     .section-title {
-      font-size: clamp(1.8rem, 4vw, 2.4rem);
-      font-weight: 700;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
       margin-bottom: 1rem;
       letter-spacing: -0.02em;
     }
 
     .section-subtitle {
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       color: var(--text-light);
       max-width: 600px;
       margin-bottom: 3rem;
+      line-height: 1.75;
+    }
+
+    .accent-text {
+      color: var(--accent);
+      font-weight: 700;
     }
 
     .btn {
@@ -94,19 +100,50 @@
       cursor: pointer;
       transition: all var(--transition);
       border: 2px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn:hover::before {
+      width: 300px;
+      height: 300px;
     }
 
     .btn-primary {
       background: var(--accent);
       color: var(--white);
       border-color: var(--accent);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(45, 80, 22, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(45, 80, 22, 0);
+      }
     }
 
     .btn-primary:hover {
       background: var(--accent-hover);
       border-color: var(--accent-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(45, 80, 22, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(45, 80, 22, 0.3);
+      animation: none;
     }
 
     .btn-ghost {
@@ -118,7 +155,8 @@
     .btn-ghost:hover {
       background: var(--text);
       color: var(--white);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     }
 
     /* ========== FADE-IN ANIMATIONS ========== */
@@ -244,7 +282,14 @@
       display: flex;
       align-items: center;
       overflow: hidden;
-      padding: 80px 0;
+      padding: 100px 0;
+    }
+
+    .hero .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
     }
 
     .hero-bg {
@@ -253,26 +298,63 @@
       right: -10%;
       width: 70%;
       height: 100%;
-      opacity: 0.12;
+      opacity: 0.06;
       pointer-events: none;
     }
 
     .hero-content {
       position: relative;
       z-index: 1;
-      max-width: 640px;
+      max-width: 580px;
+    }
+
+    .hero-image {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero-image-placeholder {
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 1 / 1;
+      background: linear-gradient(135deg, var(--bg-alt) 0%, var(--white) 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+      border: 1px solid var(--line);
+      transition: transform 0.4s ease;
+    }
+
+    .hero-image-placeholder:hover {
+      transform: translateY(-8px);
+    }
+
+    .hero-image-placeholder svg {
+      width: 60%;
+      height: 60%;
+      opacity: 0.3;
     }
 
     .hero h1 {
-      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-size: clamp(2.6rem, 6vw, 4.2rem);
       font-weight: 800;
-      line-height: 1.1;
+      line-height: 1.05;
       letter-spacing: -0.03em;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 .highlight {
+      color: var(--accent);
+      display: block;
     }
 
     .hero p {
-      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      font-size: clamp(1.05rem, 2.5vw, 1.25rem);
       color: var(--text-light);
       line-height: 1.7;
       margin-bottom: 2.5rem;
@@ -285,12 +367,95 @@
       flex-wrap: wrap;
     }
 
+    .hero-buttons .btn {
+      font-size: 1rem;
+      padding: 16px 32px;
+    }
+
     /* ========== FEATURES / PRODUKT ========== */
+    .product-gallery {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+      margin-top: 3rem;
+    }
+
+    .product-item {
+      position: relative;
+      background: var(--white);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .product-item:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .product-image {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: linear-gradient(135deg, #f5f5f3 0%, #e8e8e4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .product-image svg {
+      width: 50%;
+      height: 50%;
+      opacity: 0.25;
+    }
+
+    .product-image::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.05) 100%);
+    }
+
+    .product-info {
+      padding: 24px;
+    }
+
+    .product-info h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .product-info p {
+      font-size: 0.92rem;
+      color: var(--text-light);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .product-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: var(--accent);
+      color: var(--white);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      z-index: 1;
+    }
+
     .features-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 32px;
-      margin-top: 2rem;
+      margin-top: 4rem;
     }
 
     .feature-card {
@@ -329,6 +494,7 @@
       font-size: 0.92rem;
       color: var(--text-light);
       font-style: italic;
+      text-align: center;
     }
 
     /* ========== B2B ========== */
@@ -420,6 +586,84 @@
       margin: 0;
     }
 
+    /* ========== TRUST / TESTIMONIALS ========== */
+    .trust {
+      background: var(--bg-alt);
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-top: 2rem;
+    }
+
+    .testimonial-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 32px 28px;
+      box-shadow: var(--shadow);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .testimonial-quote {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--text);
+      font-style: italic;
+      position: relative;
+      flex-grow: 1;
+    }
+
+    .testimonial-quote::before {
+      content: '"';
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--accent);
+      opacity: 0.2;
+      position: absolute;
+      top: -20px;
+      left: -10px;
+      line-height: 1;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .testimonial-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent) 0%, #3A6B1E 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-weight: 700;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .testimonial-info h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .testimonial-info p {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin: 2px 0 0 0;
+    }
+
     /* ========== PREISE ========== */
     .pricing-grid {
       display: grid;
@@ -506,6 +750,65 @@
       color: var(--text-light);
       line-height: 1.8;
       margin-bottom: 3rem;
+    }
+
+    .founders-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 48px;
+      margin-bottom: 4rem;
+    }
+
+    .founder-card {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .founder-image {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8e8e4 0%, #d0cfc9 100%);
+      border: 4px solid var(--white);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: var(--accent);
+      font-weight: 700;
+      margin: 0 auto;
+    }
+
+    .founder-info {
+      text-align: center;
+    }
+
+    .founder-info h3 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .founder-role {
+      font-size: 0.9rem;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .founder-location {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-bottom: 16px;
+    }
+
+    .founder-bio {
+      font-size: 0.95rem;
+      color: var(--text-light);
+      line-height: 1.7;
+      text-align: left;
     }
 
     .values-grid {
@@ -668,6 +971,19 @@
         padding: 60px 0 80px;
       }
 
+      .hero .container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .hero-content {
+        order: 1;
+      }
+
+      .hero-image {
+        order: 2;
+      }
+
       .hero h1 {
         font-size: clamp(2rem, 8vw, 2.8rem);
       }
@@ -683,12 +999,19 @@
 
       .features-grid,
       .pricing-grid,
-      .values-grid {
+      .values-grid,
+      .product-gallery,
+      .testimonials-grid {
         grid-template-columns: 1fr;
         gap: 20px;
       }
 
       .personal-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .founders-grid {
         grid-template-columns: 1fr;
         gap: 40px;
       }
@@ -773,11 +1096,28 @@
 
     <div class="container">
       <div class="hero-content fade-in">
-        <h1>Deine Route. Dein Gipfel.<br>Für immer.</h1>
-        <p>Wir verwandeln deine GPS-Strecke in ein handgefertigtes 3D-Reliefmodell – gefertigt in Baden-Württemberg.</p>
+        <h1>
+          Deine Route. Dein Gipfel.<br>
+          <span class="highlight">Zum Anfassen.</span>
+        </h1>
+        <p>Wir verwandeln deine GPS-Route in ein handgefertigtes 3D-Reliefmodell – präzise, nachhaltig und gefertigt in Baden-Württemberg.</p>
         <div class="hero-buttons">
-          <a href="#preise" class="btn btn-primary">Modell konfigurieren</a>
-          <a href="#produkt" class="btn btn-ghost">Mehr erfahren</a>
+          <a href="#preise" class="btn btn-primary">Modell erstellen</a>
+          <a href="#veranstalter" class="btn btn-ghost">Für Events anfragen</a>
+        </div>
+      </div>
+      
+      <div class="hero-image fade-in">
+        <div class="hero-image-placeholder">
+          <!-- Placeholder for product photo -->
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="60" width="80" height="8" rx="2" fill="#2D5016" opacity="0.4"/>
+            <path d="M20 60 L30 30 L50 40 L70 20 L80 60" stroke="#2D5016" stroke-width="2" fill="none" opacity="0.6"/>
+            <circle cx="30" cy="30" r="2" fill="#2D5016"/>
+            <circle cx="50" cy="40" r="2" fill="#2D5016"/>
+            <circle cx="70" cy="20" r="2" fill="#2D5016"/>
+            <text x="50" y="75" font-size="6" text-anchor="middle" fill="#2D5016" opacity="0.5">Produktfoto hier</text>
+          </svg>
         </div>
       </div>
     </div>
@@ -786,7 +1126,70 @@
   <!-- ========== PRODUKT ========== -->
   <section class="section" id="produkt">
     <div class="container">
-      <h2 class="section-title fade-in">Das Modell</h2>
+      <h2 class="section-title fade-in">Deine Route als Kunstwerk</h2>
+      <p class="section-subtitle fade-in">Jedes Modell ist ein handgefertigtes Unikat, das die echte Topografie deiner Route zeigt.</p>
+      
+      <div class="product-gallery">
+        <div class="product-item fade-in">
+          <div class="product-badge">Bestseller</div>
+          <div class="product-image">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <rect x="15" y="70" width="70" height="6" rx="2" fill="#8B4513" opacity="0.6"/>
+              <path d="M25 70 L30 40 L40 45 L50 30 L60 50 L70 35 L75 70" stroke="#2D5016" stroke-width="2" fill="rgba(45,80,22,0.1)"/>
+              <path d="M25 70 L30 40 L40 45 L50 30 L60 50 L70 35 L75 70" stroke="#2D5016" stroke-width="1.5" fill="none"/>
+            </svg>
+          </div>
+          <div class="product-info">
+            <h3>15 × 15 cm Classic</h3>
+            <p>Holzsockel Eiche · Mit Gravur: Name, Datum, Distanz & Höhenmeter</p>
+          </div>
+        </div>
+
+        <div class="product-item fade-in">
+          <div class="product-image">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="65" width="80" height="8" rx="2" fill="#8B4513" opacity="0.6"/>
+              <path d="M15 65 L25 25 L35 35 L50 15 L65 40 L75 30 L85 65" stroke="#2D5016" stroke-width="2.5" fill="rgba(45,80,22,0.1)"/>
+              <path d="M15 65 L25 25 L35 35 L50 15 L65 40 L75 30 L85 65" stroke="#2D5016" stroke-width="2" fill="none"/>
+              <circle cx="50" cy="15" r="2" fill="#2D5016"/>
+            </svg>
+          </div>
+          <div class="product-info">
+            <h3>30 × 30 cm Premium</h3>
+            <p>Holzsockel Walnuss · Individuelle Gravur & QR-Code zur Originalroute</p>
+          </div>
+        </div>
+
+        <div class="product-item fade-in">
+          <div class="product-image">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <rect x="20" y="72" width="60" height="5" rx="2" fill="#D2B48C" opacity="0.6"/>
+              <path d="M30 72 L40 50 L50 55 L60 45 L70 72" stroke="#2D5016" stroke-width="1.5" fill="rgba(45,80,22,0.1)"/>
+              <path d="M30 72 L40 50 L50 55 L60 45 L70 72" stroke="#2D5016" stroke-width="1.2" fill="none"/>
+            </svg>
+          </div>
+          <div class="product-info">
+            <h3>10 × 10 cm Starter</h3>
+            <p>Holzsockel Buche · Kompakte Größe für Schreibtisch & Regal</p>
+          </div>
+        </div>
+
+        <div class="product-item fade-in">
+          <div class="product-image">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="65" width="80" height="8" rx="2" fill="#8B4513" opacity="0.6"/>
+              <path d="M15 65 L22 45 L30 50 L40 35 L52 48 L62 38 L72 52 L85 65" stroke="#2D5016" stroke-width="2" fill="rgba(45,80,22,0.1)"/>
+              <path d="M15 65 L22 45 L30 50 L40 35 L52 48 L62 38 L72 52 L85 65" stroke="#2D5016" stroke-width="1.5" fill="none"/>
+              <text x="50" y="82" font-size="5" text-anchor="middle" fill="#2D5016" opacity="0.4">Event-Edition</text>
+            </svg>
+          </div>
+          <div class="product-info">
+            <h3>Custom Event-Modelle</h3>
+            <p>Serien ab 50 Stück · Mit Veranstalter-Logo & individueller Gravur</p>
+          </div>
+        </div>
+      </div>
+
       <div class="features-grid">
         <div class="feature-card fade-in">
           <span class="feature-icon">🗺️</span>
@@ -804,7 +1207,10 @@
           <p>Montiert auf einem edlen Holzsockel mit graviertem Namen, Datum, Distanz und Höhenmetern.</p>
         </div>
       </div>
-      <p class="feature-note fade-in">Standardgröße 15 × 15 cm – erweiterbar bis 30 × 30 cm.</p>
+
+      <p class="feature-note fade-in">
+        <a href="#preise" class="btn btn-primary" style="display: inline-flex; margin-top: 1rem;">Modell jetzt konfigurieren</a>
+      </p>
     </div>
   </section>
 
@@ -813,7 +1219,7 @@
     <div class="container">
       <div class="b2b-content fade-in">
         <h2 class="section-title">Für Veranstalter &amp; Events</h2>
-        <p>Ob Marathonfinisher-Prämie, Siegertrophäe oder exklusives Messegeschenk – PeakMemory liefert Serien ab 50 Stück. Jedes Modell zeigt die echte Strecke eurer Veranstaltung, individuell graviert mit dem Namen des Teilnehmers.</p>
+        <p>Ob Marathonfinisher-Prämie, Siegertrophäe oder exklusives Messegeschenk – PeakMemory liefert Serien <span class="accent-text">ab 50 Stück</span>. Jedes Modell zeigt die echte Strecke eurer Veranstaltung, individuell graviert mit dem Namen des Teilnehmers.</p>
         <ul class="b2b-checks">
           <li><span class="check-icon">✅</span> Ab 50 Stück</li>
           <li><span class="check-icon">✅</span> Veranstalter-Logo auf Sockel möglich</li>
@@ -859,7 +1265,56 @@
             <div class="step-number">4</div>
             <div class="step-content">
               <h4>Erhalten</h4>
-              <p>Lieferung in 7–10 Werktagen</p>
+              <p>Lieferung in <span class="accent-text">7–10 Werktagen</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TRUST / TESTIMONIALS ========== -->
+  <section class="section trust" id="testimonials">
+    <div class="container">
+      <h2 class="section-title fade-in">Was unsere Kunden sagen</h2>
+      <p class="section-subtitle fade-in">Jedes Modell erzählt eine Geschichte – hier sind einige davon.</p>
+      
+      <div class="testimonials-grid">
+        <div class="testimonial-card fade-in">
+          <div class="testimonial-quote">
+            Das Modell meines ersten Marathons steht jetzt auf meinem Schreibtisch. Jedes Mal, wenn ich es sehe, erinnere ich mich an jeden Anstieg und jeden Moment. Einfach genial!
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">M</div>
+            <div class="testimonial-info">
+              <h4>Michael S.</h4>
+              <p>Albstadt Bike Marathon 2025</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card fade-in">
+          <div class="testimonial-quote">
+            Wir haben für unseren Event 120 Modelle bestellt – die Teilnehmer waren begeistert! Viel persönlicher als eine Standard-Medaille. Die Zusammenarbeit war unkompliziert und pünktlich.
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">A</div>
+            <div class="testimonial-info">
+              <h4>Anna K.</h4>
+              <p>Event-Organisatorin</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card fade-in">
+          <div class="testimonial-quote">
+            Als Geschenk für meinen Partner perfekt! Die Qualität ist hervorragend und die Detailgenauigkeit beeindruckend. Man sieht wirklich jede Kurve der Route.
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">L</div>
+            <div class="testimonial-info">
+              <h4>Lisa R.</h4>
+              <p>Individuelle Bestellung</p>
             </div>
           </div>
         </div>
@@ -908,15 +1363,44 @@
           <a href="#kontakt" class="btn btn-primary" style="width:100%;justify-content:center;">Jetzt bestellen</a>
         </div>
       </div>
-      <p class="pricing-note fade-in">Serienpreise für Veranstalter auf Anfrage.</p>
+      <p class="pricing-note fade-in">Serienpreise für Veranstalter <span class="accent-text">ab 50 Stück</span> auf Anfrage.</p>
     </div>
   </section>
 
   <!-- ========== ÜBER UNS ========== -->
   <section class="section" id="ueber">
     <div class="container">
-      <h2 class="section-title fade-in">Warum PeakMemory?</h2>
-      <p class="about-text fade-in">PeakMemory entstand aus einer einfachen Überzeugung: Jede außergewöhnliche Leistung verdient ein bleibendes Denkmal. Wir sind Sportler und Macher aus Baden-Württemberg, die moderne 3D-Drucktechnologie mit echtem Handwerk verbinden. Unsere Modelle werden auf Bambu Lab Druckern mit biologisch abbaubarem PLA gefertigt – präzise, nachhaltig und mit Liebe zum Detail.</p>
+      <h2 class="section-title fade-in">Die Köpfe hinter Peak Memory</h2>
+      <p class="about-text fade-in">
+        Peak Memory entstand aus einer einfachen Überzeugung: Jede außergewöhnliche Leistung verdient ein bleibendes Denkmal. Wir sind Sportler und Macher aus Baden-Württemberg, die moderne 3D-Drucktechnologie mit echtem Handwerk verbinden.
+      </p>
+
+      <div class="founders-grid">
+        <div class="founder-card fade-in">
+          <div class="founder-image">C</div>
+          <div class="founder-info">
+            <h3>Carolin Merz</h3>
+            <div class="founder-role">Mitgründerin</div>
+            <div class="founder-location">📍 Albstadt</div>
+            <div class="founder-bio">
+              Aufgewachsen in Albstadt und tief verwurzelt in der Region. Carolin kennt die Strecken des Bike Marathon aus eigener Erfahrung – und weiß, was es bedeutet, eine außergewöhnliche Leistung in etwas Bleibendem festzuhalten.
+            </div>
+          </div>
+        </div>
+
+        <div class="founder-card fade-in">
+          <div class="founder-image">A</div>
+          <div class="founder-info">
+            <h3>Alexander Weimer</h3>
+            <div class="founder-role">Mitgründer</div>
+            <div class="founder-location">📍 Leonberg</div>
+            <div class="founder-bio">
+              Sportler und Macher aus Leonberg. Alexander ist in einer Handwerkerfamilie aufgewachsen und verbindet technisches Know-how im 3D-Druck mit einer Leidenschaft für den Outdoorsport. Made in Baden-Württemberg ist für ihn kein Slogan, sondern Überzeugung.
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="values-grid fade-in">
         <div class="value-item">
           <span class="value-icon">🏔️</span>

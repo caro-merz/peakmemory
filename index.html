@@ -837,8 +837,39 @@
       background: var(--bg-alt);
     }
 
-    .contact-form {
+    .contact-wrapper {
       max-width: 560px;
+    }
+
+    .gpx-info-box {
+      background: var(--white);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .gpx-info-box h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+
+    .gpx-info-box p {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .gpx-info-box strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .contact-form {
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -1134,43 +1165,42 @@
           <div class="product-badge">Bestseller</div>
           <div class="product-image">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <rect x="20" y="72" width="60" height="5" rx="2" fill="#8B4513" opacity="0.6"/>
+              <path d="M30 72 L40 50 L50 55 L60 45 L70 72" stroke="#2D5016" stroke-width="1.5" fill="rgba(45,80,22,0.1)"/>
+              <path d="M30 72 L40 50 L50 55 L60 45 L70 72" stroke="#2D5016" stroke-width="1.2" fill="none"/>
+            </svg>
+          </div>
+          <div class="product-info">
+            <h3>10 × 10 cm Classic</h3>
+            <p>Rechteckiger Holzsockel · Individuelle Gravur: Name, Datum & mehr</p>
+          </div>
+        </div>
+
+        <div class="product-item fade-in">
+          <div class="product-image">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
               <rect x="15" y="70" width="70" height="6" rx="2" fill="#8B4513" opacity="0.6"/>
               <path d="M25 70 L30 40 L40 45 L50 30 L60 50 L70 35 L75 70" stroke="#2D5016" stroke-width="2" fill="rgba(45,80,22,0.1)"/>
               <path d="M25 70 L30 40 L40 45 L50 30 L60 50 L70 35 L75 70" stroke="#2D5016" stroke-width="1.5" fill="none"/>
             </svg>
           </div>
           <div class="product-info">
-            <h3>15 × 15 cm Classic</h3>
-            <p>Holzsockel Eiche · Mit Gravur: Name, Datum, Distanz & Höhenmeter</p>
+            <h3>15 × 15 cm Premium</h3>
+            <p>Rechteckiger Holzsockel · Individuelle Gravur: Name, Datum, Distanz & Höhenmeter</p>
           </div>
         </div>
 
         <div class="product-item fade-in">
           <div class="product-image">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <rect x="10" y="65" width="80" height="8" rx="2" fill="#8B4513" opacity="0.6"/>
-              <path d="M15 65 L25 25 L35 35 L50 15 L65 40 L75 30 L85 65" stroke="#2D5016" stroke-width="2.5" fill="rgba(45,80,22,0.1)"/>
-              <path d="M15 65 L25 25 L35 35 L50 15 L65 40 L75 30 L85 65" stroke="#2D5016" stroke-width="2" fill="none"/>
-              <circle cx="50" cy="15" r="2" fill="#2D5016"/>
+              <rect x="25" y="75" width="50" height="4" rx="2" fill="#D2B48C" opacity="0.6"/>
+              <path d="M35 75 L45 55 L55 60 L65 50 L75 75" stroke="#2D5016" stroke-width="1.2" fill="rgba(45,80,22,0.1)"/>
+              <path d="M35 75 L45 55 L55 60 L65 50 L75 75" stroke="#2D5016" stroke-width="1" fill="none"/>
             </svg>
           </div>
           <div class="product-info">
-            <h3>30 × 30 cm Premium</h3>
-            <p>Holzsockel Walnuss · Individuelle Gravur & QR-Code zur Originalroute</p>
-          </div>
-        </div>
-
-        <div class="product-item fade-in">
-          <div class="product-image">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <rect x="20" y="72" width="60" height="5" rx="2" fill="#D2B48C" opacity="0.6"/>
-              <path d="M30 72 L40 50 L50 55 L60 45 L70 72" stroke="#2D5016" stroke-width="1.5" fill="rgba(45,80,22,0.1)"/>
-              <path d="M30 72 L40 50 L50 55 L60 45 L70 72" stroke="#2D5016" stroke-width="1.2" fill="none"/>
-            </svg>
-          </div>
-          <div class="product-info">
-            <h3>10 × 10 cm Starter</h3>
-            <p>Holzsockel Buche · Kompakte Größe für Schreibtisch & Regal</p>
+            <h3>10 × 10 cm Basic</h3>
+            <p>Quadratischer Holzsockel · Ohne Gravur – Puristische Variante</p>
           </div>
         </div>
 
@@ -1219,9 +1249,9 @@
     <div class="container">
       <div class="b2b-content fade-in">
         <h2 class="section-title">Für Veranstalter &amp; Events</h2>
-        <p>Ob Marathonfinisher-Prämie, Siegertrophäe oder exklusives Messegeschenk – PeakMemory liefert Serien <span class="accent-text">ab 50 Stück</span>. Jedes Modell zeigt die echte Strecke eurer Veranstaltung, individuell graviert mit dem Namen des Teilnehmers.</p>
+        <p>Ob Marathonfinisher-Prämie, Siegertrophäe oder exklusives Messegeschenk – PeakMemory liefert Serien <span class="accent-text">ab 30 Stück</span>. Jedes Modell zeigt die echte Strecke eurer Veranstaltung, individuell graviert mit dem Namen des Teilnehmers.</p>
         <ul class="b2b-checks">
-          <li><span class="check-icon">✅</span> Ab 50 Stück</li>
+          <li><span class="check-icon">✅</span> Ab 30 Stück</li>
           <li><span class="check-icon">✅</span> Veranstalter-Logo auf Sockel möglich</li>
           <li><span class="check-icon">✅</span> Lieferung direkt zum Event</li>
         </ul>
@@ -1327,15 +1357,15 @@
     <div class="container">
       <h2 class="section-title fade-in">Modelle &amp; Preise</h2>
       <div class="pricing-grid">
-        <!-- Starter -->
+        <!-- Basic -->
         <div class="pricing-card fade-in">
-          <h3>Starter</h3>
+          <h3>Basic</h3>
           <div class="pricing-details">
             Größe: 10 × 10 cm<br>
-            Holzsockel Buche<br>
-            Gravur: Name + Datum
+            Quadratischer Holzsockel<br>
+            Ohne Gravur
           </div>
-          <div class="price">ab 49 € <span></span></div>
+          <div class="price">ab 39 € <span></span></div>
           <a href="#kontakt" class="btn btn-primary" style="width:100%;justify-content:center;">Jetzt bestellen</a>
         </div>
         <!-- Classic -->
@@ -1343,27 +1373,26 @@
           <div class="pricing-badge">Beliebt</div>
           <h3>Classic</h3>
           <div class="pricing-details">
-            Größe: 15 × 15 cm<br>
-            Holzsockel Eiche<br>
-            Gravur: Name, Datum, Distanz, Höhenmeter
+            Größe: 10 × 10 cm<br>
+            Rechteckiger Holzsockel<br>
+            Individuelle Gravur (Name, Datum, etc.)
           </div>
-          <div class="price">ab 79 € <span></span></div>
+          <div class="price">ab 59 € <span></span></div>
           <a href="#kontakt" class="btn btn-primary" style="width:100%;justify-content:center;">Jetzt bestellen</a>
         </div>
         <!-- Premium -->
         <div class="pricing-card fade-in">
           <h3>Premium</h3>
           <div class="pricing-details">
-            Größe: 30 × 30 cm<br>
-            Holzsockel Walnuss<br>
-            Gravur individuell<br>
-            inkl. QR-Code zur Originalroute
+            Größe: 15 × 15 cm<br>
+            Rechteckiger Holzsockel<br>
+            Individuelle Gravur (Name, Datum, Distanz, Höhenmeter)
           </div>
-          <div class="price">ab 149 € <span></span></div>
+          <div class="price">ab 89 € <span></span></div>
           <a href="#kontakt" class="btn btn-primary" style="width:100%;justify-content:center;">Jetzt bestellen</a>
         </div>
       </div>
-      <p class="pricing-note fade-in">Serienpreise für Veranstalter <span class="accent-text">ab 50 Stück</span> auf Anfrage.</p>
+      <p class="pricing-note fade-in">Serienpreise für Veranstalter <span class="accent-text">ab 30 Stück</span> auf Anfrage.</p>
     </div>
   </section>
 
@@ -1422,18 +1451,38 @@
   <section class="section contact" id="kontakt">
     <div class="container">
       <h2 class="section-title fade-in">Kontakt</h2>
-      <form class="contact-form fade-in" id="contactForm">
-        <div class="form-group">
-          <input type="text" name="name" placeholder="Dein Name" required autocomplete="name">
+      <p class="section-subtitle fade-in">Schreib uns deine Anfrage – wir melden uns innerhalb von 24 Stunden bei dir.</p>
+      
+      <div class="contact-wrapper">
+        <!-- GPX Upload Info -->
+        <div class="gpx-info-box fade-in">
+          <h3>📁 GPX-Datei</h3>
+          <p>Für individuelle Modelle benötigen wir deine GPS-Route als GPX-Datei.</p>
+          <p><strong>Bitte sende deine GPX-Datei an:</strong> <a href="mailto:peak.memory@web.de" style="color: var(--accent); text-decoration: underline;">peak.memory@web.de</a></p>
+          <p style="font-size: 0.85rem; margin: 0;">💡 Tipp: Du kannst die Datei direkt von Strava, Komoot oder Garmin Connect exportieren.</p>
         </div>
-        <div class="form-group">
-          <input type="email" name="email" placeholder="Deine E-Mail-Adresse" required autocomplete="email">
-        </div>
-        <div class="form-group">
-          <textarea name="message" placeholder="Deine Nachricht" required></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Nachricht senden</button>
-      </form>
+
+        <form class="contact-form fade-in" id="contactForm">
+          <div class="form-group">
+            <input type="text" name="name" placeholder="Dein Name" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <input type="email" name="email" placeholder="Deine E-Mail-Adresse" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <select name="type" required style="width: 100%; padding: 14px 18px; border: 1px solid var(--line); border-radius: var(--radius); font-family: inherit; font-size: 0.95rem; background: var(--white); color: var(--text);">
+              <option value="">Art der Anfrage wählen</option>
+              <option value="individual">Individuelle Bestellung (Einzelstück)</option>
+              <option value="event">Event-Anfrage (ab 30 Stück)</option>
+              <option value="other">Sonstiges</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <textarea name="message" placeholder="Deine Nachricht (z.B. gewünschte Größe, Gravur-Text, Event-Details)" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Nachricht senden</button>
+        </form>
+      </div>
     </div>
   </section>
 
@@ -1517,16 +1566,26 @@
         e.preventDefault();
         var name = form.elements['name'].value;
         var email = form.elements['email'].value;
+        var type = form.elements['type'].value;
         var message = form.elements['message'].value;
 
-        var subject = encodeURIComponent('Anfrage von ' + name);
+        var typeLabels = {
+          'individual': 'Individuelle Bestellung',
+          'event': 'Event-Anfrage (ab 30 Stück)',
+          'other': 'Sonstiges'
+        };
+
+        var subject = encodeURIComponent('Anfrage von ' + name + ' – ' + typeLabels[type]);
         var body = encodeURIComponent(
           'Name: ' + name + '\n' +
-          'E-Mail: ' + email + '\n\n' +
-          message
+          'E-Mail: ' + email + '\n' +
+          'Art: ' + typeLabels[type] + '\n\n' +
+          'Nachricht:\n' + message + '\n\n' +
+          '---\n' +
+          'GPX-Datei bitte separat an peak.memory@web.de senden.'
         );
 
-        window.location.href = 'mailto:info@peakmemory.de?subject=' + subject + '&body=' + body;
+        window.location.href = 'mailto:peak.memory@web.de?subject=' + subject + '&body=' + body;
       });
     })();
 

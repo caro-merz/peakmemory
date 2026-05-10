@@ -1061,6 +1061,78 @@
       }
     }
 
+    /* ========== MODAL ========== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 48px;
+      max-width: 640px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal h2 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      color: var(--text);
+    }
+
+    .modal h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 1.5rem 0 0.5rem;
+      color: var(--text);
+    }
+
+    .modal p {
+      font-size: 0.92rem;
+      color: var(--text-light);
+      line-height: 1.7;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      background: none;
+      border: none;
+      font-size: 1.6rem;
+      cursor: pointer;
+      color: var(--text-light);
+      line-height: 1;
+      padding: 4px 8px;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    @media (max-width: 768px) {
+      .modal {
+        padding: 32px 24px;
+      }
+    }
+
     @media (min-width: 769px) and (max-width: 1024px) {
       .features-grid,
       .pricing-grid {
@@ -1283,20 +1355,7 @@
             <div class="testimonial-avatar">M</div>
             <div class="testimonial-info">
               <h4>Michael S.</h4>
-              <p>Albstadt Bike Marathon 2025</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card fade-in">
-          <div class="testimonial-quote">
-            Wir haben für unseren Event 120 Modelle bestellt – die Teilnehmer waren begeistert! Viel persönlicher als eine Standard-Medaille. Die Zusammenarbeit war unkompliziert und pünktlich.
-          </div>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar">A</div>
-            <div class="testimonial-info">
-              <h4>Anna K.</h4>
-              <p>Event-Organisatorin</p>
+              <p>Individuelle Bestellung</p>
             </div>
           </div>
         </div>
@@ -1377,7 +1436,7 @@
             <div class="founder-role">Mitgründerin</div>
             <div class="founder-location">📍 Albstadt</div>
             <div class="founder-bio">
-              Aufgewachsen in Albstadt und tief verwurzelt in der Region. Carolin weiß, was es bedeutet, eine außergewöhnliche Leistung in etwas Bleibendem festzuhalten.
+              Leidenschaft für Outdoorsport, alpines Gelände und präzise Umsetzung. Durch die Teilnahme an verschiedenen Läufen kennt Carolin die Bedeutung besonderer sportlicher Momente aus eigener Erfahrung. Mit ihrem Know-how im 3D-Druck verbindet sie Technik mit Liebe zum Detail.
             </div>
           </div>
         </div>
@@ -1389,7 +1448,7 @@
             <div class="founder-role">Mitgründer</div>
             <div class="founder-location">📍 Leonberg</div>
             <div class="founder-bio">
-              Sportler und Macher aus Leonberg. Alexander ist in einer Handwerkerfamilie aufgewachsen und verbindet technisches Know-how im 3D-Druck mit einer Leidenschaft für den Outdoorsport. Made in Baden-Württemberg ist für ihn kein Slogan, sondern Überzeugung.
+              Sportler und Macher aus Leonberg. Alexander ist in einer Handwerkerfamilie aufgewachsen und verbindet praktische Erfahrung mit einer Leidenschaft für den Outdoorsport. Qualität, saubere Verarbeitung und echte Handwerksarbeit stehen für ihn an erster Stelle.
             </div>
           </div>
         </div>
@@ -1455,8 +1514,8 @@
   <footer class="footer">
     <div class="container">
       <div class="footer-links">
-        <a href="#">Impressum</a>
-        <a href="#">Datenschutz</a>
+        <a href="#" id="impressumLink">Impressum</a>
+        <a href="#" id="datenschutzLink">Datenschutz</a>
       </div>
       <div class="footer-copy">
         &copy; 2026 PeakMemory – Baden-Württemberg
@@ -1468,6 +1527,105 @@
       </div>
     </div>
   </footer>
+
+  <!-- ========== IMPRESSUM MODAL ========== -->
+  <div class="modal-overlay" id="impressumModal" role="dialog" aria-modal="true" aria-labelledby="impressumTitle">
+    <div class="modal">
+      <button class="modal-close" id="impressumClose" aria-label="Schließen">&times;</button>
+      <h2 id="impressumTitle">Impressum</h2>
+
+      <h3>Peak Memory</h3>
+
+      <h3>Anschrift</h3>
+      <p>Peak Memory<br>Poststr. 29<br>71229 Leonberg</p>
+
+      <h3>Vertreten durch</h3>
+      <p>Carolin Merz<br>Alexander Weimer</p>
+
+      <h3>Kontakt</h3>
+      <p><a href="mailto:peak.memory@web.de" style="color: var(--accent);">peak.memory@web.de</a></p>
+
+      <h3>Haftung für Inhalte</h3>
+      <p>Als Diensteanbieter sind wir gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.</p>
+
+      <h3>Haftung für Links</h3>
+      <p>Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.</p>
+
+      <h3>Urheberrecht</h3>
+      <p>Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.</p>
+    </div>
+  </div>
+
+  <!-- ========== DATENSCHUTZ MODAL ========== -->
+  <div class="modal-overlay" id="datenschutzModal" role="dialog" aria-modal="true" aria-labelledby="datenschutzTitle">
+    <div class="modal">
+      <button class="modal-close" id="datenschutzClose" aria-label="Schließen">&times;</button>
+      <h2 id="datenschutzTitle">Datenschutzerklärung</h2>
+
+      <h3 id="m716">Präambel</h3>
+      <p>Mit der folgenden Datenschutzerklärung möchten wir Sie darüber aufklären, welche Arten Ihrer personenbezogenen Daten wir zu welchen Zwecken und in welchem Umfang verarbeiten. Die Datenschutzerklärung gilt für alle von uns durchgeführten Verarbeitungen personenbezogener Daten, sowohl im Rahmen der Erbringung unserer Leistungen als auch insbesondere auf unseren Webseiten und externen Onlinepräsenzen, wie z. B. unserer Social-Media-Profile.</p>
+      <p>Die verwendeten Begriffe sind nicht geschlechtsspezifisch.</p>
+      <p>Stand: 10. Mai 2026</p>
+
+      <h3 id="m3">Verantwortlicher</h3>
+      <p>Peak Memory<br>Poststr. 29<br>71229 Leonberg</p>
+      <p>E-Mail: <a href="mailto:peak.memory@web.de" style="color: var(--accent);">peak.memory@web.de</a></p>
+
+      <h3 id="mOverview">Übersicht der Verarbeitungen</h3>
+      <p>Die nachfolgende Übersicht fasst die Arten der verarbeiteten Daten und die Zwecke ihrer Verarbeitung zusammen.</p>
+      <p><strong>Arten der verarbeiteten Daten:</strong> Kontaktdaten, Inhaltsdaten, Nutzungsdaten, Meta- und Kommunikationsdaten, Protokolldaten.</p>
+      <p><strong>Kategorien betroffener Personen:</strong> Kommunikationspartner, Nutzer.</p>
+      <p><strong>Zwecke der Verarbeitung:</strong> Kommunikation, Sicherheitsmaßnahmen, Bereitstellung des Onlineangebotes, Feedback.</p>
+
+      <h3 id="m2427">Maßgebliche Rechtsgrundlagen</h3>
+      <p><strong>Maßgebliche Rechtsgrundlagen nach der DSGVO:</strong> Im Folgenden erhalten Sie eine Übersicht der Rechtsgrundlagen der DSGVO, auf deren Basis wir personenbezogene Daten verarbeiten.</p>
+      <ul style="padding-left: 1.2rem; font-size: 0.92rem; color: var(--text-light); line-height: 1.7;">
+        <li style="margin-bottom: 8px;"><strong>Einwilligung (Art. 6 Abs. 1 S. 1 lit. a) DSGVO)</strong> – Die betroffene Person hat ihre Einwilligung gegeben.</li>
+        <li style="margin-bottom: 8px;"><strong>Vertragserfüllung und vorvertragliche Anfragen (Art. 6 Abs. 1 S. 1 lit. b) DSGVO)</strong> – Die Verarbeitung ist für die Erfüllung eines Vertrags erforderlich.</li>
+        <li style="margin-bottom: 8px;"><strong>Rechtliche Verpflichtung (Art. 6 Abs. 1 S. 1 lit. c) DSGVO)</strong> – Die Verarbeitung ist zur Erfüllung einer rechtlichen Verpflichtung erforderlich.</li>
+        <li><strong>Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO)</strong> – Die Verarbeitung ist zur Wahrung berechtigter Interessen notwendig.</li>
+      </ul>
+      <p>Zusätzlich gelten nationale Datenschutzregelungen in Deutschland, insbesondere das Bundesdatenschutzgesetz (BDSG).</p>
+
+      <h3 id="m27">Sicherheitsmaßnahmen</h3>
+      <p>Wir treffen nach Maßgabe der gesetzlichen Vorgaben geeignete technische und organisatorische Maßnahmen, um ein dem Risiko angemessenes Schutzniveau zu gewährleisten. Zu den Maßnahmen gehören insbesondere die Sicherung der Vertraulichkeit, Integrität und Verfügbarkeit von Daten. Online-Verbindungen werden durch TLS-/SSL-Verschlüsselungstechnologie (HTTPS) gesichert.</p>
+
+      <h3 id="m24">Internationale Datentransfers</h3>
+      <p>Sofern wir Daten in ein Drittland übermitteln, erfolgt dies stets im Einklang mit den gesetzlichen Vorgaben, insbesondere auf Basis von Standardvertragsklauseln oder dem EU-US Data Privacy Framework.</p>
+
+      <h3 id="m12">Allgemeine Informationen zur Datenspeicherung und Löschung</h3>
+      <p>Wir löschen personenbezogene Daten, sobald die zugrundeliegenden Einwilligungen widerrufen werden oder keine weiteren rechtlichen Grundlagen für die Verarbeitung bestehen. Ausnahmen bestehen, wenn gesetzliche Pflichten eine längere Aufbewahrung erfordern.</p>
+
+      <h3 id="m10">Rechte der betroffenen Personen</h3>
+      <p>Ihnen stehen als Betroffene nach der DSGVO folgende Rechte zu:</p>
+      <ul style="padding-left: 1.2rem; font-size: 0.92rem; color: var(--text-light); line-height: 1.7;">
+        <li style="margin-bottom: 6px;"><strong>Widerspruchsrecht</strong> gegen die Verarbeitung Ihrer Daten</li>
+        <li style="margin-bottom: 6px;"><strong>Widerrufsrecht</strong> bei erteilten Einwilligungen</li>
+        <li style="margin-bottom: 6px;"><strong>Auskunftsrecht</strong> über verarbeitete Daten</li>
+        <li style="margin-bottom: 6px;"><strong>Recht auf Berichtigung</strong> unrichtiger Daten</li>
+        <li style="margin-bottom: 6px;"><strong>Recht auf Löschung</strong> und Einschränkung der Verarbeitung</li>
+        <li style="margin-bottom: 6px;"><strong>Recht auf Datenübertragbarkeit</strong></li>
+        <li><strong>Beschwerderecht</strong> bei einer Aufsichtsbehörde</li>
+      </ul>
+
+      <h3 id="m225">Bereitstellung des Onlineangebots und Webhosting</h3>
+      <p>Wir verarbeiten die IP-Adresse des Nutzers, um Inhalte und Funktionen unserer Online-Dienste bereitzustellen. Zugriffe werden in Server-Logfiles protokolliert (max. 30 Tage). Rechtsgrundlage: Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
+
+      <h3 id="m134">Einsatz von Cookies</h3>
+      <p>Wir verwenden Cookies gemäß den gesetzlichen Vorschriften. Soweit keine Einwilligung erforderlich ist, stützen wir uns auf berechtigte Interessen. Nutzer können Cookies über die Einstellungen ihres Browsers ablehnen oder löschen. Rechtsgrundlage: Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
+
+      <h3 id="m182">Kontakt- und Anfrageverwaltung</h3>
+      <p>Bei der Kontaktaufnahme über unser Kontaktformular oder per E-Mail verarbeiten wir Name, E-Mail-Adresse und Nachrichteninhalt ausschließlich zur Beantwortung Ihrer Anfrage. Rechtsgrundlagen: Vertragserfüllung (Art. 6 Abs. 1 S. 1 lit. b) DSGVO), Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
+
+      <h3 id="m15">Änderung und Aktualisierung</h3>
+      <p>Wir passen die Datenschutzerklärung an, sobald Änderungen der von uns durchgeführten Datenverarbeitungen dies erforderlich machen. Wir informieren Sie, sobald durch die Änderungen eine Mitwirkungshandlung Ihrerseits erforderlich wird.</p>
+
+      <h3 id="m42">Begriffsdefinitionen</h3>
+      <p><strong>Personenbezogene Daten:</strong> Alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen.</p>
+      <p><strong>Verarbeitung:</strong> Jeder Vorgang im Zusammenhang mit personenbezogenen Daten, z. B. Erheben, Speichern, Übermitteln oder Löschen.</p>
+      <p><strong>Verantwortlicher:</strong> Die natürliche oder juristische Person, die über Zwecke und Mittel der Verarbeitung personenbezogener Daten entscheidet.</p>
+    </div>
+  </div>
 
   <!-- ========== JAVASCRIPT ========== -->
   <script>
@@ -1548,6 +1706,62 @@
         );
 
         window.location.href = 'mailto:peak.memory@web.de?subject=' + subject + '&body=' + body;
+      });
+    })();
+
+    // Datenschutz modal
+    (function() {
+      var modal = document.getElementById('datenschutzModal');
+      var openBtn = document.getElementById('datenschutzLink');
+      var closeBtn = document.getElementById('datenschutzClose');
+
+      openBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      });
+
+      function closeModal() {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      closeBtn.addEventListener('click', closeModal);
+
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+      });
+    })();
+
+    // Impressum modal
+    (function() {
+      var modal = document.getElementById('impressumModal');
+      var openBtn = document.getElementById('impressumLink');
+      var closeBtn = document.getElementById('impressumClose');
+
+      openBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      });
+
+      function closeModal() {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      closeBtn.addEventListener('click', closeModal);
+
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
       });
     })();
 

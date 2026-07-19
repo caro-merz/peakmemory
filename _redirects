@@ -1,1 +1,3 @@
-https://www.peak-memory.de/* https://peak-memory.de/:splat 301
+# www -> apex redirect is handled in worker.js
+# (Cloudflare Workers static assets only supports relative paths here)
+

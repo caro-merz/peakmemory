@@ -1,7 +1,19 @@
-name              = "peak-memory"
-main              = "worker.js"
+name               = "peakmemory"
+main               = "worker.js"
 compatibility_date = "2026-07-19"
 
 [assets]
-directory             = "."
-not_found_handling    = "single-page-application"
+directory          = "."
+not_found_handling = "single-page-application"
+exclude            = [
+  ".git",
+  ".wrangler",
+  "worker.js",
+  "wrangler.toml",
+  "functions",
+  ".gitignore",
+  "node_modules",
+  "package.json",
+  "package-lock.json",
+  "*.map"
+]

@@ -23,6 +23,12 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // Redirect www -> apex
+    if (url.hostname === 'www.peak-memory.de') {
+      url.hostname = 'peak-memory.de';
+      return Response.redirect(url.toString(), 301);
+    }
+
     // Route: contact form submission
     if (url.pathname === '/contact' && request.method === 'POST') {
       return handleContact(request, env);
@@ -103,3 +109,5 @@ function json(body, status = 200) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
+
+

@@ -11,12 +11,12 @@
   <meta property="og:description" content="Deine Route als 3D-Relief: personalisiert, handgefertigt, made in Baden-Württemberg.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://peak-memory.de/">
-  <meta property="og:image" content="https://peak-memory.de/classic.jpeg">
+  <meta property="og:image" content="https://peak-memory.de/images/classic.jpeg">
   <meta name="twitter:card" content="summary_large_image">
   <title>PeakMemory | Personalisierte 3D-Topografie aus deiner GPX-Route</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="image" href="classic.jpeg">
+  <link rel="preload" as="image" href="images/classic.jpeg">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -288,18 +288,16 @@
     /* ========== HERO ========== */
     .hero {
       position: relative;
-      min-height: calc(100vh - 72px);
-      display: flex;
-      align-items: center;
       overflow: hidden;
-      padding: 100px 0;
+      padding: 80px 0 100px;
+      text-align: center;
     }
 
     .hero .container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
+      gap: 0;
     }
 
     .hero-bg {
@@ -315,30 +313,30 @@
     .hero-content {
       position: relative;
       z-index: 1;
-      max-width: 580px;
+      width: 100%;
+      max-width: 760px;
     }
 
     .hero-image {
       position: relative;
       z-index: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 100%;
+      max-width: 800px;
+      margin: 40px 0;
     }
 
     .hero-image-placeholder {
       width: 100%;
-      max-width: 500px;
-      aspect-ratio: 1 / 1;
-      border-radius: 16px;
+      aspect-ratio: 4 / 3;
+      border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+      box-shadow: 0 24px 72px rgba(0,0,0,0.14);
       border: 1px solid var(--line);
       transition: transform 0.4s ease;
     }
 
     .hero-image-placeholder:hover {
-      transform: translateY(-8px);
+      transform: translateY(-6px);
     }
 
     .hero-image-placeholder img {
@@ -348,30 +346,33 @@
     }
 
     .hero h1 {
-      font-size: clamp(2.6rem, 6vw, 4.2rem);
+      font-size: clamp(2.8rem, 7vw, 5rem);
       font-weight: 800;
-      line-height: 1.05;
+      line-height: 1.0;
       letter-spacing: -0.03em;
-      margin-bottom: 1.5rem;
+      margin-bottom: 0;
     }
 
     .hero h1 .highlight {
       color: var(--accent);
-      display: block;
+      display: inline;
     }
 
-    .hero p {
-      font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+    .hero-subtitle {
+      font-size: clamp(1.05rem, 2.5vw, 1.2rem);
       color: var(--text-light);
-      line-height: 1.7;
+      line-height: 1.75;
       margin-bottom: 2.5rem;
-      max-width: 520px;
+      max-width: 660px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .hero-buttons {
       display: flex;
       gap: 16px;
       flex-wrap: wrap;
+      justify-content: center;
     }
 
     .hero-buttons .btn {
@@ -396,6 +397,83 @@
     }
 
     /* ========== FEATURES / PRODUKT ========== */
+
+    /* Two-image grid inside a product card */
+    .product-image-pair {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      background: var(--line);
+      overflow: hidden;
+    }
+
+    .product-image-pair img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .product-item:hover .product-image-pair img {
+      transform: scale(1.04);
+    }
+
+    /* ========== INSIGHTS CAROUSEL ========== */
+    .carousel-strip {
+      overflow: hidden;
+      padding: 48px 0;
+      background: var(--bg-alt);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .carousel-track {
+      display: flex;
+      gap: 16px;
+      width: max-content;
+      animation: scroll-left 32s linear infinite;
+    }
+
+    .carousel-strip:hover .carousel-track {
+      animation-play-state: paused;
+    }
+
+    @keyframes scroll-left {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .carousel-slide {
+      flex-shrink: 0;
+      width: 180px;
+      height: 280px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .carousel-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .carousel-slide:hover img {
+      transform: scale(1.05);
+    }
+
+    @media (max-width: 768px) {
+      .carousel-slide {
+        width: 130px;
+        height: 200px;
+      }
+    }
+
     .product-gallery {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -1139,25 +1217,15 @@
       }
 
       .hero {
-        min-height: auto;
         padding: 60px 0 80px;
-      }
-
-      .hero .container {
-        grid-template-columns: 1fr;
-        gap: 40px;
-      }
-
-      .hero-content {
-        order: 1;
-      }
-
-      .hero-image {
-        order: 2;
       }
 
       .hero h1 {
         font-size: clamp(2rem, 8vw, 2.8rem);
+      }
+
+      .hero-image {
+        margin: 28px 0;
       }
 
       .hero-bg {
@@ -1215,6 +1283,62 @@
         text-align: center;
         justify-content: center;
       }
+    }
+
+    /* ========== Q&A / FAQ ========== */
+    .faq {
+      background: var(--bg-alt);
+    }
+
+    .faq-list {
+      max-width: 760px;
+      margin-top: 2.5rem;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .faq-item:first-child {
+      border-top: 1px solid var(--line);
+    }
+
+    .faq-question {
+      width: 100%;
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 0;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      gap: 16px;
+    }
+
+    .faq-question svg {
+      flex-shrink: 0;
+      transition: transform var(--transition);
+    }
+
+    .faq-item.open .faq-question svg {
+      transform: rotate(45deg);
+    }
+
+    .faq-answer {
+      display: none;
+      padding-bottom: 20px;
+      font-size: 0.95rem;
+      color: var(--text-light);
+      line-height: 1.75;
+    }
+
+    .faq-item.open .faq-answer {
+      display: block;
     }
 
     /* ========== CONTACT STATUS ========== */
@@ -1323,7 +1447,7 @@
   <nav class="navbar" role="navigation" aria-label="Hauptnavigation">
     <div class="container">
       <a href="#" class="logo" aria-label="PeakMemory Startseite">
-        <img src="logo_new.jpeg" alt="Peak Memory Logo" style="height: 40px; width: auto;">
+        <img src="images/logo_new.jpeg" alt="Peak Memory Logo" style="height: 40px; width: auto;">
       </a>
 
       <div class="nav-links" id="navLinks">
@@ -1332,6 +1456,7 @@
         <a href="#personalisierung">Personalisierung</a>
         <a href="#veranstalter">Für Veranstalter</a>
         <a href="#ueber">Über uns</a>
+        <a href="#faq">Q&amp;A</a>
         <a href="#kontakt">Kontakt</a>
         <a href="#preise" class="btn btn-primary nav-cta">Jetzt konfigurieren</a>
       </div>
@@ -1361,25 +1486,26 @@
     <div class="container">
       <div class="hero-content fade-in">
         <h1>
-          Deine GPX-Route.<br>
-          <span class="highlight">Als 3D-Topografie.</span>
+          Deine Route.<br>
+          <span class="highlight">Für Zuhause.</span>
         </h1>
-        <p>PeakMemory auf Etsy verwandelt deine Tour in ein personalisiertes Relief: ideal für Hiking, Trailrunning, Mountainbike, Gravel und Rennrad.</p>
+      </div>
+
+      <div class="hero-image fade-in">
+        <div class="hero-image-placeholder">
+          <img src="images/classic.jpeg" alt="Peak Memory 3D-Reliefmodell auf Holzsockel">
+        </div>
+      </div>
+
+      <div class="hero-content fade-in">
+        <p class="hero-subtitle">Wir bilden deine individuelle Route als <strong>3D-Druck auf einem edlen Eiche-Holzsockel</strong> ab – mit der Möglichkeit, das Holz personalisiert zu lasern. Das ideale Geschenk für Wandervögel, Trailrunner, Mountainbiker und alle, die ihre Lieblingsroute nie vergessen wollen.</p>
         <div class="hero-buttons">
           <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Zum Etsy-Shop</a>
           <a href="#produkt" class="btn btn-ghost">Produkte ansehen</a>
         </div>
-        <div class="shop-facts" aria-label="Shop Fakten von Etsy">
+        <div class="shop-facts" aria-label="Shop Fakten von Etsy" style="justify-content: center; margin-top: 1.5rem;">
           <span class="shop-fact">Etsy-Shop seit 2026</span>
-          <span class="shop-fact">3 Verkäufe</span>
-          <span class="shop-fact">1 Admirer</span>
-          <span class="shop-fact">Standort: Baden-Württemberg</span>
-        </div>
-      </div>
-      
-      <div class="hero-image fade-in">
-        <div class="hero-image-placeholder">
-          <img src="classic.jpeg" alt="Peak Memory 3D-Reliefmodell">
+          <span class="shop-fact">Handgefertigt in Baden-Württemberg</span>
         </div>
       </div>
     </div>
@@ -1393,13 +1519,14 @@
       
       <div class="product-gallery">
         <div class="product-item fade-in">
-          <div class="product-badge">Featured</div>
-          <div class="product-image">
-            <img src="classic.jpeg" alt="10x10 cm Classic Modell" style="width: 100%; height: 100%; object-fit: cover;">
+          <div class="product-badge">Bestseller</div>
+          <div class="product-image-pair">
+            <img src="images/compact.jpeg" alt="Bergrelief auf Holz – Vorderansicht">
+            <img src="images/custom.jpeg" alt="Bergrelief auf Holz – Detailansicht">
           </div>
           <div class="product-info">
-            <h3>Personalized 3D topography</h3>
-            <p>Deine Route als Bergrelief für Hiking, Trailrunning und Mountainbike.</p>
+            <h3>Bergrelief auf Holzsockel</h3>
+            <p>Deine GPX-Route als 3D-Druck auf edlem Eiche-Holzsockel – mit optionaler Laser-Gravur für Hiking, Trailrunning und Mountainbike.</p>
             <div class="product-actions">
               <span class="product-link" aria-label="Preis">ab 49,99 EUR</span>
               <a class="product-link" href="https://www.etsy.com/de-en/listing/4502550552/personalized-3d-topography-gpx-route-as?ref=shop_home_active_1" target="_blank" rel="noopener noreferrer">Auf Etsy ansehen</a>
@@ -1408,12 +1535,13 @@
         </div>
 
         <div class="product-item fade-in">
-          <div class="product-image">
-            <img src="classic.jpeg" alt="15x15 cm Premium Modell" style="width: 100%; height: 100%; object-fit: cover;">
+          <div class="product-image-pair">
+            <img src="images/rahmen.jpeg" alt="3D-Topografie im Bilderrahmen – Frontansicht">
+            <img src="images/rahmen2.jpeg" alt="3D-Topografie im Bilderrahmen – Seitenansicht">
           </div>
           <div class="product-info">
-            <h3>Personalized 3D topography in a frame</h3>
-            <p>Gerahmtes 3D-Relief mit GPX-Route für Hiking, Rennrad, Gravel und MTB.</p>
+            <h3>Topografie im Bilderrahmen</h3>
+            <p>Gerahmtes 3D-Relief mit deiner GPX-Route – ein edles Wandobjekt für Hiking, Rennrad, Gravel und MTB.</p>
             <div class="product-actions">
               <span class="product-link" aria-label="Preis">ab 45,99 EUR</span>
               <a class="product-link" href="https://www.etsy.com/de-en/listing/4505089817/personalized-3d-topography-in-a-frame?ref=shop_home_active_2" target="_blank" rel="noopener noreferrer">Auf Etsy ansehen</a>
@@ -1445,6 +1573,26 @@
       </p>
     </div>
   </section>
+
+  <!-- ========== INSIGHTS CAROUSEL ========== -->
+  <div class="carousel-strip" aria-label="Impressionen aus der Werkstatt">
+    <div class="carousel-track">
+      <!-- original set -->
+      <div class="carousel-slide"><img src="images/insights1.jpeg" alt="Werkstatt-Impression 1" loading="lazy"></div>
+      <div class="carousel-slide"><img src="images/insight2.jpeg"  alt="Werkstatt-Impression 2" loading="lazy"></div>
+      <div class="carousel-slide"><img src="images/insights3.jpeg" alt="Werkstatt-Impression 3" loading="lazy"></div>
+      <div class="carousel-slide"><img src="images/insights4.jpeg" alt="Werkstatt-Impression 4" loading="lazy"></div>
+      <div class="carousel-slide"><img src="images/insights5.jpeg" alt="Werkstatt-Impression 5" loading="lazy"></div>
+      <div class="carousel-slide"><img src="images/insights6.jpeg" alt="Werkstatt-Impression 6" loading="lazy"></div>
+      <!-- duplicate set for seamless loop -->
+      <div class="carousel-slide"><img src="images/insights1.jpeg" alt="Werkstatt-Impression 1" loading="lazy" aria-hidden="true"></div>
+      <div class="carousel-slide"><img src="images/insight2.jpeg"  alt="Werkstatt-Impression 2" loading="lazy" aria-hidden="true"></div>
+      <div class="carousel-slide"><img src="images/insights3.jpeg" alt="Werkstatt-Impression 3" loading="lazy" aria-hidden="true"></div>
+      <div class="carousel-slide"><img src="images/insights4.jpeg" alt="Werkstatt-Impression 4" loading="lazy" aria-hidden="true"></div>
+      <div class="carousel-slide"><img src="images/insights5.jpeg" alt="Werkstatt-Impression 5" loading="lazy" aria-hidden="true"></div>
+      <div class="carousel-slide"><img src="images/insights6.jpeg" alt="Werkstatt-Impression 6" loading="lazy" aria-hidden="true"></div>
+    </div>
+  </div>
 
   <!-- ========== B2B / VERANSTALTER ========== -->
   <section class="section b2b" id="veranstalter">
@@ -1732,6 +1880,78 @@
     </div>
   </section>
 
+  <!-- ========== Q&A ========== -->
+  <section class="section faq" id="faq">
+    <div class="container">
+      <h2 class="section-title fade-in">Häufige Fragen</h2>
+      <p class="section-subtitle fade-in">Alles, was du vor deiner Bestellung wissen möchtest.</p>
+
+      <div class="faq-list fade-in">
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Wie funktioniert das mit der GPX-Datei?
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="faq-answer">
+            Nach deiner Bestellung auf Etsy schickst du uns deine GPX-Datei einfach per E-Mail an <a href="mailto:peak.memory@web.de" style="color:var(--accent);">peak.memory@web.de</a>. Die Datei kannst du direkt von Strava, Komoot, Garmin Connect oder anderen Tracking-Apps exportieren.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Welche Routen eignen sich?
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="faq-answer">
+            Grundsätzlich jede Route mit ausreichend Höheninformation – Wanderungen, Trailruns, Mountainbike-Touren, Gravel- und Rennradrouten. Je mehr Höhenunterschied, desto markanter das Relief. Strecken in flachem Gelände können weniger plastisch wirken.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Was bedeutet personalisiertes Lasern auf dem Holzsockel?
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="faq-answer">
+            Wir können den Eiche-Holzsockel mit einem Text deiner Wahl gravieren – zum Beispiel Name, Datum, Streckenname oder ein persönlicher Spruch. So wird das Modell zu einem einzigartigen Erinnerungsstück oder Geschenk.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Wie lange dauert die Lieferung?
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="faq-answer">
+            Nach Eingang deiner GPX-Datei und Bestellbestätigung dauert die Fertigung in der Regel 7–10 Werktage. Danach kommt das Paket per Versand direkt zu dir.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Kann ich das als Geschenk bestellen?
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="faq-answer">
+            Ja, absolut! Du kannst eine Lieferadresse angeben, die vom Besteller abweicht. Gib beim Bestellvorgang einfach die Adresse des Beschenkten an. Auf Wunsch fügen wir auch eine persönliche Grußkarte bei – schreib uns einfach eine Nachricht auf Etsy.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Gibt es Mengenrabatte für Events oder Firmen?
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="faq-answer">
+            Ja! Ab 30 Stück bieten wir Serienpreise für Veranstalter, Firmen und Events an. Jedes Modell kann individuell graviert werden – zum Beispiel mit dem Namen des Teilnehmers. Schreib uns über das <a href="#kontakt" style="color:var(--accent);">Kontaktformular</a> oder direkt auf Etsy.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- ========== FOOTER ========== -->
   <footer class="footer">
     <div class="container">
@@ -1759,7 +1979,7 @@
       <h3>Peak Memory</h3>
 
       <h3>Anschrift</h3>
-      <p>Peak Memory<br>Poststr. 29<br>71229 Leonberg</p>
+      <p>Peak Memory GbR<br>Poststr. 29<br>71229 Leonberg</p>
 
       <h3>Vertreten durch</h3>
       <p>Carolin Merz<br>Alexander Weimer</p>
@@ -2057,6 +2277,25 @@
           navbar.style.background = 'rgba(250, 250, 248, 0.8)';
           navbar.style.boxShadow = 'none';
         }
+      });
+    })();
+
+    // FAQ accordion
+    (function() {
+      document.querySelectorAll('.faq-question').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var item = btn.closest('.faq-item');
+          var isOpen = item.classList.contains('open');
+          // close all
+          document.querySelectorAll('.faq-item.open').forEach(function(el) {
+            el.classList.remove('open');
+            el.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+          });
+          if (!isOpen) {
+            item.classList.add('open');
+            btn.setAttribute('aria-expanded', 'true');
+          }
+        });
       });
     })();
   </script>

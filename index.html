@@ -3,8 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="PeakMemory – Deine Route als handgefertigtes 3D-Reliefmodell. Gefertigt in Baden-Württemberg.">
-  <title>PeakMemory – Deine Route. Dein Gipfel. Für immer.</title>
+  <meta name="description" content="PeakMemory auf Etsy: Personalisierte 3D-Topografie aus deiner GPX-Route. Handgefertigt in Baden-Württemberg für Hiking, Trailrunning und Mountainbike.">
+  <meta name="keywords" content="PeakMemory, Etsy, personalisierte 3D Topografie, GPX Geschenk, Hiking Geschenk, Trailrunning Geschenk, Mountainbike Geschenk">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://peak-memory.de/">
+  <meta property="og:title" content="PeakMemory | Personalisierte 3D-Topografie auf Etsy">
+  <meta property="og:description" content="Deine Route als 3D-Relief: personalisiert, handgefertigt, made in Baden-Württemberg.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://peak-memory.de/">
+  <meta property="og:image" content="https://peak-memory.de/classic.jpeg">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>PeakMemory | Personalisierte 3D-Topografie aus deiner GPX-Route</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="image" href="classic.jpeg">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -367,6 +379,22 @@
       padding: 16px 32px;
     }
 
+    .shop-facts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 1.2rem;
+    }
+
+    .shop-fact {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      color: var(--text-light);
+    }
+
     /* ========== FEATURES / PRODUKT ========== */
     .product-gallery {
       display: grid;
@@ -429,6 +457,31 @@
       color: var(--text-light);
       line-height: 1.6;
       margin: 0;
+    }
+
+    .product-actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .product-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent);
+      transition: all var(--transition);
+    }
+
+    .product-link:hover {
+      background: var(--accent);
+      color: var(--white);
     }
 
     .product-badge {
@@ -738,6 +791,99 @@
       font-style: italic;
     }
 
+    /* ========== PREISLISTE SHEET (PDF-INSPIRED) ========== */
+    .price-sheet {
+      background: linear-gradient(180deg, #f7f5ef 0%, #f1eee5 100%);
+      border-top: 1px solid #e3dfd3;
+      border-bottom: 1px solid #e3dfd3;
+    }
+
+    .sheet-frame {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+      border: 1px solid #ddd7c9;
+      overflow: hidden;
+    }
+
+    .sheet-head {
+      padding: 24px 28px;
+      background: repeating-linear-gradient(
+        135deg,
+        #f7f4ea,
+        #f7f4ea 12px,
+        #f3efe3 12px,
+        #f3efe3 24px
+      );
+      border-bottom: 1px solid #e6e0cf;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .sheet-title {
+      font-size: clamp(1.3rem, 3vw, 1.9rem);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #2a2a2a;
+    }
+
+    .sheet-sub {
+      font-size: 0.86rem;
+      color: #5d5a4e;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .sheet-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+    }
+
+    .sheet-card {
+      padding: 28px 24px;
+      border-right: 1px solid #ece8dd;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .sheet-card:last-child {
+      border-right: none;
+    }
+
+    .sheet-card h3 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      margin: 0;
+    }
+
+    .sheet-meta {
+      font-size: 0.86rem;
+      color: var(--text-light);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .sheet-price {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin-top: 2px;
+    }
+
+    .sheet-links {
+      margin-top: auto;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     /* ========== ÜBER UNS ========== */
     .about-text {
       max-width: 720px;
@@ -1025,11 +1171,21 @@
 
       .features-grid,
       .pricing-grid,
+      .sheet-grid,
       .values-grid,
       .product-gallery,
       .testimonials-grid {
         grid-template-columns: 1fr;
         gap: 20px;
+      }
+
+      .sheet-card {
+        border-right: none;
+        border-bottom: 1px solid #ece8dd;
+      }
+
+      .sheet-card:last-child {
+        border-bottom: none;
       }
 
       .personal-grid {
@@ -1059,6 +1215,20 @@
         text-align: center;
         justify-content: center;
       }
+    }
+
+    /* ========== CONTACT STATUS ========== */
+    .contact-status {
+      font-size: 0.92rem;
+      line-height: 1.5;
+      min-height: 1.5em;
+    }
+    .contact-status--ok {
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .contact-status--error {
+      color: #c0392b;
     }
 
     /* ========== MODAL ========== */
@@ -1158,6 +1328,7 @@
 
       <div class="nav-links" id="navLinks">
         <a href="#produkt">Produkte</a>
+        <a href="#preisliste">Preisliste</a>
         <a href="#personalisierung">Personalisierung</a>
         <a href="#veranstalter">Für Veranstalter</a>
         <a href="#ueber">Über uns</a>
@@ -1190,13 +1361,19 @@
     <div class="container">
       <div class="hero-content fade-in">
         <h1>
-          Deine Route. Dein Gipfel.<br>
-          <span class="highlight">Zum Anfassen.</span>
+          Deine GPX-Route.<br>
+          <span class="highlight">Als 3D-Topografie.</span>
         </h1>
-        <p>Wir verwandeln deine GPS-Route in ein handgefertigtes 3D-Reliefmodell – präzise, nachhaltig und gefertigt in Baden-Württemberg.</p>
+        <p>PeakMemory auf Etsy verwandelt deine Tour in ein personalisiertes Relief: ideal für Hiking, Trailrunning, Mountainbike, Gravel und Rennrad.</p>
         <div class="hero-buttons">
-          <a href="#preise" class="btn btn-primary">Modell erstellen</a>
-          <a href="#veranstalter" class="btn btn-ghost">Für Events anfragen</a>
+          <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Zum Etsy-Shop</a>
+          <a href="#produkt" class="btn btn-ghost">Produkte ansehen</a>
+        </div>
+        <div class="shop-facts" aria-label="Shop Fakten von Etsy">
+          <span class="shop-fact">Etsy-Shop seit 2026</span>
+          <span class="shop-fact">3 Verkäufe</span>
+          <span class="shop-fact">1 Admirer</span>
+          <span class="shop-fact">Standort: Baden-Württemberg</span>
         </div>
       </div>
       
@@ -1211,18 +1388,22 @@
   <!-- ========== PRODUKT ========== -->
   <section class="section" id="produkt">
     <div class="container">
-      <h2 class="section-title fade-in">Deine Route als Kunstwerk</h2>
-      <p class="section-subtitle fade-in">Jedes Modell ist ein handgefertigtes Unikat, das die echte Topografie deiner Route zeigt.</p>
+      <h2 class="section-title fade-in">Aktuelle Etsy-Produkte</h2>
+      <p class="section-subtitle fade-in">Diese Modelle sind aktuell im PeakMemory Etsy-Shop gelistet. Preise und Verfügbarkeit entsprechen dem Shop-Stand.</p>
       
       <div class="product-gallery">
         <div class="product-item fade-in">
-          <div class="product-badge">Bestseller</div>
+          <div class="product-badge">Featured</div>
           <div class="product-image">
             <img src="classic.jpeg" alt="10x10 cm Classic Modell" style="width: 100%; height: 100%; object-fit: cover;">
           </div>
           <div class="product-info">
-            <h3>10 × 10 cm Classic</h3>
-            <p>Rechteckiger Holzsockel · Individuelle Gravur: Name, Datum & mehr</p>
+            <h3>Personalized 3D topography</h3>
+            <p>Deine Route als Bergrelief für Hiking, Trailrunning und Mountainbike.</p>
+            <div class="product-actions">
+              <span class="product-link" aria-label="Preis">ab 49,99 EUR</span>
+              <a class="product-link" href="https://www.etsy.com/de-en/listing/4502550552/personalized-3d-topography-gpx-route-as?ref=shop_home_active_1" target="_blank" rel="noopener noreferrer">Auf Etsy ansehen</a>
+            </div>
           </div>
         </div>
 
@@ -1231,28 +1412,12 @@
             <img src="classic.jpeg" alt="15x15 cm Premium Modell" style="width: 100%; height: 100%; object-fit: cover;">
           </div>
           <div class="product-info">
-            <h3>15 × 15 cm Premium</h3>
-            <p>Rechteckiger Holzsockel · Individuelle Gravur: Name, Datum, Distanz & Höhenmeter</p>
-          </div>
-        </div>
-
-        <div class="product-item fade-in">
-          <div class="product-image">
-            <img src="basic.jpeg" alt="10x10 cm Basic Modell" style="width: 100%; height: 100%; object-fit: cover;">
-          </div>
-          <div class="product-info">
-            <h3>10 × 10 cm Basic</h3>
-            <p>Quadratischer Holzsockel · Ohne Gravur – Puristische Variante</p>
-          </div>
-        </div>
-
-        <div class="product-item fade-in">
-          <div class="product-image">
-            <img src="classic.jpeg" alt="Custom Event-Modelle" style="width: 100%; height: 100%; object-fit: cover;">
-          </div>
-          <div class="product-info">
-            <h3>Custom Event-Modelle</h3>
-            <p>Serien ab 30 Stück · Mit Veranstalter-Logo & individueller Gravur</p>
+            <h3>Personalized 3D topography in a frame</h3>
+            <p>Gerahmtes 3D-Relief mit GPX-Route für Hiking, Rennrad, Gravel und MTB.</p>
+            <div class="product-actions">
+              <span class="product-link" aria-label="Preis">ab 45,99 EUR</span>
+              <a class="product-link" href="https://www.etsy.com/de-en/listing/4505089817/personalized-3d-topography-in-a-frame?ref=shop_home_active_2" target="_blank" rel="noopener noreferrer">Auf Etsy ansehen</a>
+            </div>
           </div>
         </div>
       </div>
@@ -1261,22 +1426,22 @@
         <div class="feature-card fade-in">
           <span class="feature-icon">🗺️</span>
           <h3>Echte Topografie</h3>
-          <p>Aus deiner GPX-Datei oder Strava-Route wird ein präzises 3D-Geländemodell gefräst und gedruckt.</p>
+          <p>Aus deiner GPX-Datei entsteht ein präzises 3D-Geländemodell mit den charakteristischen Höhenprofilen deiner Tour.</p>
         </div>
         <div class="feature-card fade-in">
           <span class="feature-icon">🖨️</span>
-          <h3>Made in Baden-Württemberg</h3>
-          <p>Gefertigt auf professionellen Bambu Lab Druckern mit hochwertigem PLA. Jedes Modell ein Einzelstück.</p>
+          <h3>Handgefertigt in Deutschland</h3>
+          <p>PeakMemory fertigt in Baden-Württemberg. Jedes Modell ist ein Einzelstück und wird individuell finalisiert.</p>
         </div>
         <div class="feature-card fade-in">
           <span class="feature-icon">🪵</span>
-          <h3>Holzsockel &amp; Gravur</h3>
-          <p>Montiert auf einem edlen Holzsockel mit graviertem Namen, Datum, Distanz und Höhenmetern.</p>
+          <h3>Personalisierung</h3>
+          <p>Wähle Route, Anlass und Wunschtext für ein Geschenk mit echter sportlicher Erinnerung und emotionalem Wert.</p>
         </div>
       </div>
 
       <p class="feature-note fade-in">
-        <a href="#preise" class="btn btn-primary" style="display: inline-flex; margin-top: 1rem;">Modell jetzt konfigurieren</a>
+        <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="display: inline-flex; margin-top: 1rem;">Alle Etsy-Artikel ansehen</a>
       </p>
     </div>
   </section>
@@ -1343,32 +1508,45 @@
   <!-- ========== TRUST / TESTIMONIALS ========== -->
   <section class="section trust" id="testimonials">
     <div class="container">
-      <h2 class="section-title fade-in">Was unsere Kunden sagen</h2>
-      <p class="section-subtitle fade-in">Jedes Modell erzählt eine Geschichte – hier sind einige davon.</p>
+      <h2 class="section-title fade-in">Shop-Status auf Etsy</h2>
+      <p class="section-subtitle fade-in">PeakMemory ist ein junger Etsy-Shop mit klarer Spezialisierung auf personalisierte 3D-Topografie.</p>
       
       <div class="testimonials-grid">
         <div class="testimonial-card fade-in">
           <div class="testimonial-quote">
-            Das Modell meines ersten Marathons steht jetzt auf meinem Schreibtisch. Jedes Mal, wenn ich es sehe, erinnere ich mich an jeden Anstieg und jeden Moment. Einfach genial!
+            3 Sales auf Etsy. Fokus auf hochwertige, individuelle Reliefmodelle aus echten GPX-Routen.
           </div>
           <div class="testimonial-author">
-            <div class="testimonial-avatar">M</div>
+            <div class="testimonial-avatar">3</div>
             <div class="testimonial-info">
-              <h4>Michael S.</h4>
-              <p>Individuelle Bestellung</p>
+              <h4>Shop-Aktivität</h4>
+              <p>Verkaufe insgesamt</p>
             </div>
           </div>
         </div>
 
         <div class="testimonial-card fade-in">
           <div class="testimonial-quote">
-            Als Geschenk für meinen Partner perfekt! Die Qualität ist hervorragend und die Detailgenauigkeit beeindruckend. Man sieht wirklich jede Kurve der Route.
+            Noch keine Bewertungen sichtbar. Als fruher Kunde kannst du den Aufbau des Shops aktiv mitgestalten.
           </div>
           <div class="testimonial-author">
-            <div class="testimonial-avatar">L</div>
+            <div class="testimonial-avatar">0</div>
             <div class="testimonial-info">
-              <h4>Lisa R.</h4>
-              <p>Individuelle Bestellung</p>
+              <h4>Bewertungen</h4>
+              <p>Derzeit keine Reviews</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card fade-in">
+          <div class="testimonial-quote">
+            1 Admirer folgt dem Shop bereits. Folge PeakMemory auf Etsy, um neue Designs und Produktupdates zuerst zu sehen.
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">1</div>
+            <div class="testimonial-info">
+              <h4>Admirer</h4>
+              <p>Shop-Follower auf Etsy</p>
             </div>
           </div>
         </div>
@@ -1377,46 +1555,88 @@
   </section>
 
   <!-- ========== PREISE ========== -->
-  <section class="section" id="preise" style="background: var(--bg);">
+  <section class="section price-sheet" id="preisliste">
     <div class="container">
-      <h2 class="section-title fade-in">Modelle &amp; Preise</h2>
-      <div class="pricing-grid">
-        <!-- Basic -->
-        <div class="pricing-card fade-in">
-          <h3>Basic</h3>
-          <div class="pricing-details">
-            Größe: 10 × 10 cm<br>
-            Quadratischer Holzsockel<br>
-            Ohne Gravur
+      <div class="sheet-frame fade-in">
+        <div class="sheet-head">
+          <div>
+            <p class="sheet-sub">PeakMemory</p>
+            <h2 class="sheet-title">PREISLISTE</h2>
           </div>
-          <div class="price">ab 39 € <span></span></div>
-          <a href="#kontakt" class="btn btn-primary" style="width:100%;justify-content:center;">Jetzt anfragen</a>
+          <p class="sheet-sub">Alle Preise inkl. MwSt.</p>
         </div>
-        <!-- Classic -->
-        <div class="pricing-card featured fade-in">
-          <div class="pricing-badge">Beliebt</div>
-          <h3>Classic</h3>
-          <div class="pricing-details">
-            Größe: 10 × 10 cm<br>
-            Rechteckiger Holzsockel<br>
-            Individuelle Gravur (Name, Datum, etc.)
-          </div>
-          <div class="price">ab 59 € <span></span></div>
-          <a href="#kontakt" class="btn btn-primary" style="width:100%;justify-content:center;">Jetzt anfragen</a>
-        </div>
-        <!-- Premium -->
-        <div class="pricing-card fade-in">
-          <h3>Premium</h3>
-          <div class="pricing-details">
-            Größe: 15 × 15 cm<br>
-            Rechteckiger Holzsockel<br>
-            Individuelle Gravur (Name, Datum, Distanz, Höhenmeter)
-          </div>
-          <div class="price">ab 89 € <span></span></div>
-          <a href="#kontakt" class="btn btn-primary" style="width:100%;justify-content:center;">Jetzt anfragen</a>
+
+        <div class="sheet-grid">
+          <article class="sheet-card">
+            <h3>Compact</h3>
+            <p class="sheet-meta">Personalisierte 3D-Topografie im Rahmen für den schnellen Einstieg.</p>
+            <div class="sheet-price">ab 45,99 EUR</div>
+            <div class="sheet-links">
+              <a class="product-link" href="https://www.etsy.com/de-en/listing/4505089817/personalized-3d-topography-in-a-frame?ref=shop_home_active_2" target="_blank" rel="noopener noreferrer">Etsy Listing</a>
+            </div>
+          </article>
+
+          <article class="sheet-card">
+            <h3>Classic</h3>
+            <p class="sheet-meta">Deine GPX-Route als markantes Relief für Hiking, Trailrunning und MTB.</p>
+            <div class="sheet-price">ab 49,99 EUR</div>
+            <div class="sheet-links">
+              <a class="product-link" href="https://www.etsy.com/de-en/listing/4502550552/personalized-3d-topography-gpx-route-as?ref=shop_home_active_1" target="_blank" rel="noopener noreferrer">Etsy Listing</a>
+            </div>
+          </article>
+
+          <article class="sheet-card">
+            <h3>Custom</h3>
+            <p class="sheet-meta">Individuelle Anforderungen, Sonderformate oder Event-Serien auf Anfrage.</p>
+            <div class="sheet-price">Preis auf Anfrage</div>
+            <div class="sheet-links">
+              <a class="product-link" href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer">Shop kontaktieren</a>
+            </div>
+          </article>
         </div>
       </div>
-      <p class="pricing-note fade-in">Serienpreise für Veranstalter <span class="accent-text">ab 30 Stück</span> auf Anfrage.</p>
+    </div>
+  </section>
+
+  <section class="section" id="preise" style="background: var(--bg);">
+    <div class="container">
+      <h2 class="section-title fade-in">Etsy-Preise auf einen Blick</h2>
+      <div class="pricing-grid">
+        <div class="pricing-card fade-in">
+          <h3>3D Topography</h3>
+          <div class="pricing-details">
+            Personalisierte Route als Relief<br>
+            Für Hiking, Trailrunning, MTB<br>
+            Etsy Listing 4502550552
+          </div>
+          <div class="price">ab 49,99 EUR <span></span></div>
+          <a href="https://www.etsy.com/de-en/listing/4502550552/personalized-3d-topography-gpx-route-as?ref=shop_home_active_1" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;justify-content:center;">Auf Etsy kaufen</a>
+        </div>
+
+        <div class="pricing-card featured fade-in">
+          <div class="pricing-badge">Aktuell günstigster Einstieg</div>
+          <h3>3D Topography in a frame</h3>
+          <div class="pricing-details">
+            Gerahmte 3D-Topografie<br>
+            Personalisierbar per GPX-Route<br>
+            Etsy Listing 4505089817
+          </div>
+          <div class="price">ab 45,99 EUR <span></span></div>
+          <a href="https://www.etsy.com/de-en/listing/4505089817/personalized-3d-topography-in-a-frame?ref=shop_home_active_2" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;justify-content:center;">Auf Etsy kaufen</a>
+        </div>
+
+        <div class="pricing-card fade-in">
+          <h3>Shop kontaktieren</h3>
+          <div class="pricing-details">
+            Individuelle Sonderwunsche<br>
+            Personalisierung und Fragen<br>
+            Antwort direkt uber Etsy Nachrichten
+          </div>
+          <div class="price">Direkt im Shop <span></span></div>
+          <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;justify-content:center;">Etsy kontaktieren</a>
+        </div>
+      </div>
+      <p class="pricing-note fade-in">Hinweis: Preise können sich auf Etsy je nach Optionen, Versandziel und Konfiguration ändern.</p>
     </div>
   </section>
 
@@ -1475,7 +1695,7 @@
   <section class="section contact" id="kontakt">
     <div class="container">
       <h2 class="section-title fade-in">Kontakt</h2>
-      <p class="section-subtitle fade-in">Schreib uns deine Anfrage – wir melden uns innerhalb von 24 Stunden bei dir.</p>
+      <p class="section-subtitle fade-in">Für schnelle Antworten nutze direkt den Etsy-Shop oder sende uns eine E-Mail.</p>
       
       <div class="contact-wrapper">
         <!-- GPX Upload Info -->
@@ -1484,6 +1704,7 @@
           <p>Für individuelle Modelle benötigen wir deine GPS-Route als GPX-Datei.</p>
           <p><strong>Bitte sende deine GPX-Datei an:</strong> <a href="mailto:peak.memory@web.de" style="color: var(--accent); text-decoration: underline;">peak.memory@web.de</a></p>
           <p style="font-size: 0.85rem; margin: 0;">💡 Tipp: Du kannst die Datei direkt von Strava, Komoot oder Garmin Connect exportieren.</p>
+          <p style="font-size: 0.85rem; margin-top: 10px;"><strong>Direkt auf Etsy:</strong> <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">PeakMemory Shop besuchen</a></p>
         </div>
 
         <form class="contact-form fade-in" id="contactForm">
@@ -1505,6 +1726,7 @@
             <textarea name="message" placeholder="Deine Nachricht (z.B. gewünschte Größe, Gravur-Text, Event-Details)" required></textarea>
           </div>
           <button type="submit" class="btn btn-primary">Nachricht senden</button>
+          <div id="contactStatus" class="contact-status" role="status" aria-live="polite"></div>
         </form>
       </div>
     </div>
@@ -1629,6 +1851,47 @@
 
   <!-- ========== JAVASCRIPT ========== -->
   <script>
+    // Structured data for better search indexing
+    (function() {
+      var data = {
+        '@context': 'https://schema.org',
+        '@type': 'Store',
+        name: 'PeakMemory',
+        url: 'https://peak-memory.de/',
+        sameAs: [
+          'https://www.etsy.com/shop/peakmemory/?etsrc=sdt',
+          'https://www.instagram.com/peak.memory'
+        ],
+        areaServed: 'DE',
+        address: {
+          '@type': 'PostalAddress',
+          addressRegion: 'Baden-Württemberg',
+          addressCountry: 'DE'
+        },
+        offers: [
+          {
+            '@type': 'Offer',
+            name: 'Personalized 3D topography',
+            url: 'https://www.etsy.com/de-en/listing/4502550552/personalized-3d-topography-gpx-route-as?ref=shop_home_active_1',
+            price: '49.99',
+            priceCurrency: 'EUR'
+          },
+          {
+            '@type': 'Offer',
+            name: 'Personalized 3D topography in a frame',
+            url: 'https://www.etsy.com/de-en/listing/4505089817/personalized-3d-topography-in-a-frame?ref=shop_home_active_2',
+            price: '45.99',
+            priceCurrency: 'EUR'
+          }
+        ]
+      };
+
+      var script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.text = JSON.stringify(data);
+      document.head.appendChild(script);
+    })();
+
     // Intersection Observer for fade-in animations
     (function() {
       var fadeElements = document.querySelectorAll('.fade-in');
@@ -1679,33 +1942,51 @@
       });
     })();
 
-    // Contact form – mailto fallback
+    // Contact form – fetch POST to /contact (Cloudflare Pages Function)
     (function() {
       var form = document.getElementById('contactForm');
+      var status = document.getElementById('contactStatus');
+      var submitBtn = form.querySelector('button[type="submit"]');
+
       form.addEventListener('submit', function(e) {
         e.preventDefault();
-        var name = form.elements['name'].value;
-        var email = form.elements['email'].value;
-        var type = form.elements['type'].value;
-        var message = form.elements['message'].value;
 
-        var typeLabels = {
-          'individual': 'Individuelle Bestellung',
-          'event': 'Event-Anfrage (ab 30 Stück)',
-          'other': 'Sonstiges'
-        };
+        var body = JSON.stringify({
+          name:    form.elements['name'].value,
+          email:   form.elements['email'].value,
+          type:    form.elements['type'].value,
+          message: form.elements['message'].value,
+        });
 
-        var subject = encodeURIComponent('Anfrage von ' + name + ' – ' + typeLabels[type]);
-        var body = encodeURIComponent(
-          'Name: ' + name + '\n' +
-          'E-Mail: ' + email + '\n' +
-          'Art: ' + typeLabels[type] + '\n\n' +
-          'Nachricht:\n' + message + '\n\n' +
-          '---\n' +
-          'GPX-Datei bitte als Anhang mitsenden.'
-        );
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Wird gesendet…';
+        status.textContent = '';
+        status.className = 'contact-status';
 
-        window.location.href = 'mailto:peak.memory@web.de?subject=' + subject + '&body=' + body;
+        fetch('/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: body,
+        })
+          .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })
+          .then(function(result) {
+            if (result.ok) {
+              status.textContent = '✓ Deine Nachricht wurde gesendet. Wir melden uns bald!';
+              status.className = 'contact-status contact-status--ok';
+              form.reset();
+            } else {
+              status.textContent = result.data.error || 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.';
+              status.className = 'contact-status contact-status--error';
+            }
+          })
+          .catch(function() {
+            status.textContent = 'Verbindungsfehler. Bitte versuche es erneut oder schreib direkt an peak.memory@web.de.';
+            status.className = 'contact-status contact-status--error';
+          })
+          .finally(function() {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Nachricht senden';
+          });
       });
     })();
 

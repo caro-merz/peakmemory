@@ -252,6 +252,7 @@
     .nav-cta {
       padding: 10px 22px;
       font-size: 0.85rem;
+      color: var(--white) !important;
     }
 
     .hamburger {
@@ -762,6 +763,7 @@
       background: linear-gradient(135deg, #e8e8e4 0%, #d0cfc9 100%);
       border: 4px solid var(--white);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -769,6 +771,14 @@
       color: var(--accent);
       font-weight: 700;
       margin: 0 auto;
+    }
+
+    .founder-image img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
     }
 
     .founder-info {
@@ -1015,14 +1025,23 @@
         padding: 64px 0;
       }
 
+      .navbar {
+        background: #fafaf8;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }
+
       .nav-links {
         position: fixed;
         top: 72px;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(250, 250, 248, 0.98);
-        backdrop-filter: blur(12px);
+        background: #fafaf8;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        opacity: 1;
+        box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.04), 0 18px 40px rgba(0, 0, 0, 0.08);
         flex-direction: column;
         justify-content: flex-start;
         padding-top: 48px;
@@ -1293,8 +1312,8 @@
     <div class="container">
       <div class="hero-content fade-in">
         <h1>
-          Deine Route.<br>
-          <span class="highlight">Für Zuhause.</span>
+          Deine Route<br>
+          <span class="highlight">Für Zuhause</span>
         </h1>
       </div>
 
@@ -1451,7 +1470,9 @@
 
       <div class="founders-grid">
         <div class="founder-card fade-in">
-          <div class="founder-image">C</div>
+          <div class="founder-image">
+            <img src="images/caro.jpeg" alt="Carolin Merz">
+          </div>
           <div class="founder-info">
             <h3>Carolin Merz</h3>
             <div class="founder-role">Mitgründerin</div>
@@ -1463,7 +1484,9 @@
         </div>
 
         <div class="founder-card fade-in">
-          <div class="founder-image">A</div>
+          <div class="founder-image">
+            <img src="images/alex.jpeg" alt="Alexander Weimer">
+          </div>
           <div class="founder-info">
             <h3>Alexander Weimer</h3>
             <div class="founder-role">Mitgründer</div>

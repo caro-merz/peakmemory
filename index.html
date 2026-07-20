@@ -577,42 +577,80 @@
       z-index: 1;
     }
 
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
+    .process-section {
       margin-top: 4rem;
     }
 
-    .feature-card {
+    .process-heading {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .process-intro {
+      max-width: 760px;
+      margin: 0 auto 2.5rem;
+      text-align: center;
+      font-size: 0.98rem;
+      color: var(--text-light);
+      line-height: 1.75;
+    }
+
+    .process-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+    }
+
+    .process-card {
       background: var(--white);
       border-radius: 12px;
       padding: 36px 28px;
       box-shadow: var(--shadow);
       transition: transform var(--transition), box-shadow var(--transition);
+      position: relative;
     }
 
-    .feature-card:hover {
+    .process-card:hover {
       transform: translateY(-4px);
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     }
 
-    .feature-icon {
-      font-size: 2rem;
-      margin-bottom: 16px;
-      display: block;
+    .process-step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--white);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 18px;
     }
 
-    .feature-card h3 {
+    .process-card h3 {
       font-size: 1.1rem;
       font-weight: 600;
       margin-bottom: 10px;
     }
 
-    .feature-card p {
+    .process-card p,
+    .process-card li {
       font-size: 0.92rem;
       color: var(--text-light);
       line-height: 1.65;
+    }
+
+    .process-card ul {
+      margin: 14px 0 0;
+      padding-left: 1.2rem;
+    }
+
+    .process-card li + li {
+      margin-top: 8px;
     }
 
     .feature-note {
@@ -663,9 +701,10 @@
     /* ========== PERSONALISIERUNG ========== */
     .personal-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
+      grid-template-columns: 1fr;
+      gap: 0;
       align-items: center;
+      max-width: 720px;
     }
 
     .personal-text p {
@@ -673,293 +712,6 @@
       color: var(--text-light);
       line-height: 1.8;
       margin-bottom: 2rem;
-    }
-
-    .steps {
-      counter-reset: step;
-    }
-
-    .step {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 28px;
-      align-items: flex-start;
-    }
-
-    .step-number {
-      flex-shrink: 0;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: var(--white);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
-
-    .step-content h4 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-
-    .step-content p {
-      font-size: 0.88rem;
-      color: var(--text-light);
-      margin: 0;
-    }
-
-    /* ========== TRUST / TESTIMONIALS ========== */
-    .trust {
-      background: var(--bg-alt);
-    }
-
-    .testimonials-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
-      margin-top: 2rem;
-    }
-
-    .testimonial-card {
-      background: var(--white);
-      border-radius: 12px;
-      padding: 32px 28px;
-      box-shadow: var(--shadow);
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .testimonial-quote {
-      font-size: 0.95rem;
-      line-height: 1.7;
-      color: var(--text);
-      font-style: italic;
-      position: relative;
-      flex-grow: 1;
-    }
-
-    .testimonial-quote::before {
-      content: '"';
-      font-size: 3rem;
-      font-weight: 700;
-      color: var(--accent);
-      opacity: 0.2;
-      position: absolute;
-      top: -20px;
-      left: -10px;
-      line-height: 1;
-    }
-
-    .testimonial-author {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding-top: 16px;
-      border-top: 1px solid var(--line);
-    }
-
-    .testimonial-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent) 0%, #3A6B1E 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--white);
-      font-weight: 700;
-      font-size: 1.1rem;
-      flex-shrink: 0;
-    }
-
-    .testimonial-info h4 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin: 0;
-    }
-
-    .testimonial-info p {
-      font-size: 0.85rem;
-      color: var(--text-light);
-      margin: 2px 0 0 0;
-    }
-
-    /* ========== PREISE ========== */
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 28px;
-      margin-top: 2rem;
-    }
-
-    .pricing-card {
-      background: var(--white);
-      border-radius: 12px;
-      padding: 36px 28px;
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      border: 2px solid transparent;
-      transition: transform var(--transition), box-shadow var(--transition);
-    }
-
-    .pricing-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    }
-
-    .pricing-card.featured {
-      border-color: var(--accent);
-    }
-
-    .pricing-badge {
-      position: absolute;
-      top: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--accent);
-      color: var(--white);
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 4px 16px;
-      border-radius: 20px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .pricing-card h3 {
-      font-size: 1.3rem;
-      font-weight: 700;
-      margin-bottom: 16px;
-    }
-
-    .pricing-details {
-      font-size: 0.88rem;
-      color: var(--text-light);
-      line-height: 1.8;
-      margin-bottom: 20px;
-      flex-grow: 1;
-    }
-
-    .price {
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--accent);
-      margin-bottom: 20px;
-    }
-
-    .price span {
-      font-size: 0.85rem;
-      font-weight: 400;
-      color: var(--text-light);
-    }
-
-    .pricing-note {
-      text-align: center;
-      margin-top: 2.5rem;
-      font-size: 0.92rem;
-      color: var(--text-light);
-      font-style: italic;
-    }
-
-    /* ========== PREISLISTE SHEET (PDF-INSPIRED) ========== */
-    .price-sheet {
-      background: linear-gradient(180deg, #f7f5ef 0%, #f1eee5 100%);
-      border-top: 1px solid #e3dfd3;
-      border-bottom: 1px solid #e3dfd3;
-    }
-
-    .sheet-frame {
-      background: var(--white);
-      border-radius: 16px;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
-      border: 1px solid #ddd7c9;
-      overflow: hidden;
-    }
-
-    .sheet-head {
-      padding: 24px 28px;
-      background: repeating-linear-gradient(
-        135deg,
-        #f7f4ea,
-        #f7f4ea 12px,
-        #f3efe3 12px,
-        #f3efe3 24px
-      );
-      border-bottom: 1px solid #e6e0cf;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .sheet-title {
-      font-size: clamp(1.3rem, 3vw, 1.9rem);
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      color: #2a2a2a;
-    }
-
-    .sheet-sub {
-      font-size: 0.86rem;
-      color: #5d5a4e;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    .sheet-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0;
-    }
-
-    .sheet-card {
-      padding: 28px 24px;
-      border-right: 1px solid #ece8dd;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .sheet-card:last-child {
-      border-right: none;
-    }
-
-    .sheet-card h3 {
-      font-size: 1.2rem;
-      font-weight: 800;
-      letter-spacing: 0.03em;
-      margin: 0;
-    }
-
-    .sheet-meta {
-      font-size: 0.86rem;
-      color: var(--text-light);
-      line-height: 1.6;
-      margin: 0;
-    }
-
-    .sheet-price {
-      font-size: 1.55rem;
-      font-weight: 800;
-      color: var(--accent);
-      margin-top: 2px;
-    }
-
-    .sheet-links {
-      margin-top: auto;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
     }
 
     /* ========== ÜBER UNS ========== */
@@ -1293,23 +1045,11 @@
         opacity: 0.08;
       }
 
-      .features-grid,
-      .pricing-grid,
-      .sheet-grid,
+      .process-grid,
       .values-grid,
-      .product-gallery,
-      .testimonials-grid {
+      .product-gallery {
         grid-template-columns: 1fr;
         gap: 20px;
-      }
-
-      .sheet-card {
-        border-right: none;
-        border-bottom: 1px solid #ece8dd;
-      }
-
-      .sheet-card:last-child {
-        border-bottom: none;
       }
 
       .personal-grid {
@@ -1484,15 +1224,8 @@
     }
 
     @media (min-width: 769px) and (max-width: 1024px) {
-      .features-grid,
-      .pricing-grid {
+      .features-grid {
         grid-template-columns: repeat(2, 1fr);
-      }
-
-      .pricing-card:last-child {
-        grid-column: 1 / -1;
-        max-width: 400px;
-        margin: 0 auto;
       }
     }
   </style>
@@ -1508,13 +1241,12 @@
 
       <div class="nav-links" id="navLinks">
         <a href="#produkt">Produkte</a>
-        <a href="#preisliste">Preisliste</a>
         <a href="#personalisierung">Personalisierung</a>
         <a href="#veranstalter">Für Veranstalter</a>
         <a href="#ueber">Über uns</a>
         <a href="#faq">Q&amp;A</a>
         <a href="#kontakt">Kontakt</a>
-        <a href="#preise" class="btn btn-primary nav-cta">Jetzt konfigurieren</a>
+        <a href="#kontakt" class="btn btn-primary nav-cta">Jetzt anfragen</a>
       </div>
 
       <button class="hamburger" id="hamburger" aria-label="Menü öffnen" aria-expanded="false">
@@ -1558,6 +1290,7 @@
         <div class="hero-buttons">
           <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Zum Etsy-Shop</a>
           <a href="#produkt" class="btn btn-ghost">Produkte ansehen</a>
+          <a href="https://www.instagram.com/peak.memory" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">Impressionen auf Instagram</a>
         </div>
         <div class="shop-facts" aria-label="Shop Fakten von Etsy" style="justify-content: center; margin-top: 1.5rem;">
           <span class="shop-fact">Etsy-Shop seit 2026</span>
@@ -1606,21 +1339,36 @@
         </div>
       </div>
 
-      <div class="features-grid">
-        <div class="feature-card fade-in">
-          <span class="feature-icon">🗺️</span>
-          <h3>Echte Topografie</h3>
-          <p>Aus deiner GPX-Datei entsteht ein präzises 3D-Geländemodell mit den charakteristischen Höhenprofilen deiner Tour.</p>
-        </div>
-        <div class="feature-card fade-in">
-          <span class="feature-icon">🖨️</span>
-          <h3>Handgefertigt in Deutschland</h3>
-          <p>PeakMemory fertigt in Baden-Württemberg. Jedes Modell ist ein Einzelstück und wird individuell finalisiert.</p>
-        </div>
-        <div class="feature-card fade-in">
-          <span class="feature-icon">🪵</span>
-          <h3>Personalisierung</h3>
-          <p>Wähle Route, Anlass und Wunschtext für ein Geschenk mit echter sportlicher Erinnerung und emotionalem Wert.</p>
+      <div class="process-section">
+        <h3 class="process-heading fade-in">So funktioniert's</h3>
+        <p class="process-intro fade-in">Von der Etsy-Bestellung bis zum fertigen Relief: So läuft deine personalisierte PeakMemory-Anfertigung ab.</p>
+
+        <div class="process-grid">
+          <div class="process-card fade-in">
+            <span class="process-step-number">1</span>
+            <h3>Bestellung &amp; Bezahlung</h3>
+            <p>Auswahl von Produktvariante und Personalisierung, Angabe der Versanddetails und Bezahlung – alles bequem über Etsy.</p>
+          </div>
+          <div class="process-card fade-in">
+            <span class="process-step-number">2</span>
+            <h3>GPX-Daten teilen</h3>
+            <p>Damit wir deine Route ins Relief umsetzen können, brauchen wir die Streckendaten. Dafür hast du drei Möglichkeiten:</p>
+            <ul>
+              <li>GPX-Datei per E-Mail oder über das Kontaktformular auf peak-memory.de zusenden</li>
+              <li>Strava-Link teilen</li>
+              <li>Route über Google Maps nachbauen und den Link teilen</li>
+            </ul>
+          </div>
+          <div class="process-card fade-in">
+            <span class="process-step-number">3</span>
+            <h3>Vorschau</h3>
+            <p>Wir erstellen eine Vorschau des 3D-Reliefs inklusive lasergraviertem Schriftzug und lassen sie dir zukommen.</p>
+          </div>
+          <div class="process-card fade-in">
+            <span class="process-step-number">4</span>
+            <h3>Produktion &amp; Versand</h3>
+            <p>Nach deiner Freigabe der Vorschau geht dein Unikat in Produktion und wird anschließend zu dir nach Hause versendet.</p>
+          </div>
         </div>
       </div>
 
@@ -1648,6 +1396,9 @@
       <div class="carousel-slide"><img src="images/insights5.jpeg" alt="Werkstatt-Impression 5" loading="lazy" aria-hidden="true"></div>
       <div class="carousel-slide"><img src="images/insights6.jpeg" alt="Werkstatt-Impression 6" loading="lazy" aria-hidden="true"></div>
     </div>
+    <div class="container" style="text-align: center; padding-top: 28px;">
+      <a href="https://www.instagram.com/peak.memory" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">Mehr Impressionen unserer Arbeit auf Instagram</a>
+    </div>
   </div>
 
   <!-- ========== B2B / VERANSTALTER ========== -->
@@ -1655,12 +1406,10 @@
     <div class="container">
       <div class="b2b-content fade-in">
         <h2 class="section-title">Für Veranstalter &amp; Events</h2>
-        <p>Ob Marathonfinisher-Prämie, Siegertrophäe oder exklusives Messegeschenk – PeakMemory liefert Serien <span class="accent-text">ab 30 Stück</span>. Jedes Modell zeigt die echte Strecke eurer Veranstaltung, individuell graviert mit dem Namen des Teilnehmers.</p>
+        <p>Ob Marathonfinisher-Prämie, Siegertrophäe oder exklusives Messegeschenk – PeakMemory liefert Serien <span class="accent-text">ab 5 Stück</span>. Jedes Modell zeigt die echte Strecke eurer Veranstaltung, individuell graviert mit dem Namen des Teilnehmers.</p>
         <ul class="b2b-checks">
-          <li><span class="check-icon">✅</span> Ab 30 Stück</li>
-          <li><span class="check-icon">✅</span> Veranstalter-Logo auf Sockel möglich</li>
-          <li><span class="check-icon">✅</span> Lieferung direkt zum Event</li>
-        </ul>
+          <li><span class="check-icon">✅</span> Ab 5 Stück</li>
+          <li><span class="check-icon">✅</span> Veranstalter-Logo auf Sockel möglich</li>        </ul>
         <a href="#kontakt" class="btn btn-primary">Serienanfrage stellen</a>
       </div>
     </div>
@@ -1673,174 +1422,9 @@
       <div class="personal-grid">
         <div class="personal-text fade-in">
           <p>Du hast einen besonderen Lauf, eine Radtour oder eine Skitour, die du nie vergessen möchtest? Lade deine GPX-Datei hoch oder verbinde dein Strava-Konto – wir fertigen dein individuelles Reliefmodell.</p>
-          <a href="#preise" class="btn btn-primary">Jetzt personalisieren</a>
-        </div>
-        <div class="steps fade-in">
-          <div class="step">
-            <div class="step-number">1</div>
-            <div class="step-content">
-              <h4>Route wählen</h4>
-              <p>GPX-Datei hochladen oder Strava-Aktivität wählen</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-number">2</div>
-            <div class="step-content">
-              <h4>Konfigurieren</h4>
-              <p>Größe &amp; Material konfigurieren</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-number">3</div>
-            <div class="step-content">
-              <h4>Personalisieren</h4>
-              <p>Name, Datum &amp; persönliche Widmung eingeben</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-number">4</div>
-            <div class="step-content">
-              <h4>Erhalten</h4>
-              <p>Lieferung in <span class="accent-text">7–10 Werktagen</span></p>
-            </div>
-          </div>
+          <a href="#kontakt" class="btn btn-primary">Jetzt Vorschau anfordern</a>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- ========== TRUST / TESTIMONIALS ========== -->
-  <section class="section trust" id="testimonials">
-    <div class="container">
-      <h2 class="section-title fade-in">Shop-Status auf Etsy</h2>
-      <p class="section-subtitle fade-in">PeakMemory ist ein junger Etsy-Shop mit klarer Spezialisierung auf personalisierte 3D-Topografie.</p>
-      
-      <div class="testimonials-grid">
-        <div class="testimonial-card fade-in">
-          <div class="testimonial-quote">
-            3 Sales auf Etsy. Fokus auf hochwertige, individuelle Reliefmodelle aus echten GPX-Routen.
-          </div>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar">3</div>
-            <div class="testimonial-info">
-              <h4>Shop-Aktivität</h4>
-              <p>Verkaufe insgesamt</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card fade-in">
-          <div class="testimonial-quote">
-            Noch keine Bewertungen sichtbar. Als fruher Kunde kannst du den Aufbau des Shops aktiv mitgestalten.
-          </div>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar">0</div>
-            <div class="testimonial-info">
-              <h4>Bewertungen</h4>
-              <p>Derzeit keine Reviews</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card fade-in">
-          <div class="testimonial-quote">
-            1 Admirer folgt dem Shop bereits. Folge PeakMemory auf Etsy, um neue Designs und Produktupdates zuerst zu sehen.
-          </div>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar">1</div>
-            <div class="testimonial-info">
-              <h4>Admirer</h4>
-              <p>Shop-Follower auf Etsy</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ========== PREISE ========== -->
-  <section class="section price-sheet" id="preisliste">
-    <div class="container">
-      <div class="sheet-frame fade-in">
-        <div class="sheet-head">
-          <div>
-            <p class="sheet-sub">PeakMemory</p>
-            <h2 class="sheet-title">PREISLISTE</h2>
-          </div>
-          <p class="sheet-sub">Alle Preise inkl. MwSt.</p>
-        </div>
-
-        <div class="sheet-grid">
-          <article class="sheet-card">
-            <h3>Compact</h3>
-            <p class="sheet-meta">Personalisierte 3D-Topografie im Rahmen für den schnellen Einstieg.</p>
-            <div class="sheet-price">ab 45,99 EUR</div>
-            <div class="sheet-links">
-              <a class="product-link" href="https://www.etsy.com/de-en/listing/4505089817/personalized-3d-topography-in-a-frame?ref=shop_home_active_2" target="_blank" rel="noopener noreferrer">Etsy Listing</a>
-            </div>
-          </article>
-
-          <article class="sheet-card">
-            <h3>Classic</h3>
-            <p class="sheet-meta">Deine GPX-Route als markantes Relief für Hiking, Trailrunning und MTB.</p>
-            <div class="sheet-price">ab 49,99 EUR</div>
-            <div class="sheet-links">
-              <a class="product-link" href="https://www.etsy.com/de-en/listing/4502550552/personalized-3d-topography-gpx-route-as?ref=shop_home_active_1" target="_blank" rel="noopener noreferrer">Etsy Listing</a>
-            </div>
-          </article>
-
-          <article class="sheet-card">
-            <h3>Custom</h3>
-            <p class="sheet-meta">Individuelle Anforderungen, Sonderformate oder Event-Serien auf Anfrage.</p>
-            <div class="sheet-price">Preis auf Anfrage</div>
-            <div class="sheet-links">
-              <a class="product-link" href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer">Shop kontaktieren</a>
-            </div>
-          </article>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="preise" style="background: var(--bg);">
-    <div class="container">
-      <h2 class="section-title fade-in">Etsy-Preise auf einen Blick</h2>
-      <div class="pricing-grid">
-        <div class="pricing-card fade-in">
-          <h3>3D Topography</h3>
-          <div class="pricing-details">
-            Personalisierte Route als Relief<br>
-            Für Hiking, Trailrunning, MTB<br>
-            Etsy Listing 4502550552
-          </div>
-          <div class="price">ab 49,99 EUR <span></span></div>
-          <a href="https://www.etsy.com/de-en/listing/4502550552/personalized-3d-topography-gpx-route-as?ref=shop_home_active_1" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;justify-content:center;">Auf Etsy kaufen</a>
-        </div>
-
-        <div class="pricing-card featured fade-in">
-          <div class="pricing-badge">Aktuell günstigster Einstieg</div>
-          <h3>3D Topography in a frame</h3>
-          <div class="pricing-details">
-            Gerahmte 3D-Topografie<br>
-            Personalisierbar per GPX-Route<br>
-            Etsy Listing 4505089817
-          </div>
-          <div class="price">ab 45,99 EUR <span></span></div>
-          <a href="https://www.etsy.com/de-en/listing/4505089817/personalized-3d-topography-in-a-frame?ref=shop_home_active_2" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;justify-content:center;">Auf Etsy kaufen</a>
-        </div>
-
-        <div class="pricing-card fade-in">
-          <h3>Shop kontaktieren</h3>
-          <div class="pricing-details">
-            Individuelle Sonderwunsche<br>
-            Personalisierung und Fragen<br>
-            Antwort direkt uber Etsy Nachrichten
-          </div>
-          <div class="price">Direkt im Shop <span></span></div>
-          <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;justify-content:center;">Etsy kontaktieren</a>
-        </div>
-      </div>
-      <p class="pricing-note fade-in">Hinweis: Preise können sich auf Etsy je nach Optionen, Versandziel und Konfiguration ändern.</p>
     </div>
   </section>
 
@@ -2005,11 +1589,21 @@
 
         <div class="faq-item">
           <button class="faq-question" aria-expanded="false">
+            Wie pflege ich mein Modell?
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="faq-answer">
+            Am besten schützt du dein Modell vor direkter Sonneneinstrahlung und starker Hitze, damit sich das PLA nicht verformt.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
             Gibt es Mengenrabatte für Events oder Firmen?
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <div class="faq-answer">
-            Ja! Ab 30 Stück bieten wir Serienpreise für Veranstalter, Firmen und Events an. Jedes Modell kann individuell graviert werden – zum Beispiel mit dem Namen des Teilnehmers. Schreib uns über das <a href="#kontakt" style="color:var(--accent);">Kontaktformular</a> oder direkt auf Etsy.
+            Ja! Ab 5 Stück bieten wir Serienpreise für Veranstalter, Firmen und Events an. Jedes Modell kann individuell graviert werden – zum Beispiel mit dem Namen des Teilnehmers. Schreib uns über das <a href="#kontakt" style="color:var(--accent);">Kontaktformular</a> oder direkt auf Etsy.
           </div>
         </div>
 

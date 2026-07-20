@@ -1118,6 +1118,62 @@
       min-height: 140px;
     }
 
+    .file-dropzone {
+      border: 1.5px dashed var(--line);
+      border-radius: var(--radius);
+      background: var(--white);
+      padding: 20px;
+      text-align: center;
+      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+
+    .file-dropzone.is-dragover {
+      border-color: var(--accent);
+      background: #f5f2ea;
+      box-shadow: 0 0 0 3px rgba(192, 142, 56, 0.12);
+    }
+
+    .file-dropzone input[type="file"] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .file-dropzone-label {
+      display: inline-block;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    .file-dropzone-text {
+      font-size: 0.92rem;
+      color: var(--text-light);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .file-dropzone-hint {
+      font-size: 0.82rem;
+      color: var(--text-light);
+      margin-top: 8px;
+    }
+
+    .file-dropzone-file {
+      min-height: 1.2em;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
     .form-group input::placeholder,
     .form-group textarea::placeholder {
       color: #999;
@@ -1850,7 +1906,7 @@
         <div class="gpx-info-box fade-in">
           <h3>📁 GPX-Datei</h3>
           <p>Für individuelle Modelle benötigen wir deine GPS-Route als GPX-Datei.</p>
-          <p><strong>Bitte sende deine GPX-Datei an:</strong> <a href="mailto:peak.memory@web.de" style="color: var(--accent); text-decoration: underline;">peak.memory@web.de</a></p>
+          <p><strong>Du kannst die GPX-Datei direkt hier im Formular hochladen</strong> oder uns alternativ an <a href="mailto:peak.memory@web.de" style="color: var(--accent); text-decoration: underline;">peak.memory@web.de</a> senden.</p>
           <p style="font-size: 0.85rem; margin: 0;">💡 Tipp: Du kannst die Datei direkt von Strava, Komoot oder Garmin Connect exportieren.</p>
           <p style="font-size: 0.85rem; margin-top: 10px;"><strong>Direkt auf Etsy:</strong> <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">PeakMemory Shop besuchen</a></p>
         </div>
@@ -1872,6 +1928,15 @@
           </div>
           <div class="form-group">
             <textarea name="message" placeholder="Deine Nachricht (z.B. gewünschte Größe, Gravur-Text, Event-Details)" required></textarea>
+          </div>
+          <div class="form-group">
+            <div class="file-dropzone" id="gpxDropzone">
+              <label class="file-dropzone-label" for="gpxFile">GPX-Datei auswählen</label>
+              <input type="file" name="gpxFile" id="gpxFile" accept=".gpx,application/gpx+xml,application/xml,text/xml">
+              <p class="file-dropzone-text">Datei hier hineinziehen oder klicken, um eine `.gpx` hochzuladen.</p>
+              <div class="file-dropzone-hint">Optionaler Anhang, max. 5 MB.</div>
+              <div class="file-dropzone-file" id="gpxFileName" aria-live="polite"></div>
+            </div>
           </div>
           <button type="submit" class="btn btn-primary">Nachricht senden</button>
           <div id="contactStatus" class="contact-status" role="status" aria-live="polite"></div>
@@ -2167,16 +2232,95 @@
       var form = document.getElementById('contactForm');
       var status = document.getElementById('contactStatus');
       var submitBtn = form.querySelector('button[type="submit"]');
+      var fileInput = document.getElementById('gpxFile');
+      var fileName = document.getElementById('gpxFileName');
+      var dropzone = document.getElementById('gpxDropzone');
+      var MAX_GPX_SIZE = 5 * 1024 * 1024;
+
+      function setSelectedFile(file) {
+        fileName.textContent = file ? 'Ausgewählt: ' + file.name : '';
+      }
+
+      function isValidGpxFile(file) {
+        return Boolean(file && /\.gpx$/i.test(file.name));
+      }
+
+      function updateFileSelection(files) {
+        var file = files && files[0];
+
+        if (!file) {
+          setSelectedFile(null);
+          status.textContent = '';
+          status.className = 'contact-status';
+          return true;
+        }
+
+        if (!isValidGpxFile(file)) {
+          fileInput.value = '';
+          setSelectedFile(null);
+          status.textContent = 'Bitte nur GPX-Dateien mit der Endung .gpx hochladen.';
+          status.className = 'contact-status contact-status--error';
+          return false;
+        }
+
+        if (file.size > MAX_GPX_SIZE) {
+          fileInput.value = '';
+          setSelectedFile(null);
+          status.textContent = 'Die GPX-Datei darf maximal 5 MB groß sein.';
+          status.className = 'contact-status contact-status--error';
+          return false;
+        }
+
+        setSelectedFile(file);
+        status.textContent = '';
+        status.className = 'contact-status';
+        return true;
+      }
+
+      fileInput.addEventListener('change', function() {
+        updateFileSelection(fileInput.files);
+      });
+
+      ['dragenter', 'dragover'].forEach(function(eventName) {
+        dropzone.addEventListener(eventName, function(e) {
+          e.preventDefault();
+          dropzone.classList.add('is-dragover');
+        });
+      });
+
+      ['dragleave', 'dragend', 'drop'].forEach(function(eventName) {
+        dropzone.addEventListener(eventName, function(e) {
+          e.preventDefault();
+          dropzone.classList.remove('is-dragover');
+        });
+      });
+
+      dropzone.addEventListener('drop', function(e) {
+        var files = e.dataTransfer && e.dataTransfer.files;
+        if (!files || !files.length) {
+          return;
+        }
+
+        fileInput.files = files;
+        updateFileSelection(files);
+      });
 
       form.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        var body = JSON.stringify({
-          name:    form.elements['name'].value,
-          email:   form.elements['email'].value,
-          type:    form.elements['type'].value,
-          message: form.elements['message'].value,
-        });
+        if (!updateFileSelection(fileInput.files)) {
+          return;
+        }
+
+        var body = new FormData();
+        body.append('name', form.elements['name'].value);
+        body.append('email', form.elements['email'].value);
+        body.append('type', form.elements['type'].value);
+        body.append('message', form.elements['message'].value);
+
+        if (fileInput.files && fileInput.files[0]) {
+          body.append('gpxFile', fileInput.files[0]);
+        }
 
         submitBtn.disabled = true;
         submitBtn.textContent = 'Wird gesendet…';
@@ -2185,7 +2329,6 @@
 
         fetch('/contact', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: body,
         })
           .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })

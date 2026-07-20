@@ -12,6 +12,7 @@
 const RECIPIENT = 'peak.memory@web.de';
 const SENDER    = 'kontakt@peak-memory.de';
 const EMAIL_RE  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_GPX_SIZE = 5 * 1024 * 1024;
 
 const TYPE_LABELS = {
   individual: 'Individuelle Bestellung (Einzelstück)',
@@ -56,7 +57,7 @@ async function handleContact(request, env) {
     return json({ error: 'Ungültige Anfrage' }, 400);
   }
 
-  const { name, email, type, message } = data;
+  const { name, email, type, message, gpxFile } = data;
 
   // Server-side validation
   if (!name || String(name).trim().length < 1)          return json({ error: 'Name ist ein Pflichtfeld.' }, 400);
@@ -67,6 +68,11 @@ async function handleContact(request, env) {
   const safeEmail   = String(email).trim().slice(0, 200);
   const safeType    = TYPE_LABELS[type] ?? 'Nicht angegeben';
   const safeMessage = String(message).trim().slice(0, 4000);
+  const attachment = await createGpxAttachment(gpxFile);
+
+  if (attachment && attachment.error) {
+    return json({ error: attachment.error }, 400);
+  }
 
   const text = [
     `Name:    ${safeName}`,
@@ -75,10 +81,19 @@ async function handleContact(request, env) {
     '',
     'Nachricht:',
     safeMessage,
-    '',
-    '---',
-    'GPX-Datei bitte als Anhang per E-Mail an peak.memory@web.de senden.',
   ].join('\n');
+
+  const payload = {
+    from:     SENDER,
+    to:       RECIPIENT,
+    reply_to: safeEmail,
+    subject:  `Anfrage von ${safeName} – ${safeType}`,
+    text,
+  };
+
+  if (attachment) {
+    payload.attachments = [attachment];
+  }
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -86,13 +101,7 @@ async function handleContact(request, env) {
       'Authorization': `Bearer ${env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      from:     SENDER,
-      to:       RECIPIENT,
-      reply_to: safeEmail,
-      subject:  `Anfrage von ${safeName} – ${safeType}`,
-      text,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
@@ -108,6 +117,40 @@ function json(body, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+async function createGpxAttachment(file) {
+  if (!file || typeof file === 'string') {
+    return null;
+  }
+
+  if (!(file instanceof File)) {
+    return { error: 'Ungültiger Dateiupload.' };
+  }
+
+  if (!/\.gpx$/i.test(file.name)) {
+    return { error: 'Bitte nur GPX-Dateien mit der Endung .gpx hochladen.' };
+  }
+
+  if (file.size > MAX_GPX_SIZE) {
+    return { error: 'Die GPX-Datei darf maximal 5 MB groß sein.' };
+  }
+
+  return {
+    filename: file.name.slice(0, 200),
+    content: arrayBufferToBase64(await file.arrayBuffer()),
+  };
+}
+
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+
+  for (let index = 0; index < bytes.length; index += 1) {
+    binary += String.fromCharCode(bytes[index]);
+  }
+
+  return btoa(binary);
 }
 
 

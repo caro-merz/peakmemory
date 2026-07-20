@@ -1,7 +1,7 @@
 # Peak Memory – Website
 
 ![Peak Memory Logo](https://img.shields.io/badge/Made%20in-Baden--W%C3%BCrttemberg-2D5016?style=flat-square)
-![GitHub Pages](https://img.shields.io/badge/Hosted%20on-GitHub%20Pages-181717?style=flat-square&logo=github)
+![Cloudflare](https://img.shields.io/badge/Hosted%20on-Cloudflare-F38020?style=flat-square&logo=cloudflare)
 
 **Peak Memory** verwandelt GPS-Routen in handgefertigte 3D-Reliefmodelle. Ob Bike-Marathon, Bergwanderung oder Stadtlauf – deine Route wird zum greifbaren Erinnerungsstück.
 
@@ -9,10 +9,9 @@
 
 ## 🚀 Live-Website
 
-Die Website wird automatisch über GitHub Pages bereitgestellt:
-- **URL:** `https://caro-merz.github.io/peakmemory`
-- **Branch:** `main`
-- **Status:** Automatisches Deployment bei jedem Push
+Die Website wird über Cloudflare bereitgestellt:
+- **URL:** `https://peak-memory.de`
+- **Status:** Statische Seite mit Contact-Endpoint über Worker/Functions
 
 ---
 
@@ -28,7 +27,7 @@ Die Website wird automatisch über GitHub Pages bereitgestellt:
 
 ## 🛠️ Lokale Entwicklung
 
-Da es sich um eine statische HTML-Website handelt, kannst du sie lokal öffnen:
+Das Frontend ist statisch, der Kontaktversand läuft über Cloudflare Worker/Functions. Für Layout-Änderungen kannst du die Seite lokal direkt öffnen:
 
 1. **Direkt im Browser:**
    ```
@@ -95,11 +94,11 @@ Deployment erfolgt automatisch via GitHub Pages:
 - Live-Preis-Berechnung
 - Separate Page: `configurator.html`
 
-### Phase 3: GPX-Upload & Preview 🔮 (Vision)
-- GPX-File-Upload
+### Phase 3: GPX-Upload & Preview 🚧 (teilweise umgesetzt)
+- GPX-File-Upload im Kontaktformular inkl. Mail-Anhang
 - 3D-Vorschau der Route
 - Integration mit Strava API
-- **Achtung:** Braucht Backend (GitHub Pages = nur statisch)
+- Weiterer Backend-Ausbau für Vorschau/Import nötig
 
 ---
 
@@ -124,7 +123,7 @@ Deployment erfolgt automatisch via GitHub Pages:
 ## 🔧 Technische Details
 
 - **Framework:** Vanilla HTML/CSS/JavaScript (kein Build-Prozess)
-- **Hosting:** GitHub Pages (kostenlos, SSL inklusive)
+- **Hosting:** Cloudflare Worker + statische Assets
 - **Performance:** Lighthouse-Score Ziel: >90
 - **Browser-Support:** Chrome, Firefox, Safari, Edge (letzte 2 Versionen)
 

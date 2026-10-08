@@ -40,6 +40,8 @@
 .configurator .primary{background:var(--accent);color:#fff;width:100%}
 .configurator input[type=range]{width:100%;accent-color:var(--accent)}
 .configurator .range-labels{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+.configurator .model-price{margin-top:16px}
+.configurator .model-price strong{font-size:1.5rem;color:var(--accent)}
 .configurator details{font-size:.82rem;margin-top:18px;color:var(--muted)}
 .configurator summary{cursor:pointer;color:var(--accent);font-weight:600}.configurator details p{margin-top:12px}
 .configurator .preview{position:sticky;top:20px;padding:24px}

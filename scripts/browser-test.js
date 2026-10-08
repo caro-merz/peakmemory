@@ -81,6 +81,8 @@ try {
   });
   const url = `http://127.0.0.1:${server.address().port}`;
   await page.goto(url + '/configurator.html');
+  assert.equal(page.url(), url + '/#konfigurator');
+  assert.equal(await page.locator('#modelPrice').innerText(), '50 €');
   await assertDesktopLayout(page);
   const defaultEngraving = 'Deine Route\n100 km | 1000 hm | 10 h\n01.01.2026';
   assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
@@ -149,6 +151,12 @@ try {
   await page.locator('#submitInquiry').click();
   await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Versand fehlgeschlagen'));
   assert.notDeepEqual(submittedImage, firstImage);
+  const rotatedImage = submittedImage;
+  await page.locator('#elevationScale').fill('1');
+  await page.locator('#elevationScale').fill('8');
+  await page.locator('#submitInquiry').click();
+  await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Versand fehlgeschlagen'));
+  assert.deepEqual(submittedImage, rotatedImage, 'Elevation changes must preserve camera angle and zoom');
   if (process.env.SCREENSHOT_PATH) await page.screenshot({path:process.env.SCREENSHOT_PATH,fullPage:true});
   emailFailure = false;
   await page.locator('#submitInquiry').click();
@@ -197,17 +205,47 @@ try {
   assert.equal(await page.locator('#previewBadge').innerText(), 'Noch keine Route');
   assert.equal(await page.locator('#submitInquiry').isDisabled(), true);
   terrainDelay = 0;
+  await page.goto(url + '/');
+  await page.reload();
   await page.goto(url + '/#datenschutz');
   assert.equal(await page.locator('#datenschutzModal').evaluate(element => element.classList.contains('open')), true);
+  assert.equal(await page.locator('#main').evaluate(element => element.inert), true);
+  assert.equal(await page.locator('#datenschutzClose').evaluate(element => element === document.activeElement), true);
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(() => document.getElementById('datenschutzModal').contains(document.activeElement)), true);
   await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#main').evaluate(element => element.inert), false);
+  assert.equal(await page.locator('#datenschutzLink').evaluate(element => element === document.activeElement), true);
+  await page.locator('#impressumLink').click();
+  assert.equal(await page.locator('#impressumClose').evaluate(element => element === document.activeElement), true);
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.locator('#impressumClose').evaluate(element => element === document.activeElement), true);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#impressumLink').evaluate(element => element === document.activeElement), true);
   await page.setViewportSize({width:800,height:800});
   assert.ok(await page.locator('.navbar .container').evaluate(element => element.scrollWidth <= element.clientWidth));
   assert.equal(await page.locator('#hero + #konfigurator + #produkt').count(), 1);
+  assert.equal(await page.locator('.process-card').count(), 6);
+  assert.deepEqual(await page.locator('.process-card h3').allTextContents(),
+    ['Route hochladen', 'Personalisieren', 'Unverbindlich anfragen', 'Finale Freigabe', 'Bestellung & Bezahlung', 'Produktion & Versand']);
+  assert.equal(await page.locator('.nav-cta').getAttribute('href'), '#konfigurator');
+  assert.match(await page.locator('#contactType option[value="event"]').innerText(), /5 Stück/);
+  for (const id of ['contactName', 'contactEmail', 'contactType', 'contactMessage']) {
+    assert.equal(await page.locator(`#${id}`).evaluate(element => element.labels.length), 1);
+  }
+  assert.ok((await page.locator('#hero img').getAttribute('src')).endsWith('.webp'));
+  for (const image of await page.locator('main img').all()) {
+    assert.ok(Number(await image.getAttribute('width')) > 0);
+    assert.ok(Number(await image.getAttribute('height')) > 0);
+    assert.ok(await image.getAttribute('srcset'));
+  }
+  assert.match(await page.locator('#engravingHint').innerText(), /Beispielwerte/);
   await assertDesktopLayout(page);
   assert.equal(await page.locator('#routeControls a[href="gpx-hilfe.html"]').count(), 1);
   assert.equal(await page.locator('#kontakt a[href="gpx-hilfe.html"]').count(), 1);
   assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
-  assert.equal(await page.locator('.navbar a[href="#konfigurator"]').count(), 1);
+  assert.equal(await page.locator('.navbar a[href="#konfigurator"]').count(), 2);
   assert.deepEqual(await page.evaluate(() => {
     const ids = [...document.querySelectorAll('[id]')].map(element => element.id);
     return ids.filter((id, index) => ids.indexOf(id) !== index);
@@ -232,6 +270,24 @@ try {
   await page.setViewportSize({width:390,height:844});
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await assertMobileOrder(page);
+  assert.ok((await page.locator('#hero').boundingBox()).height < 850, 'Mobile hero should fit within one screen');
+  for (const width of [320, 390, 768, 1365]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const image of await page.locator('.custom-formats-images img,.event-images img').all()) {
+      const box = await image.boundingBox();
+      const expectedRatio = await image.evaluate(element => Number(element.getAttribute('width')) / Number(element.getAttribute('height')));
+      assert.ok(Math.abs(box.width / box.height - expectedRatio) < .02, 'Gallery images must preserve their aspect ratio before and after loading');
+      assert.ok(box.x >= 0 && box.x + box.width <= width, 'Gallery image must fit phone width');
+    }
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await page.locator('#navLinks').evaluate(element => element.inert), true);
+  await page.locator('#hamburger').click();
+  assert.equal(await page.locator('#navLinks').evaluate(element => element.inert), false);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#hamburger').getAttribute('aria-expanded'), 'false');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  assert.equal(await page.locator('.hero .btn-primary').evaluate(element => getComputedStyle(element).animationName), 'none');
   assert.equal(await page.locator('#viewer canvas').count(), 1);
   const unavailable = await browser.newContext();
   await unavailable.addInitScript(() => {
@@ -264,6 +320,13 @@ try {
   assert.equal(unavailableImage, null);
   const guideContext = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1365, height: 950 } });
   const guide = await guideContext.newPage();
+  await guide.goto(url + '/');
+  assert.equal(await guide.locator('#hero h1').isVisible(), true);
+  assert.equal(await guide.locator('.faq-answer').first().isVisible(), true);
+  assert.equal(await guide.locator('#impressumModal').isVisible(), true);
+  assert.equal(await guide.locator('#datenschutzModal').isVisible(), true);
+  assert.equal(await guide.locator('#contactForm button[type="submit"]').isVisible(), false);
+  assert.equal((await guide.goto(url + '/gpx-hilfe')).status(), 200);
   assert.equal((await guide.goto(url + '/gpx-hilfe.html')).status(), 200);
   assert.equal(await guide.getByRole('heading', { level: 1 }).innerText(), 'Wie bekomme ich meine GPX-Datei?');
   for (const id of ['komoot', 'strava', 'garmin', 'ohne-aufzeichnung']) {
@@ -279,7 +342,7 @@ try {
   }
   await guideContext.close();
   assert.deepEqual(errors, []);
-  console.log('Browser checks passed: standalone and homepage configurator, GPX guide without JavaScript, independent contact upload, sample, personal upload/drop, 3D controls, customization, margin, inquiry success/failure, retry, removal, mobile, privacy, no WebGL.');
+  console.log('Browser checks passed: homepage configurator and legacy redirects, fixed price, GPX guide without JavaScript, independent contact upload, sample, personal upload/drop, 3D controls, customization, margin, inquiry success/failure, retry, removal, mobile, privacy, no WebGL.');
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

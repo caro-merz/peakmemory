@@ -163,7 +163,7 @@ export async function createViewer(container, onUnavailable) {
     model.add(group);
     render();
   }
-  function show(nextGrid, elevationScale, engraving) {
+  function show(nextGrid, elevationScale, engraving, resetView = true) {
     clear();
     grid = { ...nextGrid, elevationScale };
     model = new THREE.Group();
@@ -171,7 +171,16 @@ export async function createViewer(container, onUnavailable) {
     for (const path of routePaths(grid)) model.add(routeMesh(path));
     scene.add(model);
     personalize(engraving);
-    reset();
+    if (resetView) reset();
+    else {
+      const bounds = new THREE.Box3().setFromObject(model);
+      const distance = camera.position.distanceTo(controls.target);
+      const reach = bounds.getSize(new THREE.Vector3()).length();
+      controls.maxDistance = Math.max(controls.maxDistance, distance + reach * 2);
+      camera.far = Math.max(camera.far, distance + reach * 4);
+      camera.updateProjectionMatrix();
+      render();
+    }
   }
   const lost = event => { event.preventDefault(); onUnavailable('Die 3D-Grafik ist nicht mehr verfügbar. Bitte lade die Vorschau erneut.'); };
   renderer.domElement.addEventListener('webglcontextlost', lost);
@@ -193,7 +202,7 @@ export async function createViewer(container, onUnavailable) {
       return blob;
     },
     setElevationScale(elevationScale, engraving) {
-      if (grid) show(grid, elevationScale, engraving);
+      if (grid) show(grid, elevationScale, engraving, false);
     },
     rotate() {
       const offset = camera.position.clone().sub(controls.target);

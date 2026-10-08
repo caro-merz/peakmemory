@@ -1,0 +1,446 @@
+{
+  "images/classic.jpeg": {
+    "width": 1600,
+    "height": 1437,
+    "variants": [
+      {
+        "src": "images/optimized/classic-480.webp",
+        "width": 480,
+        "height": 431,
+        "bytes": 30370
+      },
+      {
+        "src": "images/optimized/classic-960.webp",
+        "width": 960,
+        "height": 862,
+        "bytes": 90378
+      }
+    ]
+  },
+  "images/main.jpeg": {
+    "width": 3024,
+    "height": 2766,
+    "variants": [
+      {
+        "src": "images/optimized/main-480.webp",
+        "width": 480,
+        "height": 439,
+        "bytes": 38174
+      },
+      {
+        "src": "images/optimized/main-960.webp",
+        "width": 960,
+        "height": 878,
+        "bytes": 105714
+      },
+      {
+        "src": "images/optimized/main-1440.webp",
+        "width": 1440,
+        "height": 1317,
+        "bytes": 194320
+      }
+    ]
+  },
+  "images/compact.jpeg": {
+    "width": 3024,
+    "height": 4032,
+    "variants": [
+      {
+        "src": "images/optimized/compact-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 26910
+      },
+      {
+        "src": "images/optimized/compact-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 78586
+      }
+    ]
+  },
+  "images/custom.jpeg": {
+    "width": 3840,
+    "height": 5120,
+    "variants": [
+      {
+        "src": "images/optimized/custom-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 23534
+      },
+      {
+        "src": "images/optimized/custom-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 64416
+      }
+    ]
+  },
+  "images/rahmen.jpeg": {
+    "width": 3024,
+    "height": 4032,
+    "variants": [
+      {
+        "src": "images/optimized/rahmen-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 26808
+      },
+      {
+        "src": "images/optimized/rahmen-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 63664
+      }
+    ]
+  },
+  "images/rahmen2.jpeg": {
+    "width": 3024,
+    "height": 4032,
+    "variants": [
+      {
+        "src": "images/optimized/rahmen2-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 32718
+      },
+      {
+        "src": "images/optimized/rahmen2-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 97606
+      }
+    ]
+  },
+  "images/XXL_Fuji.jpeg": {
+    "width": 1200,
+    "height": 1600,
+    "variants": [
+      {
+        "src": "images/optimized/XXL_Fuji-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 41448
+      },
+      {
+        "src": "images/optimized/XXL_Fuji-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 111884
+      }
+    ]
+  },
+  "images/XXL_E5.jpeg": {
+    "width": 1200,
+    "height": 1600,
+    "variants": [
+      {
+        "src": "images/optimized/XXL_E5-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 63672
+      },
+      {
+        "src": "images/optimized/XXL_E5-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 165670
+      }
+    ]
+  },
+  "images/insights1.jpeg": {
+    "width": 3288,
+    "height": 4384,
+    "variants": [
+      {
+        "src": "images/optimized/insights1-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 28970
+      },
+      {
+        "src": "images/optimized/insights1-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 82948
+      }
+    ]
+  },
+  "images/insight2.jpeg": {
+    "width": 3024,
+    "height": 4032,
+    "variants": [
+      {
+        "src": "images/optimized/insight2-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 51926
+      },
+      {
+        "src": "images/optimized/insight2-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 140424
+      }
+    ]
+  },
+  "images/insights3.jpeg": {
+    "width": 3024,
+    "height": 4032,
+    "variants": [
+      {
+        "src": "images/optimized/insights3-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 60484
+      },
+      {
+        "src": "images/optimized/insights3-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 181800
+      }
+    ]
+  },
+  "images/insights4.jpeg": {
+    "width": 3024,
+    "height": 4032,
+    "variants": [
+      {
+        "src": "images/optimized/insights4-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 26462
+      },
+      {
+        "src": "images/optimized/insights4-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 71772
+      }
+    ]
+  },
+  "images/insights5.jpeg": {
+    "width": 3024,
+    "height": 4032,
+    "variants": [
+      {
+        "src": "images/optimized/insights5-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 32950
+      },
+      {
+        "src": "images/optimized/insights5-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 107604
+      }
+    ]
+  },
+  "images/insights6.jpeg": {
+    "width": 3024,
+    "height": 4032,
+    "variants": [
+      {
+        "src": "images/optimized/insights6-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 46536
+      },
+      {
+        "src": "images/optimized/insights6-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 128302
+      }
+    ]
+  },
+  "images/insights7.jpeg": {
+    "width": 3024,
+    "height": 4032,
+    "variants": [
+      {
+        "src": "images/optimized/insights7-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 63294
+      },
+      {
+        "src": "images/optimized/insights7-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 175478
+      }
+    ]
+  },
+  "images/ABM1.jpeg": {
+    "width": 1200,
+    "height": 1600,
+    "variants": [
+      {
+        "src": "images/optimized/ABM1-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 40356
+      },
+      {
+        "src": "images/optimized/ABM1-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 109508
+      }
+    ]
+  },
+  "images/ABM2.jpeg": {
+    "width": 1200,
+    "height": 1600,
+    "variants": [
+      {
+        "src": "images/optimized/ABM2-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 35272
+      },
+      {
+        "src": "images/optimized/ABM2-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 102728
+      }
+    ]
+  },
+  "images/ABM3.jpeg": {
+    "width": 1200,
+    "height": 1600,
+    "variants": [
+      {
+        "src": "images/optimized/ABM3-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 47732
+      },
+      {
+        "src": "images/optimized/ABM3-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 134026
+      }
+    ]
+  },
+  "images/ABM4.jpeg": {
+    "width": 1200,
+    "height": 1600,
+    "variants": [
+      {
+        "src": "images/optimized/ABM4-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 57958
+      },
+      {
+        "src": "images/optimized/ABM4-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 149544
+      }
+    ]
+  },
+  "images/APM_recap1.jpeg": {
+    "width": 1200,
+    "height": 1600,
+    "variants": [
+      {
+        "src": "images/optimized/APM_recap1-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 22522
+      },
+      {
+        "src": "images/optimized/APM_recap1-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 56654
+      }
+    ]
+  },
+  "images/APM_recap2.jpeg": {
+    "width": 1200,
+    "height": 1600,
+    "variants": [
+      {
+        "src": "images/optimized/APM_recap2-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 72930
+      },
+      {
+        "src": "images/optimized/APM_recap2-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 204542
+      }
+    ]
+  },
+  "images/APM_recap3.jpeg": {
+    "width": 1200,
+    "height": 1600,
+    "variants": [
+      {
+        "src": "images/optimized/APM_recap3-480.webp",
+        "width": 480,
+        "height": 640,
+        "bytes": 73508
+      },
+      {
+        "src": "images/optimized/APM_recap3-960.webp",
+        "width": 960,
+        "height": 1280,
+        "bytes": 274888
+      }
+    ]
+  },
+  "images/APM1.jpeg": {
+    "width": 1024,
+    "height": 1536,
+    "variants": [
+      {
+        "src": "images/optimized/APM1-480.webp",
+        "width": 480,
+        "height": 720,
+        "bytes": 94022
+      },
+      {
+        "src": "images/optimized/APM1-960.webp",
+        "width": 960,
+        "height": 1440,
+        "bytes": 405562
+      }
+    ]
+  },
+  "images/caro_new.jpeg": {
+    "width": 768,
+    "height": 768,
+    "variants": [
+      {
+        "src": "images/optimized/caro_new-480.webp",
+        "width": 480,
+        "height": 480,
+        "bytes": 14322
+      }
+    ]
+  },
+  "images/alex_new.jpeg": {
+    "width": 768,
+    "height": 768,
+    "variants": [
+      {
+        "src": "images/optimized/alex_new-480.webp",
+        "width": 480,
+        "height": 480,
+        "bytes": 21702
+      }
+    ]
+  }
+}

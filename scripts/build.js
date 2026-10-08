@@ -43,7 +43,9 @@ for (let index = 0; index < packages.length; index += 1) {
 }
 await writeFile('assets/licenses.txt', licenses + '\nQuicksand Book\n' + await readFile('fonts/OFL.txt', 'utf8'));
 await mkdir('dist', { recursive: true });
-for (const entry of ['index.html', 'configurator.html', 'gpx-hilfe.html', 'images', 'fonts', 'assets', '_headers', '_redirects', 'robots.txt', 'sitemap.xml']) {
+try { await unlink(path.join('dist', 'configurator.html')); }
+catch (error) { if (error.code !== 'ENOENT') throw error; }
+for (const entry of ['index.html', 'gpx-hilfe.html', 'images', 'fonts', 'assets', '_headers', '_redirects', 'robots.txt', 'sitemap.xml']) {
   await cp(entry, path.join('dist', entry), { recursive: true });
 }
 const configurator = await readFile('configurator.html', 'utf8');
@@ -51,5 +53,23 @@ const content = configurator.match(/    <noscript>[\s\S]*?(?=  <\/main>)/)?.[0];
 const homepage = await readFile('index.html', 'utf8');
 const placeholder = /<!-- CONFIGURATOR_CONTENT -->[\s\S]*?<!-- \/CONFIGURATOR_CONTENT -->/;
 if (!content || !placeholder.test(homepage)) throw new Error('Missing shared configurator content or homepage placeholder');
-await writeFile(path.join('dist', 'index.html'), homepage.replace(placeholder, () => content));
+const imageManifest = JSON.parse(await readFile(path.join('images', 'optimized', 'manifest.json'), 'utf8'));
+const srcset = image => image.variants.map(variant => `${variant.src} ${variant.width}w`).join(', ');
+let builtHomepage = homepage.replace(placeholder, () => content);
+builtHomepage = builtHomepage.replace(/<img\b[^>]*>/g, tag => {
+  const source = tag.match(/\bsrc="([^"]+)"/)?.[1];
+  const image = imageManifest[source];
+  if (!image) return tag;
+  const hero = source === 'images/main.jpeg';
+  const sizes = hero ? '(max-width: 848px) calc(100vw - 48px), 800px'
+    : '(max-width: 768px) calc(100vw - 48px), 540px';
+  return tag.replace(/\s(?:loading|width|height)="[^"]*"/g, '')
+    .replace(/\bsrc="[^"]*"/, `src="${image.variants.at(-1).src}"`)
+    .replace(/>$/, ` srcset="${srcset(image)}" sizes="${sizes}" width="${image.width}" height="${image.height}" loading="${hero ? 'eager' : 'lazy'}" decoding="async"${hero ? ' fetchpriority="high"' : ''}>`);
+});
+const heroImage = imageManifest['images/main.jpeg'];
+if (!heroImage) throw new Error('Missing optimized hero image');
+builtHomepage = builtHomepage.replace(/<link rel="preload" as="image"[^>]*>/,
+  `<link rel="preload" as="image" href="${heroImage.variants.at(-1).src}" imagesrcset="${srcset(heroImage)}" imagesizes="(max-width: 848px) calc(100vw - 48px), 800px" fetchpriority="high">`);
+await writeFile(path.join('dist', 'index.html'), builtHomepage);
 console.log('Built local configurator assets and public-only dist directory.');

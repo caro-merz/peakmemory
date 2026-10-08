@@ -1,3 +1,5 @@
 # www -> apex redirect is handled in worker.js
 # (Cloudflare Workers static assets only supports relative paths here)
-
+/configurator /#konfigurator 301
+/configurator.html /#konfigurator 301
+/configurator/ /#konfigurator 301

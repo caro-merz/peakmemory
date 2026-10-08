@@ -23,7 +23,7 @@ export function woodTexturePixels(size, face) {
     const v = y / size * (face === 'top' ? 13.5 : 2);
     const warp = noise(u * 0.2, v * 0.4) * 0.6 + Math.sin(u * 0.35) * 0.15;
     const grain = face === 'end' ? Math.hypot(u * 0.35 + 1.5, v + 3) : v + warp;
-    const rings = Math.sin(grain * 22 + noise(u * 0.3, v * 2) * 2);
+    const rings = Math.sin(grain * 22 + noise(u * 0.3, v * 2) * 5 + noise(u * 0.8, v * 0.7) * 3);
     const darkRing = Math.pow(Math.max(0, rings), 9);
     const fibers = noise(u * 1.2, grain * 65);
     const pore = Math.pow(Math.max(0, (noise(u * 5, grain * 30) - 0.6) / 0.4), 3);

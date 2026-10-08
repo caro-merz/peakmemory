@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="PeakMemory auf Etsy: Personalisierte 3D-Topografie aus deiner GPX-Route. Handgefertigt in Baden-Württemberg für Hiking, Trailrunning und Mountainbike.">
+  <meta name="description" content="Gestalte dein PeakMemory: GPX hochladen, 3D-Relief personalisieren und unverbindlich anfragen. Handgefertigt in Baden-Württemberg. Etsy als alternative Bestellmöglichkeit.">
   <meta name="keywords" content="PeakMemory, Etsy, personalisierte 3D Topografie, GPX Geschenk, Hiking Geschenk, Trailrunning Geschenk, Mountainbike Geschenk">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://peak-memory.de/">
@@ -16,7 +16,7 @@
   <title>PeakMemory | Personalisierte 3D-Topografie aus deiner GPX-Route</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="image" href="images/classic.jpeg">
+  <link rel="preload" as="image" href="images/main.jpeg" fetchpriority="high">
   <link rel="icon" href="images/logo_grey.png" type="image/png">
   <link rel="stylesheet" href="assets/configurator.css">
   <script type="module" src="assets/configurator.js"></script>
@@ -176,8 +176,8 @@
 
     /* ========== FADE-IN ANIMATIONS ========== */
     .fade-in {
-      opacity: 0;
-      transform: translateY(24px);
+      opacity: 1;
+      transform: none;
       transition: opacity 0.7s ease, transform 0.7s ease;
     }
 
@@ -687,7 +687,7 @@
     /* ========== NEWSBLOG ========== */
     .news-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
       gap: 2rem;
       margin-top: 2.5rem;
     }
@@ -705,6 +705,10 @@
       display: flex;
       flex-direction: column;
     }
+    .custom-formats-images { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+    .custom-formats-images img { display: block; width: 100%; height: auto; border-radius: 8px; }
+    .event-images { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; padding: 0 1.5rem 1.5rem; align-items: start; }
+    .event-images img { display: block; width: 100%; height: auto; border-radius: 8px; }
     .news-card-meta {
       font-size: 0.8rem;
       color: var(--text-light);
@@ -1143,7 +1147,7 @@
       }
 
       .hero {
-        padding: 60px 0 80px;
+        padding: 28px 0 40px;
       }
 
       .hero h1 {
@@ -1151,8 +1155,13 @@
       }
 
       .hero-image {
-        margin: 28px 0;
+        margin: 20px 0;
       }
+      .hero-image-placeholder { max-height: 230px; }
+      .hero-subtitle { font-size: 1rem; margin-bottom: 20px; }
+      .hero-secondary { font-size: .85rem; }
+      .hero .shop-facts { margin-top: 16px!important; }
+      .custom-formats-images { grid-template-columns: 1fr; }
 
       .hero-bg {
         width: 100%;
@@ -1347,14 +1356,35 @@
       }
     }
   </style>
+  <style>
+    .hero-secondary { margin-top: 16px; color: var(--text-light); }
+    .hero-secondary a { text-decoration: underline; text-underline-offset: 3px; }
+    .form-group label { display: block; font-weight: 600; margin: 0 0 8px; }
+    .homepage-skip { position: absolute; top: -100px; left: 16px; z-index: 1100; padding: 12px; background: white; }
+    .homepage-skip:focus { top: 12px; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none!important; transition: none!important; }
+    }
+  </style>
+  <noscript><style>
+    .faq-answer { display: block; }
+    .modal-overlay { display: block; position: static; padding: 24px; background: transparent; }
+    .modal { margin: auto; max-height: none; }
+    .modal-close, .contact-form button[type=submit], .hamburger { display: none; }
+    .nav-links { position: static; transform: none; flex-direction: row; flex-wrap: wrap; padding: 12px 0; gap: 12px; }
+    .navbar .container { height: auto; flex-wrap: wrap; }
+  </style></noscript>
 </head>
 <body class="contour-bg">
+  <a class="homepage-skip" href="#konfigurator">Zum Konfigurator</a>
 
   <!-- ========== NAVIGATION ========== -->
   <nav class="navbar" role="navigation" aria-label="Hauptnavigation">
     <div class="container">
       <a href="#" class="logo" aria-label="PeakMemory Startseite">
-        <img src="images/logo_new.jpeg" alt="Peak Memory Logo" style="height: 40px; width: auto;">
+        <img src="images/logo_new.jpeg" alt="PeakMemory Logo" width="708" height="323" style="height: 40px; width: auto;">
       </a>
 
       <div class="nav-links" id="navLinks">
@@ -1365,7 +1395,7 @@
         <a href="#news">News</a>
         <a href="#faq">Q&amp;A</a>
         <a href="#kontakt">Kontakt</a>
-        <a href="#kontakt" class="btn btn-primary nav-cta">Jetzt anfragen</a>
+        <a href="#konfigurator" class="btn btn-primary nav-cta">Jetzt gestalten</a>
       </div>
 
       <button class="hamburger" id="hamburger" aria-label="Menü öffnen" aria-expanded="false">
@@ -1376,6 +1406,7 @@
     </div>
   </nav>
 
+  <main id="main">
   <!-- ========== HERO ========== -->
   <section class="hero section" id="hero">
     <!-- Decorative mountain silhouette -->
@@ -1400,20 +1431,19 @@
 
       <div class="hero-image fade-in">
         <div class="hero-image-placeholder">
-          <img src="images/main.jpeg" alt="Peak Memory 3D-Reliefmodell auf Holzsockel">
+          <img src="images/main.jpeg" alt="PeakMemory 3D-Reliefmodell auf Holzsockel">
         </div>
       </div>
 
       <div class="hero-content fade-in">
-        <p class="hero-subtitle">Wir bilden deine individuelle Route als <strong>3D-Druck auf einem edlen Eiche-Holzsockel</strong> ab – mit der Möglichkeit, das Holz personalisiert zu lasern. Das ideale Geschenk für Wandervögel, Trailrunner, Mountainbiker und alle, die ihre Lieblingsroute nie vergessen wollen.</p>
+        <p class="hero-subtitle">Dein Abenteuer als <strong>3D-Relief auf Eiche</strong>. Lade deine Route hoch, gestalte deine Gravur und frage dein persönliches Erinnerungsstück unverbindlich an.</p>
         <div class="hero-buttons">
-          <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Zum Etsy-Shop</a>
+          <a href="#konfigurator" class="btn btn-primary">Deine Route gestalten</a>
           <a href="#produkt" class="btn btn-ghost">Produkte ansehen</a>
-          <a href="#konfigurator" class="btn btn-ghost">Deine Route in 3D gestalten</a>
-          <a href="https://www.instagram.com/peak.memory" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">Impressionen auf Instagram</a>
         </div>
-        <div class="shop-facts" aria-label="Shop Fakten von Etsy" style="justify-content: center; margin-top: 1.5rem;">
-          <span class="shop-fact">Etsy-Shop seit 2026</span>
+        <p class="hero-secondary">Alternativ <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer">auf Etsy bestellen</a> · <a href="https://www.instagram.com/peak.memory" target="_blank" rel="noopener noreferrer">Einblicke auf Instagram</a></p>
+        <div class="shop-facts" aria-label="Über PeakMemory" style="justify-content: center; margin-top: 1.5rem;">
+          <span class="shop-fact">Persönliche Freigabe vor Fertigung</span>
           <span class="shop-fact">Handgefertigt in Baden-Württemberg</span>
         </div>
       </div>
@@ -1426,7 +1456,7 @@
       <h2 id="configuratorTitle" class="section-title">Gestalte deine Erinnerung.</h2>
       <p class="section-subtitle">Lade deine GPX-Datei hoch, entdecke deine Landschaft in 3D und gestalte dein persönliches Erinnerungsstück. Kostenlos, ohne Anmeldung und ohne Bestellung.</p>
       <!-- CONFIGURATOR_CONTENT -->
-      <p><a href="configurator.html">Zum Konfigurator</a></p>
+      <p>Der Konfigurator wird beim Website-Build hier eingebunden.</p>
       <!-- /CONFIGURATOR_CONTENT -->
     </div>
   </section>
@@ -1434,8 +1464,8 @@
   <!-- ========== PRODUKT ========== -->
   <section class="section" id="produkt">
     <div class="container">
-      <h2 class="section-title fade-in">Aktuelle Etsy-Produkte</h2>
-      <p class="section-subtitle fade-in">Diese Modelle sind aktuell im PeakMemory Etsy-Shop gelistet. Verfügbarkeit entspricht dem Shop-Stand.</p>
+      <h2 class="section-title fade-in">Deine Route. Dein Relief.</h2>
+      <p class="section-subtitle fade-in">Gestalte dein Relief auf Eiche direkt im Konfigurator. Für Rahmen und Sonderformate beraten wir dich persönlich. Alternativ findest du unsere Modelle auf Etsy.</p>
       
       <div class="product-gallery">
         <div class="product-item fade-in">
@@ -1448,6 +1478,7 @@
             <h3>Bergrelief auf Holzsockel</h3>
             <p>Deine GPX-Route als 3D-Druck auf edlem Eiche-Holzsockel – mit optionaler Laser-Gravur für Hiking, Trailrunning und Mountainbike.</p>
             <div class="product-actions">
+              <a class="product-link" href="#konfigurator">Jetzt gestalten</a>
               <a class="product-link" href="https://www.etsy.com/de-en/listing/4502550552/personalized-3d-topography-gpx-route-as?ref=shop_home_active_1" target="_blank" rel="noopener noreferrer">Auf Etsy ansehen</a>
             </div>
           </div>
@@ -1462,50 +1493,56 @@
             <h3>Topografie im Bilderrahmen</h3>
             <p>Gerahmtes 3D-Relief mit deiner GPX-Route – ein edles Wandobjekt für Hiking, Rennrad, Gravel und MTB.</p>
             <div class="product-actions">
+              <a class="product-link" href="#kontakt">Rahmen anfragen</a>
               <a class="product-link" href="https://www.etsy.com/de-en/listing/4505089817/personalized-3d-topography-in-a-frame?ref=shop_home_active_2" target="_blank" rel="noopener noreferrer">Auf Etsy ansehen</a>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="custom-formats-section fade-in" style="margin: 2.5rem 0; padding: 2rem; background: var(--surface); border-radius: 12px;">
+      <div class="custom-formats-section fade-in" style="margin: 2.5rem 0; padding: 2rem; background: var(--bg-alt); border-radius: 12px;">
         <h3 style="margin-bottom: 0.75rem;">Individuelle Formate auf Anfrage</h3>
         <p style="margin-bottom: 1.5rem;">Wir können individuelle Formate (z.B. für größere Bergketten oder ganze Länder) abbilden – z.B. 20 × 24 cm Holzsockel mit 18 × 18 cm 3D-Modell. <a href="#kontakt" style="color: var(--accent); text-decoration: underline;">Kontaktiert uns dafür einfach</a>.</p>
-        <div style="display: flex; gap: 1.5rem;">
-          <img src="images/XXL_Fuji.jpeg" alt="Individuelles XXL-Format – Fuji" style="width: 50%; border-radius: 8px; object-fit: cover;">
-          <img src="images/XXL_E5.jpeg" alt="Individuelles XXL-Format – E5" style="width: 50%; border-radius: 8px; object-fit: cover;">
+        <div class="custom-formats-images">
+          <img src="images/XXL_Fuji.jpeg" alt="Individuelles XXL-Format – Fuji">
+          <img src="images/XXL_E5.jpeg" alt="Individuelles XXL-Format – E5">
         </div>
       </div>
 
       <div class="process-section">
         <h3 class="process-heading fade-in">So funktioniert's</h3>
-        <p class="process-intro fade-in">Von der Etsy-Bestellung bis zum fertigen Relief: So läuft deine personalisierte PeakMemory-Anfertigung ab.</p>
+        <p class="process-intro fade-in">Vom GPX-Upload bis zum fertigen Unikat: Du entscheidest erst nach der persönlichen Abstimmung. Etsy bleibt eine alternative Bestellmöglichkeit.</p>
 
         <div class="process-grid">
           <div class="process-card fade-in">
             <span class="process-step-number">1</span>
-            <h3>Bestellung &amp; Bezahlung</h3>
-            <p>Auswahl von Produktvariante und Personalisierung, Angabe der Versanddetails und Bezahlung – alles bequem über Etsy.</p>
+            <h3>Route hochladen</h3>
+            <p>Lade deine GPX-Datei in den <a href="#konfigurator">Konfigurator</a>. Noch keine Datei? Unsere <a href="/gpx-hilfe">GPX-Anleitung</a> hilft dir beim Export.</p>
           </div>
           <div class="process-card fade-in">
             <span class="process-step-number">2</span>
-            <h3>GPX-Daten teilen</h3>
-            <p>Damit wir deine Route ins Relief umsetzen können, brauchen wir die Streckendaten. Dafür hast du drei Möglichkeiten:</p>
-            <ul>
-              <li>GPX-Datei per E-Mail oder über das Kontaktformular auf peak-memory.de zusenden</li>
-              <li>Strava-Link teilen</li>
-              <li>Route über Google Maps nachbauen und den Link teilen</li>
-            </ul>
+            <h3>Personalisieren</h3>
+            <p>Gestalte Gravur, Geländerand und Höhenüberhöhung. Die Online-Vorschau zeigt dir eine erste Idee deines Reliefs.</p>
           </div>
           <div class="process-card fade-in">
             <span class="process-step-number">3</span>
-            <h3>Vorschau</h3>
-            <p>Teste deine Route vorab in unserer <a href="#konfigurator" style="color:var(--accent);text-decoration:underline;">interaktiven 3D-Vorschau</a>. Die verbindliche Produktionsvorschau inklusive Gravur erstellen wir anschließend persönlich und lassen sie dir zur Freigabe zukommen.</p>
+            <h3>Unverbindlich anfragen</h3>
+            <p>Sende uns deine Route und Wünsche. Wir besprechen Format und Preis mit dir – eine Anfrage ist noch keine Bestellung.</p>
           </div>
           <div class="process-card fade-in">
             <span class="process-step-number">4</span>
+            <h3>Finale Freigabe</h3>
+            <p>Du erhältst deine persönliche Produktionsvorschau inklusive Gravur. Erst wenn alles passt, gibst du sie frei.</p>
+          </div>
+          <div class="process-card fade-in">
+            <span class="process-step-number">5</span>
+            <h3>Bestellung &amp; Bezahlung</h3>
+            <p>Nach deiner Freigabe stimmen wir Bestellung, Zahlungsweg und Versanddetails persönlich mit dir ab.</p>
+          </div>
+          <div class="process-card fade-in">
+            <span class="process-step-number">6</span>
             <h3>Produktion &amp; Versand</h3>
-            <p>Nach deiner Freigabe der Vorschau geht dein Unikat in Produktion und wird anschließend zu dir nach Hause versendet.</p>
+            <p>Nach der abgestimmten Bestellung und Bezahlung fertigen wir dein Unikat und senden es zu dir nach Hause.</p>
           </div>
         </div>
       </div>
@@ -1526,7 +1563,7 @@
         <div class="carousel-slide"><img src="images/insights4.jpeg" alt="Werkstatt-Impression 4" loading="lazy"></div>
         <div class="carousel-slide"><img src="images/insights5.jpeg" alt="Werkstatt-Impression 5" loading="lazy"></div>
         <div class="carousel-slide"><img src="images/insights6.jpeg" alt="Werkstatt-Impression 6" loading="lazy"></div>
-        <div class="carousel-slide"><img src="images/insights7.jpeg" alt="Werkstatt-Impression 6" loading="lazy"></div>
+        <div class="carousel-slide"><img src="images/insights7.jpeg" alt="Werkstatt-Impression 7" loading="lazy"></div>
 
       </div>
     </div>
@@ -1539,7 +1576,7 @@
   <section class="section" id="news" style="background: var(--bg-alt);">
     <div class="container">
       <h2 class="section-title fade-in">News &amp; Events</h2>
-      <p class="section-subtitle fade-in">Wo ihr uns trefft &ndash; unsere Pr&auml;senz bei Sportveranstaltungen.</p>
+      <p class="section-subtitle fade-in">Einblicke in vergangene Veranstaltungen und Begegnungen mit euch.</p>
 
       <div class="news-grid">
 
@@ -1550,7 +1587,7 @@
             <h3>Bike Marathon Albstadt</h3>
             <p>Wir waren mit einem Stand auf der Expo des Bike Marathon Albstadt vertreten und haben die Troph&auml;en f&uuml;r den Albstadtmeister und die Albstadtmeisterin gesponsort. Das Event war ein voller Erfolg &ndash; wir haben uns sehr &uuml;ber den Austausch mit euch gefreut!</p>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; padding: 0 1.5rem 1.5rem;">
+          <div class="event-images">
             <img src="images/ABM1.jpeg" alt="Bike Marathon Albstadt – Impression 1" style="width: 100%; border-radius: 8px; object-fit: cover;">
             <img src="images/ABM2.jpeg" alt="Bike Marathon Albstadt – Impression 2" style="width: 100%; border-radius: 8px; object-fit: cover;">
             <img src="images/ABM3.jpeg" alt="Bike Marathon Albstadt – Impression 3" style="width: 100%; border-radius: 8px; object-fit: cover;">
@@ -1566,7 +1603,7 @@
             <p>Das war ein tolles Wochenende bei strahlendem Sonnenschein! Am Samstag waren wir bei der Startnummernausgabe in der Indoor Arena Allg&auml;u vor Ort, am Sonntag haben wir die Finisher am Ziel empfangen. Wir haben uns sehr &uuml;ber den Austausch mit euch gefreut! </p>
             <p style="margin-top: 0.75rem;">Wer noch kein Modell seiner Strecke hat: Finisher k&ouml;nnen ihr personalisiertes Modell (Ultramarathon, Marathon, H&ouml;rnerlauf oder Halbmarathon) jetzt noch bequem nach Hause bestellen &ndash; wir schicken es per Post.</p>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; padding: 0 1.5rem 1.5rem;">
+          <div class="event-images">
             <img src="images/APM_recap1.jpeg" alt="Allg&auml;u Panorama Marathon – Impression 1" style="width: 100%; border-radius: 8px; object-fit: cover;">
             <img src="images/APM_recap2.jpeg" alt="Allg&auml;u Panorama Marathon – Impression 2" style="width: 100%; border-radius: 8px; object-fit: cover;">
             <img src="images/APM_recap3.jpeg" alt="Allg&auml;u Panorama Marathon – Impression 3" style="width: 100%; border-radius: 8px; object-fit: cover;">
@@ -1595,9 +1632,9 @@
   <!-- ========== ÜBER UNS ========== -->
   <section class="section" id="ueber">
     <div class="container">
-      <h2 class="section-title fade-in">Die Köpfe hinter Peak Memory</h2>
+      <h2 class="section-title fade-in">Die Köpfe hinter PeakMemory</h2>
       <p class="about-text fade-in">
-        Peak Memory entstand aus einer einfachen Überzeugung: Jede außergewöhnliche Leistung verdient ein bleibendes Denkmal. Wir sind Sportler und Macher aus Baden-Württemberg, die moderne 3D-Drucktechnologie mit echtem Handwerk verbinden.
+        PeakMemory entstand aus einer einfachen Überzeugung: Jede außergewöhnliche Leistung verdient ein bleibendes Denkmal. Wir sind Sportler und Macher aus Baden-Württemberg, die moderne 3D-Drucktechnologie mit echtem Handwerk verbinden.
       </p>
 
       <div class="founders-grid">
@@ -1651,37 +1688,42 @@
   <section class="section contact" id="kontakt">
     <div class="container">
       <h2 class="section-title fade-in">Kontakt</h2>
-      <p class="section-subtitle fade-in">Für schnelle Antworten nutze direkt den Etsy-Shop oder sende uns eine E-Mail.</p>
+      <p class="section-subtitle fade-in">Fragen, Rahmen, Sonderformate oder Event-Serien? Schreib uns hier. Dein Relief auf Eiche gestaltest und fragst du direkt im Konfigurator an.</p>
       
       <div class="contact-wrapper">
         <!-- GPX Upload Info -->
         <div class="gpx-info-box fade-in">
-          <h3>📁 GPX-Datei</h3>
+          <h3>Dein individuelles Relief</h3>
           <p>Für individuelle Modelle benötigen wir deine GPS-Route als GPX-Datei.</p>
           <p><a href="gpx-hilfe.html" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">Wie bekomme ich meine GPX-Datei? ↗</a></p>
-          <p><strong>Du kannst die GPX-Datei direkt hier im Formular hochladen</strong> oder uns alternativ an <a href="mailto:peak.memory@web.de" style="color: var(--accent); text-decoration: underline;">peak.memory@web.de</a> senden.</p>
+          <p>Nutze für dein Relief den Konfigurator mit 3D-Vorschau. Für manuelle Unterstützung kannst du hier eine GPX-Datei beifügen oder uns an <a href="mailto:peak.memory@web.de" style="color: var(--accent); text-decoration: underline;">peak.memory@web.de</a> schreiben. Streckenlinks kannst du für eine persönliche Rücksprache teilen; für die Online-Vorschau brauchst du eine GPX-Datei.</p>
           <p><a href="#konfigurator" class="btn btn-primary">Route hochladen &amp; in 3D gestalten</a></p>
           <p style="font-size: 0.85rem; margin: 0;">💡 Tipp: Du kannst die Datei direkt von Strava, Komoot oder Garmin Connect exportieren.</p>
           <p style="font-size: 0.85rem; margin-top: 10px;"><strong>Direkt auf Etsy:</strong> <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">PeakMemory Shop besuchen</a></p>
         </div>
 
         <form class="contact-form fade-in" id="contactForm">
+          <noscript><p>Für den Formularversand brauchst du JavaScript. Schreib uns stattdessen an <a href="mailto:peak.memory@web.de">peak.memory@web.de</a>.</p></noscript>
           <div class="form-group">
-            <input type="text" name="name" placeholder="Dein Name" required autocomplete="name">
+            <label for="contactName">Dein Name</label>
+            <input id="contactName" type="text" name="name" required autocomplete="name" maxlength="200">
           </div>
           <div class="form-group">
-            <input type="email" name="email" placeholder="Deine E-Mail-Adresse" required autocomplete="email">
+            <label for="contactEmail">Deine E-Mail-Adresse</label>
+            <input id="contactEmail" type="email" name="email" required autocomplete="email" maxlength="200">
           </div>
           <div class="form-group">
-            <select name="type" required style="width: 100%; padding: 14px 18px; border: 1px solid var(--line); border-radius: var(--radius); font-family: inherit; font-size: 0.95rem; background: var(--white); color: var(--text);">
+            <label for="contactType">Art der Anfrage</label>
+            <select id="contactType" name="type" required style="width: 100%; padding: 14px 18px; border: 1px solid var(--line); border-radius: var(--radius); font-family: inherit; font-size: 0.95rem; background: var(--white); color: var(--text);">
               <option value="">Art der Anfrage wählen</option>
-              <option value="individual">Individuelle Bestellung (Einzelstück)</option>
-              <option value="event">Event-Anfrage (ab 30 Stück)</option>
+              <option value="individual">Frage zu einem individuellen Relief</option>
+              <option value="event">Event-Anfrage (ab 5 Stück)</option>
               <option value="other">Sonstiges</option>
             </select>
           </div>
           <div class="form-group">
-            <textarea name="message" placeholder="Deine Nachricht (z.B. gewünschte Größe, Gravur-Text, Event-Details)" required></textarea>
+            <label for="contactMessage">Deine Nachricht</label>
+            <textarea id="contactMessage" name="message" placeholder="Zum Beispiel gewünschtes Format, Frage oder Event-Details" required minlength="5" maxlength="4000"></textarea>
           </div>
           <div class="form-group">
             <div class="file-dropzone" id="gpxDropzone">
@@ -1713,7 +1755,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <div class="faq-answer">
-            Du kannst deine GPX-Datei schon vor einer Bestellung in unserer <a href="#konfigurator" style="color:var(--accent);">Online-3D-Vorschau</a> hochladen und dein Relief unverbindlich anfragen. Alternativ schickst du sie uns per Kontaktformular oder E-Mail an <a href="mailto:peak.memory@web.de" style="color:var(--accent);">peak.memory@web.de</a>. Exportiere die Datei zum Beispiel aus Strava, Komoot oder Garmin Connect. Die Online-Vorschau ist beispielhaft; die finale Produktionsvorschau erhältst du persönlich zur Freigabe.
+            Du kannst deine GPX-Datei schon vor einer Bestellung in unserem <a href="#konfigurator" style="color:var(--accent);">Konfigurator</a> hochladen und dein Relief unverbindlich anfragen. Wie du die Datei aus Strava, Komoot oder Garmin Connect bekommst, erklären wir in unserer <a href="/gpx-hilfe" style="color:var(--accent);text-decoration:underline;">GPX-Anleitung</a>. Alternativ schickst du sie uns per Kontaktformular oder E-Mail an <a href="mailto:peak.memory@web.de" style="color:var(--accent);">peak.memory@web.de</a>. Die Online-Vorschau ist beispielhaft; die finale Produktionsvorschau erhältst du persönlich zur Freigabe.
           </div>
         </div>
 
@@ -1743,7 +1785,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <div class="faq-answer">
-            Nach Eingang deiner GPX-Datei und Bestellbestätigung dauert die Fertigung in der Regel 7–10 Werktage. Danach kommt das Paket per Versand direkt zu dir.
+            Nach deiner finalen Freigabe und der abgestimmten Bestellung und Bezahlung dauert die Fertigung in der Regel 7–10 Werktage. Danach kommt das Paket per Versand direkt zu dir. Den konkreten Zeitplan besprechen wir persönlich.
           </div>
         </div>
 
@@ -1753,7 +1795,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <div class="faq-answer">
-            Ja, absolut! Du kannst eine Lieferadresse angeben, die vom Besteller abweicht. Gib beim Bestellvorgang einfach die Adresse des Beschenkten an. Auf Wunsch fügen wir auch eine persönliche Grußkarte bei – schreib uns einfach eine Nachricht auf Etsy.
+            Ja, absolut! Teile uns bei der Abstimmung eine abweichende Lieferadresse mit. Auf Wunsch fügen wir auch eine persönliche Grußkarte bei – erwähne das einfach in deiner Anfrage. Alternativ kannst du über Etsy bestellen.
           </div>
         </div>
 
@@ -1781,12 +1823,13 @@
     </div>
   </section>
 
+  </main>
   <!-- ========== FOOTER ========== -->
   <footer class="footer">
     <div class="container">
       <div class="footer-links">
-        <a href="#" id="impressumLink">Impressum</a>
-        <a href="#" id="datenschutzLink">Datenschutz</a>
+        <a href="#impressumModal" id="impressumLink">Impressum</a>
+        <a href="#datenschutzModal" id="datenschutzLink">Datenschutz</a>
       </div>
       <div class="footer-copy">
         &copy; 2026 PeakMemory – Baden-Württemberg
@@ -1972,20 +2015,36 @@
     (function() {
       var hamburger = document.getElementById('hamburger');
       var navLinks = document.getElementById('navLinks');
+      var mobile = window.matchMedia('(max-width: 768px)');
+      function closeMenu() {
+        hamburger.classList.remove('active');
+        navLinks.classList.remove('open');
+        hamburger.setAttribute('aria-expanded', 'false');
+        hamburger.setAttribute('aria-label', 'Menü öffnen');
+        navLinks.inert = mobile.matches;
+      }
+      mobile.addEventListener('change', closeMenu);
+      closeMenu();
 
       hamburger.addEventListener('click', function() {
         hamburger.classList.toggle('active');
         navLinks.classList.toggle('open');
         var expanded = hamburger.getAttribute('aria-expanded') === 'true';
         hamburger.setAttribute('aria-expanded', String(!expanded));
+        hamburger.setAttribute('aria-label', expanded ? 'Menü öffnen' : 'Menü schließen');
+        navLinks.inert = expanded && mobile.matches;
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && navLinks.classList.contains('open')) {
+          closeMenu();
+          hamburger.focus();
+        }
       });
 
       // Close menu on link click
       navLinks.querySelectorAll('a').forEach(function(link) {
         link.addEventListener('click', function() {
-          hamburger.classList.remove('active');
-          navLinks.classList.remove('open');
-          hamburger.setAttribute('aria-expanded', 'false');
+          closeMenu();
         });
       });
     })();
@@ -2097,7 +2156,7 @@
           .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })
           .then(function(result) {
             if (result.ok) {
-              status.textContent = '✓ Deine Nachricht wurde gesendet. Wir melden uns bald!';
+              status.textContent = '✓ Deine Nachricht wurde gesendet. Wir melden uns persönlich bei dir!';
               status.className = 'contact-status contact-status--ok';
               form.reset();
             } else {
@@ -2116,72 +2175,51 @@
       });
     })();
 
-    // Datenschutz modal
+    // Shared legal dialogs: isolate background and restore the invoking focus.
     (function() {
-      var modal = document.getElementById('datenschutzModal');
-      var openBtn = document.getElementById('datenschutzLink');
-      var closeBtn = document.getElementById('datenschutzClose');
-
-      function openPrivacy() {
-        modal.classList.add('open');
-        document.body.style.overflow = 'hidden';
-        closeBtn.focus();
-      }
-
-      openBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        openPrivacy();
-      });
-
-      function closeModal() {
-        modal.classList.remove('open');
-        document.body.style.overflow = '';
-        if (window.location.hash === '#datenschutz') {
-          history.replaceState(null, '', window.location.pathname + window.location.search);
+      var active = null;
+      ['datenschutz', 'impressum'].forEach(function(name) {
+        var modal = document.getElementById(name + 'Modal');
+        var openBtn = document.getElementById(name + 'Link');
+        var closeBtn = document.getElementById(name + 'Close');
+        var returnFocus, previousOverflow, background = [];
+        function close() {
+          if (active !== modal) return;
+          modal.classList.remove('open');
+          background.forEach(function(entry) { entry.element.inert = entry.inert; });
+          document.body.style.overflow = previousOverflow;
+          active = null;
+          if (window.location.hash === '#' + name) history.replaceState(null, '', window.location.pathname + window.location.search);
+          if (returnFocus && returnFocus.isConnected) returnFocus.focus();
         }
-      }
-
-      window.addEventListener('hashchange', function() {
-        if (window.location.hash === '#datenschutz') openPrivacy();
-      });
-      if (window.location.hash === '#datenschutz') openPrivacy();
-
-      closeBtn.addEventListener('click', closeModal);
-
-      modal.addEventListener('click', function(e) {
-        if (e.target === modal) closeModal();
-      });
-
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeModal();
-      });
-    })();
-
-    // Impressum modal
-    (function() {
-      var modal = document.getElementById('impressumModal');
-      var openBtn = document.getElementById('impressumLink');
-      var closeBtn = document.getElementById('impressumClose');
-
-      openBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        modal.classList.add('open');
-        document.body.style.overflow = 'hidden';
-      });
-
-      function closeModal() {
-        modal.classList.remove('open');
-        document.body.style.overflow = '';
-      }
-
-      closeBtn.addEventListener('click', closeModal);
-
-      modal.addEventListener('click', function(e) {
-        if (e.target === modal) closeModal();
-      });
-
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeModal();
+        function open() {
+          if (active === modal) return;
+          if (active) active.dispatchEvent(new Event('close-dialog'));
+          returnFocus = document.activeElement === document.body ? openBtn : document.activeElement;
+          previousOverflow = document.body.style.overflow;
+          background = Array.from(document.body.children).filter(function(element) { return element !== modal; })
+            .map(function(element) { return { element: element, inert: element.inert }; });
+          background.forEach(function(entry) { entry.element.inert = true; });
+          active = modal;
+          modal.classList.add('open');
+          document.body.style.overflow = 'hidden';
+          closeBtn.focus();
+        }
+        openBtn.addEventListener('click', function(e) { e.preventDefault(); open(); });
+        closeBtn.addEventListener('click', close);
+        modal.addEventListener('close-dialog', close);
+        modal.addEventListener('click', function(e) { if (e.target === modal) close(); });
+        modal.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+          if (e.key !== 'Tab') return;
+          var focusable = Array.from(modal.querySelectorAll('a[href],button,input,textarea,select,[tabindex]'))
+            .filter(function(element) { return !element.disabled && element.tabIndex >= 0 && element.getClientRects().length; });
+          var first = focusable[0], last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        });
+        window.addEventListener('hashchange', function() { if (window.location.hash === '#' + name) open(); });
+        if (window.location.hash === '#' + name) open();
       });
     })();
 
@@ -2240,7 +2278,13 @@
 
     // FAQ accordion
     (function() {
-      document.querySelectorAll('.faq-question').forEach(function(btn) {
+      document.querySelectorAll('.faq-question').forEach(function(btn, index) {
+        var answer = btn.closest('.faq-item').querySelector('.faq-answer');
+        btn.id = 'faq-question-' + index;
+        answer.id = 'faq-answer-' + index;
+        btn.setAttribute('aria-controls', answer.id);
+        answer.setAttribute('role', 'region');
+        answer.setAttribute('aria-labelledby', btn.id);
         btn.addEventListener('click', function() {
           var item = btn.closest('.faq-item');
           var isOpen = item.classList.contains('open');

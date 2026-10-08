@@ -1,6 +1,7 @@
 import { MAX_GPX_SIZE, parseGpx, validateFile } from '../shared/gpx.js';
 import { parseConfiguration } from '../shared/configuration.js';
 import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
+import { CONFIGURATOR_PRICE_EUR } from '../shared/product.js';
 
 export const CONTACT_TIMEOUT_MS = 10000;
 export const MAX_CONTACT_SIZE = MAX_GPX_SIZE + MAX_PREVIEW_SIZE + 64 * 1024;
@@ -8,8 +9,8 @@ const RECIPIENT = 'peak.memory@web.de';
 const SENDER = 'kontakt@peak-memory.de';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TYPE_LABELS = {
-  individual: 'Individuelle Bestellung (Einzelstück)',
-  event: 'Event-Anfrage (ab 30 Stück)',
+  individual: 'Individuelle Anfrage (Einzelstück)',
+  event: 'Event-Anfrage (ab 5 Stück)',
   other: 'Sonstiges',
 };
 const DELIVERY_ERROR = 'E-Mail konnte nicht gesendet werden. Bitte versuche es später erneut.';
@@ -145,6 +146,8 @@ export async function handleContact(request, env) {
       `Höhenüberhöhung: ${configuration.version === 2 ? configuration.elevationScale : 1.5}×`,
       `Online-Vorschau: ${configuration.preview === 'ready' ? 'bereit (illustrativ)' : 'nicht verfügbar'}`,
       'Die endgültige Produktionsvorschau wird separat abgestimmt.');
+    if (configuration.version === 2) lines.push(`Modellpreis: ${CONFIGURATOR_PRICE_EUR} EUR zzgl. persönlich abgestimmter Versandkosten.`,
+      'Bestellung und Bezahlung werden nach der finalen Freigabe persönlich abgestimmt.');
     lines.push(previewAttachment ? 'Vorschaubild: als PNG angehängt (illustrative Online-Konfiguration).'
       : 'Vorschaubild: nicht angehängt.');
   }

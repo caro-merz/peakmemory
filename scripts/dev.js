@@ -25,10 +25,11 @@ export async function startDevServer(port = 8000) {
         catch { return new Response('Bad path', { status: 400 }); }
         const target = path.resolve(root, '.' + (pathname === '/' ? '/index.html' : pathname));
         if (!target.startsWith(root + path.sep)) return new Response('Forbidden', { status: 403 });
+        const asset = path.extname(target) ? target : target + '.html';
         try {
-          const body = await readFile(target);
+          const body = await readFile(asset);
           return new Response(request.method === 'HEAD' ? null : body, {
-            headers: { 'Content-Type': types[path.extname(target)] || 'application/octet-stream' },
+            headers: { 'Content-Type': types[path.extname(asset)] || 'application/octet-stream' },
           });
         } catch (error) {
           if (['ENOENT', 'EISDIR'].includes(error.code)) return new Response('Not found', { status: 404 });

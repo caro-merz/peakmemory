@@ -15,7 +15,8 @@ Datei und keine verbindliche Produktionsfreigabe.
   „Beispielroute testen“ verwendet die bereitgestellte Marathon-Strecke des
   Allgäu Panorama Marathons aus `src/client/sample.gpx`, beim Build lokal gebündelt.
 - Vollständiger Konfigurator direkt nach dem Hero auf der Startseite, zusätzlich
-  weiterhin separat unter `configurator.html`. Der Build übernimmt die gemeinsame
+  ausschließlich auf der Startseite. Frühere `/configurator`- und
+  `/configurator.html`-Links leiten zu `/#konfigurator` weiter. Der Build übernimmt die gemeinsame
   Oberfläche aus dieser Datei in den Platzhalter von `index.html`; keine zweite
   Kopie pflegen. Konfigurator-CSS ist auf `.configurator` begrenzt.
   Auf dem Smartphone folgen Route, Erinnerungsstück und Live-Vorschau
@@ -38,14 +39,30 @@ Datei und keine verbindliche Produktionsfreigabe.
   Bei verfügbarer Vorschau wird die aktuelle 3D-Ansicht als PNG angehängt
   (maximal 1 MB und 2048 Pixel je Seite). Screenshot-Fehler werden vor dem Versand
   angezeigt; ohne verfügbare Vorschau bleibt die Anfrage ohne Bild möglich.
-- Etsy bleibt der Bestellkanal; keine Bezahlung oder automatische Preisberechnung.
+- Hauptweg: Upload → Personalisierung → unverbindliche Anfrage → finale Freigabe
+  → persönlich abgestimmte Bestellung und Bezahlung → Produktion.
+  Etsy ist eine alternative Bestellmöglichkeit. Kein automatischer Checkout
+  und keine automatische Preisberechnung; Event-Serien ab 5 Stück.
+  Das Modell im Konfigurator kostet 50 EUR zzgl. persönlich abgestimmter
+  Versandkosten. Der feste Modellpreis steht in `src/shared/product.js` und wird
+  in der Oberfläche sowie serverseitig in der Anfrage verwendet.
+  Die Website verspricht keine feste Antwortzeit; Anfragen werden persönlich beantwortet.
+- Bildvarianten unter `images/optimized/` verkleinern die Übertragung; der Build
+  bindet responsive WebP-Dateien, Bildabmessungen und Lazy Loading ein.
+  `npm run optimize:images` aktualisiert diese Varianten nach neuen Fotos.
+- Höhenänderungen behalten Kamerawinkel und Zoom bei. Technische Vorschauhinweise
+  sind einklappbar, Beispielwerte der Gravur ausdrücklich gekennzeichnet.
+- Kontaktfelder haben sichtbare Labels; Rechtsdialoge isolieren den Hintergrund
+  und stellen den Fokus beim Schließen wieder her. Die Homepage und die
+  Rechtsinformationen bleiben ohne JavaScript lesbar; reduzierte Bewegung
+  deaktiviert Animationen und weiches Scrollen.
 - Die finale Produktionsvorschau wird persönlich erstellt und vor Fertigung freigegeben.
 
 ## Projektstruktur
 
 ```text
 index.html                 Bestehende Website und allgemeines Kontaktformular
-configurator.html          GPX-Konfigurator
+configurator.html          Interne Konfigurator-Vorlage, nicht separat veröffentlicht
 src/client/                Oberfläche, Geländeabruf und Three.js-Renderer
 src/shared/                GPX-, Konfigurations- und Geometrie-Logik
 src/server/                Gemeinsame Kontakt- und Gelände-Endpunkte

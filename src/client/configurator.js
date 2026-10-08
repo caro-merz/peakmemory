@@ -4,10 +4,12 @@ import { parseConfiguration } from '../shared/configuration.js';
 import { terrainPlan } from '../shared/geometry.js';
 import { loadTerrain } from './terrain.js';
 import sampleXml from './sample.gpx';
+import { CONFIGURATOR_PRICE_EUR } from '../shared/product.js';
 
 const get = id => document.getElementById(id);
 const fileInput = get('gpxFile'), dropzone = get('dropzone'), form = get('inquiryForm');
 const viewButtons = ['rotate', 'zoomIn', 'zoomOut', 'resetView'].map(get);
+get('modelPrice').textContent = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(CONFIGURATOR_PRICE_EUR);
 let file = null, route = null, sample = false, preview = 'unavailable', viewer = null;
 let generation = 0, controller = null, marginTimer = null, sending = false;
 

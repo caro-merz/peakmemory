@@ -182,11 +182,22 @@ test('current inquiries include validated oak-base and height scaling settings',
     assert.equal((await handleContact(formContact({configuration:JSON.stringify(config)}, new File([gpx], 'personal.gpx')), env)).status, 200);
     assert.match(payloads.at(-1).text, /Relief auf Eichenholzsockel/);
     assert.ok(payloads.at(-1).text.includes(`Höhenüberhöhung: ${elevationScale}×`));
+    assert.match(payloads.at(-1).text, /Modellpreis: 50 EUR zzgl/);
   }
   globalThis.fetch = () => assert.fail('Invalid height scale must not send mail');
   for (const elevationScale of [null,'2',0.99,8.01]) {
     assert.equal((await handleContact(formContact({configuration:JSON.stringify({...configuration,version:2,product:'base',elevationScale})},
       new File([gpx], 'personal.gpx')), env)).status, 400);
+  }
+});
+
+test('legacy configurator addresses redirect to the embedded homepage configurator', async () => {
+  for (const path of ['/configurator', '/configurator.html', '/configurator/']) {
+    const response = await worker.fetch(new Request(`https://peak-memory.de${path}`), {
+      ASSETS: { fetch() { assert.fail('Redirect must not serve standalone assets'); } },
+    }, {});
+    assert.equal(response.status, 301);
+    assert.equal(response.headers.get('Location'), 'https://peak-memory.de/#konfigurator');
   }
 });
 

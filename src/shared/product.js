@@ -1,3 +1,5 @@
+export const CONFIGURATOR_PRICE_EUR = 50;
+
 export const PRODUCT_DIMENSIONS_CM = Object.freeze({
   relief: 10,
   woodWidth: 11,

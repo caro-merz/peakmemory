@@ -8,6 +8,11 @@ export default {
       url.hostname = 'peak-memory.de';
       return Response.redirect(url.toString(), 301);
     }
+    if (['/configurator', '/configurator.html', '/configurator/'].includes(url.pathname)) {
+      url.pathname = '/';
+      url.hash = 'konfigurator';
+      return Response.redirect(url.toString(), 301);
+    }
     if (url.pathname === '/contact') return handleContact(request, env);
     if (url.pathname === '/terrain' || url.pathname.startsWith('/terrain/')) {
       return handleTerrain(request, env, context);

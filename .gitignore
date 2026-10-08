@@ -4,6 +4,7 @@ node_modules/
 # Cloudflare Workers/Pages build output
 .wrangler/
 dist/
+assets/
 
 # Environment files – NEVER commit secrets
 .env

@@ -18,6 +18,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="image" href="images/classic.jpeg">
   <link rel="icon" href="images/logo_grey.png" type="image/png">
+  <link rel="stylesheet" href="assets/configurator.css">
+  <script type="module" src="assets/configurator.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -1082,6 +1084,20 @@
     }
 
     /* ========== RESPONSIVE ========== */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .nav-links {
+        gap: 10px;
+      }
+
+      .nav-links a {
+        font-size: 0.8rem;
+      }
+
+      .nav-cta {
+        padding: 10px 12px;
+      }
+    }
+
     @media (max-width: 768px) {
       .section {
         padding: 64px 0;
@@ -1099,6 +1115,7 @@
         left: 0;
         right: 0;
         bottom: 0;
+        overflow-y: auto;
         background: #fafaf8;
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
@@ -1107,6 +1124,7 @@
         flex-direction: column;
         justify-content: flex-start;
         padding-top: 48px;
+        padding-bottom: 24px;
         gap: 28px;
         transform: translateX(100%);
         transition: transform 0.4s ease;
@@ -1342,6 +1360,7 @@
       <div class="nav-links" id="navLinks">
         <a href="#produkt">Produkte</a>
         <a href="#personalisierung">Personalisierung</a>
+        <a href="#konfigurator">Konfigurator</a>
         <a href="#veranstalter">Für Veranstalter</a>
         <a href="#ueber">Über uns</a>
         <a href="#news">News</a>
@@ -1391,6 +1410,7 @@
         <div class="hero-buttons">
           <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Zum Etsy-Shop</a>
           <a href="#produkt" class="btn btn-ghost">Produkte ansehen</a>
+          <a href="#konfigurator" class="btn btn-ghost">Deine Route in 3D gestalten</a>
           <a href="https://www.instagram.com/peak.memory" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">Impressionen auf Instagram</a>
         </div>
         <div class="shop-facts" aria-label="Shop Fakten von Etsy" style="justify-content: center; margin-top: 1.5rem;">
@@ -1398,6 +1418,17 @@
           <span class="shop-fact">Handgefertigt in Baden-Württemberg</span>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="section configurator configurator-embedded" id="konfigurator" aria-labelledby="configuratorTitle">
+    <div class="container">
+      <p class="eyebrow">DEINE ROUTE. DEINE ERINNERUNG.</p>
+      <h2 id="configuratorTitle" class="section-title">Gestalte deine Erinnerung.</h2>
+      <p class="section-subtitle">Lade deine GPX-Datei hoch, entdecke deine Landschaft in 3D und gestalte dein persönliches Erinnerungsstück. Kostenlos, ohne Anmeldung und ohne Bestellung.</p>
+      <!-- CONFIGURATOR_CONTENT -->
+      <p><a href="configurator.html">Zum Konfigurator</a></p>
+      <!-- /CONFIGURATOR_CONTENT -->
     </div>
   </section>
 
@@ -1470,7 +1501,7 @@
           <div class="process-card fade-in">
             <span class="process-step-number">3</span>
             <h3>Vorschau</h3>
-            <p>Wir erstellen eine Vorschau des 3D-Reliefs inklusive lasergraviertem Schriftzug und lassen sie dir zukommen.</p>
+            <p>Teste deine Route vorab in unserer <a href="#konfigurator" style="color:var(--accent);text-decoration:underline;">interaktiven 3D-Vorschau</a>. Die verbindliche Produktionsvorschau inklusive Gravur erstellen wir anschließend persönlich und lassen sie dir zur Freigabe zukommen.</p>
           </div>
           <div class="process-card fade-in">
             <span class="process-step-number">4</span>
@@ -1535,7 +1566,6 @@
             <h3>Allg&auml;u Panorama Marathon</h3>
             <p>Das war ein tolles Wochenende bei strahlendem Sonnenschein! Am Samstag waren wir bei der Startnummernausgabe in der Indoor Arena Allg&auml;u vor Ort, am Sonntag haben wir die Finisher am Ziel empfangen. Wir haben uns sehr &uuml;ber den Austausch mit euch gefreut! </p>
             <p style="margin-top: 0.75rem;">Wer noch kein Modell seiner Strecke hat: Finisher k&ouml;nnen ihr personalisiertes Modell (Ultramarathon, Marathon, H&ouml;rnerlauf oder Halbmarathon) jetzt noch bequem nach Hause bestellen &ndash; wir schicken es per Post.</p>
-            <a href="#kontakt" class="btn btn-primary" style="margin-top: 1.25rem; display: inline-flex;">Jetzt bestellen</a>
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; padding: 0 1.5rem 1.5rem;">
             <img src="images/APM_recap1.jpeg" alt="Allg&auml;u Panorama Marathon – Impression 1" style="width: 100%; border-radius: 8px; object-fit: cover;">
@@ -1587,7 +1617,7 @@
       <div class="founders-grid">
         <div class="founder-card fade-in">
           <div class="founder-image">
-            <img src="images/caro.jpeg" alt="Carolin Merz">
+            <img src="images/caro_new.jpeg" alt="Carolin Merz">
           </div>
           <div class="founder-info">
             <h3>Carolin Merz</h3>
@@ -1601,7 +1631,7 @@
 
         <div class="founder-card fade-in">
           <div class="founder-image">
-            <img src="images/alex.jpeg" alt="Alexander Weimer">
+            <img src="images/alex_new.jpeg" alt="Alexander Weimer">
           </div>
           <div class="founder-info">
             <h3>Alexander Weimer</h3>
@@ -1643,6 +1673,7 @@
           <h3>📁 GPX-Datei</h3>
           <p>Für individuelle Modelle benötigen wir deine GPS-Route als GPX-Datei.</p>
           <p><strong>Du kannst die GPX-Datei direkt hier im Formular hochladen</strong> oder uns alternativ an <a href="mailto:peak.memory@web.de" style="color: var(--accent); text-decoration: underline;">peak.memory@web.de</a> senden.</p>
+          <p><a href="#konfigurator" class="btn btn-primary">Route hochladen &amp; in 3D gestalten</a></p>
           <p style="font-size: 0.85rem; margin: 0;">💡 Tipp: Du kannst die Datei direkt von Strava, Komoot oder Garmin Connect exportieren.</p>
           <p style="font-size: 0.85rem; margin-top: 10px;"><strong>Direkt auf Etsy:</strong> <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">PeakMemory Shop besuchen</a></p>
         </div>
@@ -1667,8 +1698,8 @@
           </div>
           <div class="form-group">
             <div class="file-dropzone" id="gpxDropzone">
-              <label class="file-dropzone-label" for="gpxFile">GPX-Datei auswählen</label>
-              <input type="file" name="gpxFile" id="gpxFile" accept=".gpx,application/gpx+xml,application/xml,text/xml">
+              <label class="file-dropzone-label" for="contactGpxFile">GPX-Datei auswählen</label>
+              <input type="file" name="gpxFile" id="contactGpxFile" accept=".gpx,application/gpx+xml,application/xml,text/xml">
               <p class="file-dropzone-text">Datei hier hineinziehen oder klicken, um eine `.gpx` hochzuladen.</p>
               <div class="file-dropzone-hint">Optionaler Anhang, max. 5 MB.</div>
               <div class="file-dropzone-file" id="gpxFileName" aria-live="polite"></div>
@@ -1695,7 +1726,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <div class="faq-answer">
-            Nach deiner Bestellung auf Etsy schickst du uns deine GPX-Datei einfach per E-Mail an <a href="mailto:peak.memory@web.de" style="color:var(--accent);">peak.memory@web.de</a>. Die Datei kannst du direkt von Strava, Komoot, Garmin Connect oder anderen Tracking-Apps exportieren.
+            Du kannst deine GPX-Datei schon vor einer Bestellung in unserer <a href="#konfigurator" style="color:var(--accent);">Online-3D-Vorschau</a> hochladen und dein Relief unverbindlich anfragen. Alternativ schickst du sie uns per Kontaktformular oder E-Mail an <a href="mailto:peak.memory@web.de" style="color:var(--accent);">peak.memory@web.de</a>. Exportiere die Datei zum Beispiel aus Strava, Komoot oder Garmin Connect. Die Online-Vorschau ist beispielhaft; die finale Produktionsvorschau erhältst du persönlich zur Freigabe.
           </div>
         </div>
 
@@ -1705,7 +1736,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <div class="faq-answer">
-            Grundsätzlich jede Route mit ausreichend Höheninformation – Wanderungen, Trailruns, Mountainbike-Touren, Gravel- und Rennradrouten. Je mehr Höhenunterschied, desto markanter das Relief. Strecken in flachem Gelände können weniger plastisch wirken.
+            Wanderungen, Trailruns, Mountainbike-Touren, Gravel- und Rennradrouten eignen sich grundsätzlich. Die Online-Vorschau lädt öffentliche Geländehöhen; Höhenangaben in deiner GPX-Datei sind nicht erforderlich. Unterstützt werden bis zu 5 MB, 100.000 Punkte und 100 Streckenabschnitte außerhalb der Polarregionen. Je mehr Höhenunterschied, desto markanter das Relief. Strecken in flachem Gelände können weniger plastisch wirken.
           </div>
         </div>
 
@@ -1868,7 +1899,10 @@
       <p>Wir verwenden Cookies gemäß den gesetzlichen Vorschriften. Soweit keine Einwilligung erforderlich ist, stützen wir uns auf berechtigte Interessen. Nutzer können Cookies über die Einstellungen ihres Browsers ablehnen oder löschen. Rechtsgrundlage: Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
 
       <h3 id="m182">Kontakt- und Anfrageverwaltung</h3>
-      <p>Bei der Kontaktaufnahme über unser Kontaktformular oder per E-Mail verarbeiten wir Name, E-Mail-Adresse und Nachrichteninhalt ausschließlich zur Beantwortung Ihrer Anfrage. Rechtsgrundlagen: Vertragserfüllung (Art. 6 Abs. 1 S. 1 lit. b) DSGVO), Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
+      <p>Bei der Kontaktaufnahme verarbeiten wir Name, E-Mail-Adresse, Nachrichteninhalt und gegebenenfalls die beigefügte GPX-Datei sowie Produkt- und Gravurwünsche zur Beantwortung Ihrer Anfrage. Kontaktformulare werden über Cloudflare verarbeitet und mit dem E-Mail-Dienst Resend an uns zugestellt. GPX-Dateien können sensible Orts- und Bewegungsdaten enthalten; laden Sie nur Dateien hoch, die Sie uns zur Bearbeitung Ihrer Anfrage übermitteln möchten. Rechtsgrundlagen: Vertragserfüllung und vorvertragliche Anfragen (Art. 6 Abs. 1 S. 1 lit. b) DSGVO), Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
+
+      <h3>GPX-Dateien und interaktive Gelände-Vorschau</h3>
+      <p>Für die Online-Vorschau wird Ihre GPX-Datei lokal im Browser gelesen und nicht dauerhaft im Browser gespeichert. Die vollständige Datei wird erst mit dem Absenden einer Anfrage an uns übermittelt. Zur Darstellung des Geländes fordert der Browser über unsere Cloudflare-Endpunkte öffentliche Mapzen-Geländekacheln aus dem AWS Open Data Programm an. Die Kacheladressen lassen Rückschlüsse auf die ungefähre Region zu, enthalten aber nicht die vollständige Route. Cloudflare verarbeitet bei diesen Anfragen die IP-Adresse; AWS erhält die Kachelanfragen von unserem Server. Für die Begrenzung von Gelände-Anfragen wird die IP-Adresse als kurzlebiger Ratenbegrenzungsschlüssel verwendet. Es werden keine Routen-Konten oder öffentlich teilbaren Routen angelegt. Die Verarbeitung dient der Bereitstellung der angeforderten Vorschau (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
 
       <h3 id="m15">Änderung und Aktualisierung</h3>
       <p>Wir passen die Datenschutzerklärung an, sobald Änderungen der von uns durchgeführten Datenverarbeitungen dies erforderlich machen. Wir informieren Sie, sobald durch die Änderungen eine Mitwirkungshandlung Ihrerseits erforderlich wird.</p>
@@ -1974,7 +2008,7 @@
       var form = document.getElementById('contactForm');
       var status = document.getElementById('contactStatus');
       var submitBtn = form.querySelector('button[type="submit"]');
-      var fileInput = document.getElementById('gpxFile');
+      var fileInput = document.getElementById('contactGpxFile');
       var fileName = document.getElementById('gpxFileName');
       var dropzone = document.getElementById('gpxDropzone');
       var MAX_GPX_SIZE = 5 * 1024 * 1024;
@@ -2101,16 +2135,29 @@
       var openBtn = document.getElementById('datenschutzLink');
       var closeBtn = document.getElementById('datenschutzClose');
 
-      openBtn.addEventListener('click', function(e) {
-        e.preventDefault();
+      function openPrivacy() {
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
+        closeBtn.focus();
+      }
+
+      openBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        openPrivacy();
       });
 
       function closeModal() {
         modal.classList.remove('open');
         document.body.style.overflow = '';
+        if (window.location.hash === '#datenschutz') {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
       }
+
+      window.addEventListener('hashchange', function() {
+        if (window.location.hash === '#datenschutz') openPrivacy();
+      });
+      if (window.location.hash === '#datenschutz') openPrivacy();
 
       closeBtn.addEventListener('click', closeModal);
 

@@ -25,6 +25,21 @@
 /index.html
   Cache-Control: no-cache, must-revalidate
 
+/configurator.html
+  Cache-Control: no-cache, must-revalidate
+
+/configurator
+  Cache-Control: no-cache, must-revalidate
+
+/assets/*
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/assets/configurator.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/configurator.css
+  Cache-Control: no-cache, must-revalidate
+
 # Sitemap and robots – short cache
 /sitemap.xml
   Cache-Control: public, max-age=86400

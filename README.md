@@ -1,144 +1,229 @@
-# Peak Memory – Website
+# Peak Memory - Website
 
-![Peak Memory Logo](https://img.shields.io/badge/Made%20in-Baden--W%C3%BCrttemberg-2D5016?style=flat-square)
-![Cloudflare](https://img.shields.io/badge/Hosted%20on-Cloudflare-F38020?style=flat-square&logo=cloudflare)
+PeakMemory verwandelt GPS-Routen in handgefertigte 3D-Reliefs. Die Website unter
+https://peak-memory.de bleibt eine statische HTML-Seite mit Cloudflare-Endpunkten.
+Der Konfigurator liefert eine **illustrative Online-Vorschau**, keine druckfertige
+Datei und keine verbindliche Produktionsfreigabe.
 
-**Peak Memory** verwandelt GPS-Routen in handgefertigte 3D-Reliefmodelle. Ob Bike-Marathon, Bergwanderung oder Stadtlauf – deine Route wird zum greifbaren Erinnerungsstück.
+## Funktionen
 
----
+- Eigene GPX-Datei oder unverbindliche Beispielroute in interaktivem 3D-Gelände.
+  „Beispielroute testen“ verwendet die bereitgestellte Marathon-Strecke des
+  Allgäu Panorama Marathons aus `src/client/sample.gpx`, beim Build lokal gebündelt.
+- Vollständiger Konfigurator direkt nach dem Hero auf der Startseite, zusätzlich
+  weiterhin separat unter `configurator.html`. Der Build übernimmt die gemeinsame
+  Oberfläche aus dieser Datei in den Platzhalter von `index.html`; keine zweite
+  Kopie pflegen. Konfigurator-CSS ist auf `.configurator` begrenzt.
+- Relief auf Eiche-Holzsockel (ohne Produktvariantenauswahl), Gravurwunsch und Geländerand.
+- Höhenüberhöhung von 1× bis 8×, Standard 2×. Änderungen skalieren Gelände
+  und Route gemeinsam ohne erneuten Geländeabruf.
+- Gravur mit maximal 3 Zeilen und insgesamt 120 Zeichen. Die Vorschau übernimmt
+  die eingegebenen Zeilenumbrüche ohne automatischen Umbruch und zeigt die
+  Schrift direkt auf dem Holz, ohne separates Schild oder farbigen Hintergrund.
+  Ohne Gravurwunsch bleibt das Holz unbeschriftet.
+  Der editierbare Standardtext ist `Deine Route`, `100 km | 1000 hm | 10 h`
+  und `01.01.2026` in drei Zeilen; diese Beispielwerte werden nicht aus der GPX ermittelt.
+- Gravurschrift: original Quicksand Book, lokal aus `fonts/Quicksand_Book.otf`
+  geladen, mit SIL Open Font License unter `fonts/OFL.txt`.
+  Die Standardschriftgröße beträgt 5 mm, unabhängig von der Zeilenzahl.
+  Überschreitet die längste Zeile 8 cm, werden alle Zeilen proportional
+  verkleinert. Kürzere Texte werden nicht künstlich auf volle Breite gestreckt.
+- Unverbindliche Anfrage mit Original-GPX und Konfiguration per E-Mail.
+- Etsy bleibt der Bestellkanal; keine Bezahlung oder automatische Preisberechnung.
+- Die finale Produktionsvorschau wird persönlich erstellt und vor Fertigung freigegeben.
 
-## 🚀 Live-Website
+## Projektstruktur
 
-Die Website wird über Cloudflare bereitgestellt:
-- **URL:** `https://peak-memory.de`
-- **Status:** Statische Seite mit Contact-Endpoint über Worker/Functions
-
----
-
-## 📁 Projektstruktur
-
+```text
+index.html                 Bestehende Website und allgemeines Kontaktformular
+configurator.html          GPX-Konfigurator
+src/client/                Oberfläche, Geländeabruf und Three.js-Renderer
+src/shared/                GPX-, Konfigurations- und Geometrie-Logik
+src/server/                Gemeinsame Kontakt- und Gelände-Endpunkte
+worker.js                  Cloudflare Worker-Einstieg
+functions/                 Cloudflare Pages Functions
+scripts/                   Build, lokale Entwicklung und Browserprüfung
+tests/                     Parser-, Geometrie- und Backend-Tests
+deploy/pages.toml          Pages-Konfiguration für das Staging
+licenses/                  Lizenzhinweise, die im npm-Paket fehlen
+assets/                    Generierte lokale JS/CSS/Lizenz-Dateien (ignoriert)
+dist/                      Ausschließlich veröffentlichbare Dateien (ignoriert)
 ```
-/
-├── index.html              # Haupt-Website (All-in-One HTML)
-└── README.md               # Diese Datei
+
+## Entwicklung
+
+Node.js 22 oder neuer:
+
+```powershell
+npm ci
+npm run build
+npm run dev
 ```
 
----
+Danach http://127.0.0.1:8000/configurator.html öffnen. `PORT` kann einen anderen
+Port vorgeben. Der lokale Node-Server versendet **keine echten E-Mails**.
+Die Vorschau benötigt Netzwerkzugriff auf öffentliche Geländedaten. Nur
+`index.html` direkt zu öffnen reicht für den Konfigurator nicht.
 
-## 🛠️ Lokale Entwicklung
+Nach Änderungen `npm run build` erneut ausführen. Three.js wird erst beim Start
+einer Vorschau geladen. Bibliotheken und Styles werden lokal gebündelt; es gibt
+keinen Laufzeit-CDN für den Konfigurator und keine Framework-Migration.
 
-Das Frontend ist statisch, der Kontaktversand läuft über Cloudflare Worker/Functions. Für Layout-Änderungen kannst du die Seite lokal direkt öffnen:
+Der Entwicklungsserver muss während der gesamten Vorschau laufen, auch wenn
+die Seite bereits im Browser geöffnet ist. Bei einem Verbindungsfehler den
+Server unter derselben Adresse neu starten und im Konfigurator „Erneut laden“
+wählen. Ein offener Browser-Tab allein kann keine Geländekacheln bereitstellen.
 
-1. **Direkt im Browser:**
-   ```
-   Öffne: index.html
-   ```
+```powershell
+npm test
+npx playwright install chromium
+npm run test:browser
+```
 
-2. **Mit lokalem Server (empfohlen):**
-   ```bash
-   # Python 3
-   python -m http.server 8000
-   
-   # Node.js (mit npx http-server)
-   npx http-server -p 8000
-   
-   # Live Server VS Code Extension (Rechtsklick auf index.html)
-   ```
+Die Browserprüfung verwendet synthetische Geländekacheln und simulierten
+E-Mail-Versand. Sie sendet keine echten Anfragen. `SCREENSHOT_PATH` kann einen
+Dateipfad für einen Screenshot außerhalb des Repositorys vorgeben.
+`npm audit` prüft die Abhängigkeiten. Der `sharp`-Override hält Wranglers
+transitive Miniflare-Abhängigkeit auf der korrigierten Patchversion 0.35.5;
+entfernen, sobald Wrangler diese Version selbst mitliefert.
 
-3. **Öffne Browser:** `http://localhost:8000`
+## Cloudflare Worker (primärer Betrieb)
 
----
+```powershell
+npm ci
+npm run build
+npx wrangler dev
+```
 
-## 📦 Deployment
+Für die Veröffentlichung:
 
-Deployment erfolgt automatisch via GitHub Pages:
+```powershell
+npx wrangler secret put RESEND_API_KEY
+npx wrangler deploy
+```
 
-1. **Push zu GitHub:**
-   ```bash
-   git add .
-   git commit -m "Update website"
-   git push origin main
-   ```
+Den Secret-Wert niemals in Dateien eintragen. Die Resend-Absenderdomain
+`peak-memory.de` muss verifiziert sein. Anfragen gehen von
+`kontakt@peak-memory.de` an `peak.memory@web.de`, mit der Besucheradresse als
+Reply-To. Den existierenden Secret nicht unnötig ersetzen.
 
-2. **GitHub Pages verarbeitet:**
-   - Stellt Website direkt aus dem main Branch bereit
-   - Keine Build-Schritte nötig (statisches HTML)
+`wrangler.toml` veröffentlicht nur `dist/` und stellt `ASSETS` bereit.
+Der Worker übernimmt `/contact`, `/terrain/...` und den www-Redirect.
+Unbekannte Dateien liefern 404 statt eines vermeintlich erfolgreichen
+Homepage-Fallbacks. Keine Quellen, GPX-Testdateien, Python-Umgebung oder
+`node_modules` veröffentlichen.
 
-3. **Website ist live!** (nach ca. 1-2 Minuten)
+Der Gelände-Limiter `TERRAIN_RATE_LIMITER` erlaubt bis zu 120 **ungecachte**
+Anfragen je IP und Minute. Die Namespace-ID `1001` muss innerhalb des
+Cloudflare-Kontos für diesen Zweck reserviert sein; bei Kollision vor dem
+Deployment ändern. Der Cache wird vor dem Limiter geprüft.
 
-**GitHub Pages aktivieren:**
-- Gehe zu: Repository Settings → Pages
-- Source: Deploy from branch → main → / (root)
-- Save
+## Alternative: Cloudflare Pages
 
----
+Worker und Pages verwenden dieselbe Serverlogik. Da ihre Wrangler-Konfigurationen
+unterschiedlich sind, erstellt der Pages-Build ein isoliertes Staging:
 
-## 🎨 Design-Prinzipien
+```powershell
+npm run build:pages
+npx wrangler pages dev --cwd .wrangler\pages-project
+```
 
-- **Farben:** Hauptakzent `#2D5016` (Dunkelgrün), Neutral `#FAFAF8` (Beige-Weiß)
-- **Typografie:** Inter (Google Fonts), fette Headlines (800)
-- **Stil:** Minimalistisch, Fokus auf Produktfotos, Konturlinien als Dekoration
-- **Responsive:** Mobile-First Design, Breakpoints bei 768px und 1024px
+Für ein bestehendes Pages-Projekt:
 
----
+```powershell
+npx wrangler pages deploy --cwd .wrangler\pages-project --project-name peakmemory
+```
 
-## 🗺️ Roadmap
+Den tatsächlichen Pages-Projektnamen verwenden. `RESEND_API_KEY` in den
+Pages-Einstellungen für die benötigten Umgebungen konfigurieren. Bei einem
+Git-basierten Pages-Build `npm run build:pages` ausführen und aus dem
+gestagten Projekt veröffentlichen; nicht einfach nur das Repository als
+statische Dateien hochladen. GitHub Pages allein kann die Server-Endpunkte
+nicht bereitstellen.
 
-### Phase 1: Design-Enhancement ✅ (aktuell)
-- Hero mit Produkt-Visualisierung
-- Trust-Elemente (Testimonials)
-- Verbesserte Typografie & Animationen
+Pages bietet nicht alle Worker-Bindings. Vor einem öffentlichen Pages-Deployment
+eine Cloudflare-WAF-Ratenbegrenzungsregel für `/terrain/*` auf der Custom Domain
+einrichten, z.B. 120 Anfragen/IP/Minute. Die WAF-Regel zählt auch Cache-Treffer.
+Auch den `/contact`-Endpunkt mit einer angemessenen WAF-Regel gegen Spam schützen.
+Nicht davon ausgehen, dass der Worker-Limiter automatisch für Pages gilt.
+Die `pages.dev`-Domain und öffentliche Preview-URLs ebenfalls deaktivieren
+oder mit Cloudflare Access schützen: Die WAF-Regel auf der Custom Domain
+schützt diese alternativen Zugänge nicht.
 
-### Phase 2: Konfigurator 🔜 (geplant)
-- Interaktive Konfiguration (Größe, Holz, Gravur)
-- Live-Preis-Berechnung
-- Separate Page: `configurator.html`
+## GPX und Vorschaulimits
 
-### Phase 3: GPX-Upload & Preview 🚧 (teilweise umgesetzt)
-- GPX-File-Upload im Kontaktformular inkl. Mail-Anhang
-- 3D-Vorschau der Route
-- Integration mit Strava API
-- Weiterer Backend-Ausbau für Vorschau/Import nötig
+- GPX 1.0/1.1, Trackpunkte und Routenpunkte, auch mit XML-Namespace.
+- Maximal 5 MB (5 × 1024 × 1024 Bytes), 100.000 Punkte und 100 Abschnitte.
+- Mindestens zwei unterschiedliche Punkte in einem Abschnitt.
+- Keine DTD/XML-Entitätsdefinitionen; fehlerhafte Koordinaten werden abgelehnt.
+- Disjunkte Abschnitte werden nicht durch falsche Linien verbunden.
+- Höhendaten in GPX sind optional: Das umgebende Gelände kommt aus DEM-Kacheln.
+- Polare Routen ab ±85,0511287798° sowie Ausschnitte außerhalb der
+  Web-Mercator-Abdeckung werden ausdrücklich abgelehnt.
+- Antimeridian-Routen verwenden gewrappte Kacheln.
+- Pro Vorschau maximal 16 Kacheln, vier parallele Downloads, Zoom 0-14,
+  ein 129 × 129 Geländeraster und maximal 12.000 dargestellte Routenpunkte.
+- Sehr komplexe Routen werden nur für die Darstellung vereinfacht. Die
+  Originaldatei wird unverändert angehängt. Zu komplexe Darstellungen oder
+  fehlende Geländedaten werden als nicht verfügbar angezeigt.
+- Maße: Relief 10 × 10 cm, Eiche-Holzsockel 11 × 13,5 cm mit 2 cm Stärke. Das Relief
+  liegt oben mit 0,5 cm Rand oben und an beiden Seiten; unten bleiben 3 cm
+  Holz für die mittig platzierte Gravur.
+- Die Produktvorschau verwendet eine perspektivische Kamera. Die Holzmaße werden
+  am gerenderten Mesh getestet.
+- Auf der vorderen Stirnseite links erscheint das PeakMemory-Logo als
+  dunkle Lasergravur ohne Hintergrundfläche, auch ohne persönlichen Gravurtext.
+  Nach der Produktfoto-Referenz ist es ca. 2,2 cm breit und 1 cm hoch,
+  vertikal mittig und mit 0,6 cm Abstand zum linken Rand; das Originalseitenverhältnis bleibt erhalten.
+- Höhen sind von 1× bis 8× einstellbar (Standard 2×). Material und
+  endgültige Gravurposition sind exemplarisch; Preise werden nicht erfunden.
+- Neue Konfigurator-Anfragen verwenden Konfiguration Version 2 mit Pflichtfeld
+  `elevationScale` und festem Produkt `base`. Bereits geöffnete alte Clients
+  mit Version 1 bleiben serverseitig kompatibel (damalige Höhenüberhöhung 1,5×).
 
----
+Bei fehlendem WebGL oder nicht verfügbarem Gelände kann eine gültige eigene
+Route weiterhin angefragt werden; der Vorschauzustand steht in der E-Mail.
+Eine Beispielroute kann nicht als persönliche Anfrage abgeschickt werden.
+Fehlgeschlagener Versand bewahrt die Eingaben. Bei fehlender Versandbestätigung
+nach einem Timeout vor erneutem Senden nachfragen, um Duplikate zu vermeiden.
 
-## 🤝 Team
+## Öffentliche Höhendaten, Lizenzen und Datenschutz
 
-**Peak Memory** – Gefertigt in Baden-Württemberg
+Der Browser liest GPX lokal. Erst das Absenden einer Anfrage überträgt
+Original-GPX, Kontaktdaten und Konfiguration an Cloudflare und über Resend an
+PeakMemory. Es gibt keine Route-Konten, öffentlich teilbaren Routen oder
+persistente Speicherung der GPX-Datei im Browser.
 
-- **Carolin Merz** – Mitgründerin (Albstadt)
-- **Alexander Weimer** – Mitgründer (Leonberg)
+Geländekacheln werden über `/terrain/{z}/{x}/{y}.png` von einem fest vorgegebenen
+AWS-Endpunkt abgerufen und gecacht. Die Kacheladressen geben die ungefähre
+Region preis; weder die vollständige GPX-Datei noch die Besucher-IP wird
+gezielt an den Geländeprovider weitergereicht. Cloudflare sieht die
+Besucher-IP und nutzt sie für den kurzlebigen Limiter. Route-Inhalte nicht
+in Logs schreiben.
 
-📧 Kontakt: peak.memory@web.de  
-📞 Telefon: +49 162 2701613
+- [Terrain Tiles im AWS Open Data Programm](https://registry.opendata.aws/terrain-tiles/)
+- [Terrarium-Format](https://github.com/tilezen/joerd/blob/master/docs/formats.md)
+- [Quellen und erforderliche Attribution](https://github.com/tilezen/joerd/blob/master/docs/attribution.md)
 
----
+Die aktuelle Quelle ist
+`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/...`.
+Die im Register genannte EU-Replik lieferte beim Prüfen 403 und wird nicht
+als Standard verwendet. Auflösung und Verfügbarkeit variieren; keine
+Verfügbarkeitsgarantie oder LiDAR-/Produktionsgenauigkeit behaupten.
+Die vollständigen Terrain-Credits stehen im Konfigurator; lokal gebündelte
+Software-Lizenzen werden nach `assets/licenses.txt` geschrieben.
 
-## 📄 Lizenz
+Vor Veröffentlichung die Datenlizenzen, Cache-Regeln, produktive
+Ratenbegrenzung und die aktualisierten Datenschutzhinweise durch die
+Verantwortlichen prüfen lassen. Ein automatisierter lokaler Test ersetzt
+weder diese Prüfung noch eine produktive Resend-Konfiguration.
 
-© 2025-2026 Peak Memory. Alle Rechte vorbehalten.
+## Kontakt
 
----
+PeakMemory - handgefertigt in Baden-Württemberg.
 
-## 🔧 Technische Details
+- Carolin Merz und Alexander Weimer
+- peak.memory@web.de
+- +49 162 2701613
 
-- **Framework:** Vanilla HTML/CSS/JavaScript (kein Build-Prozess)
-- **Hosting:** Cloudflare Worker + statische Assets
-- **Performance:** Lighthouse-Score Ziel: >90
-- **Browser-Support:** Chrome, Firefox, Safari, Edge (letzte 2 Versionen)
-
----
-
-## 💡 Für Entwickler
-
-### Custom Domain einrichten:
-1. GitHub → Settings → Pages → Custom domain
-2. DNS-Records bei deinem Provider setzen (A oder CNAME)
-3. SSL-Zertifikat wird automatisch erstellt (Let's Encrypt)
-
-### GitHub Actions (optional):
-Für erweiterte Builds (z.B. CSS-Minification, Bild-Optimierung) kann `.github/workflows/deploy.yml` erstellt werden.
-
----
-
-**Made with ❤️ in Baden-Württemberg**
+Copyright 2025-2026 Peak Memory. Alle Rechte an eigenen Inhalten vorbehalten.

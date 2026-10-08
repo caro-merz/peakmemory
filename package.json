@@ -1,0 +1,26 @@
+{
+  "name": "peakmemory",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "build:pages": "npm run build && node scripts/stage-pages.js",
+    "test": "node --test tests/*.test.js",
+    "dev": "node scripts/dev.js",
+    "test:browser": "node scripts/browser-test.js"
+  },
+  "dependencies": {
+    "fast-xml-parser": "5.11.2",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.64.0",
+    "wrangler": "4.148.0"
+  },
+  "overrides": {
+    "sharp": "0.35.5"
+  }
+}

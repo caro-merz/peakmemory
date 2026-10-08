@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Deine GPX-Route als interaktive 3D-Geländevorschau. Gestalte dein PeakMemory und frage dein persönliches Relief unverbindlich an.">
+  <link rel="canonical" href="https://peak-memory.de/configurator.html">
+  <link rel="icon" href="images/logo_grey.png" type="image/png">
+  <link rel="stylesheet" href="assets/configurator.css">
+  <title>Deine Route gestalten | PeakMemory</title>
+</head>
+<body class="configurator">
+  <a class="skip-link" href="#main">Zum Inhalt</a>
+  <header class="site-header">
+    <a href="/" aria-label="PeakMemory Startseite"><img src="images/logo_new.jpeg" alt="PeakMemory" width="160" height="44"></a>
+    <nav aria-label="Navigation"><a href="/#produkt">Produkte</a><a href="/#kontakt">Kontakt</a><a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer">Etsy-Shop ↗</a></nav>
+  </header>
+  <main id="main" class="page">
+    <div class="intro">
+      <p class="eyebrow">DEINE ROUTE. DEINE ERINNERUNG.</p>
+      <h1>Ein Abenteuer.<br>Ein Stück für Zuhause.</h1>
+      <p>Lade deine GPX-Datei hoch, entdecke die Landschaft in 3D und gestalte dein persönliches PeakMemory. Kostenlos, ohne Anmeldung und ohne Bestellung.</p>
+    </div>
+    <noscript><p class="error">Für die interaktive Vorschau brauchst du JavaScript. Du kannst deine Route stattdessen an <a href="mailto:peak.memory@web.de">peak.memory@web.de</a> senden.</p></noscript>
+    <div class="workspace">
+      <div class="settings">
+        <fieldset id="routeControls" class="card">
+          <legend><span class="step">1</span> Deine Route</legend>
+          <div id="dropzone" class="dropzone">
+            <label for="gpxFile">GPX-Datei auswählen</label>
+            <input id="gpxFile" type="file" accept=".gpx,application/gpx+xml">
+            <p>Oder eine Datei hierher ziehen.</p>
+            <small>Max. 5 MB · 100.000 Punkte · 100 Abschnitte</small>
+          </div>
+          <p id="fileName" class="file-name" aria-live="polite">Noch keine Route ausgewählt.</p>
+          <div class="actions"><button id="sample" type="button" class="secondary">Beispielroute testen</button><button id="remove" type="button" class="text-button" disabled>Entfernen</button></div>
+          <p class="hint">Exportiere deine Tour zum Beispiel aus Komoot, Strava oder Garmin als GPX-Datei. Höhendaten in der Datei sind nicht erforderlich.</p>
+          <details><summary>Was passiert mit meiner Route?</summary><p>Die GPX-Datei wird für die Vorschau nur in deinem Browser verarbeitet. Erst mit deiner Anfrage wird sie an uns gesendet. Über Cloudflare laden wir öffentliche Geländekacheln von AWS; diese Kacheladressen verraten die ungefähre Region, aber nicht deine vollständige Route. Keine Anmeldung, keine Routenspeicherung im Browser.</p></details>
+        </fieldset>
+        <fieldset id="productControls" class="card">
+          <legend><span class="step">2</span> Dein Erinnerungsstück</legend>
+          <label for="engraving">Gravurwunsch <span class="hint">(optional)</span></label>
+          <textarea id="engraving" maxlength="120" rows="3" aria-describedby="engravingHint">Deine Route
+100 km | 1000 hm | 10 h
+01.01.2026</textarea>
+          <small id="engravingHint">Max. 3 Zeilen und insgesamt 120 Zeichen.</small>
+          <label for="margin">Gelände rund um deine Route: <output id="marginValue" for="margin">15 %</output></label>
+          <input id="margin" type="range" min="5" max="50" step="5" value="15">
+          <div class="range-labels"><span>Wenig Rand</span><span>Mehr Landschaft</span></div>
+          <label for="elevationScale">Höhenüberhöhung: <output id="elevationValue" for="elevationScale">2×</output></label>
+          <input id="elevationScale" type="range" min="1" max="8" step="0.5" value="2">
+          <div class="range-labels"><span>1× · Natürliche Höhen</span><span>8× · Markantes Relief</span></div>
+        </fieldset>
+      </div>
+      <section class="preview card" aria-labelledby="previewTitle">
+        <div class="preview-heading"><div><p class="eyebrow">LIVE-VORSCHAU</p><h2 id="previewTitle">So könnte deine Erinnerung aussehen.</h2></div><span id="previewBadge" class="badge">Noch keine Route</span></div>
+        <div id="viewer" class="viewer">
+          <div id="placeholder" class="placeholder"><span aria-hidden="true">△</span><p>Deine Landschaft wartet auf dich.</p><small>Lade eine Route hoch oder probiere die Beispielroute.</small></div>
+        </div>
+        <p id="previewStatus" role="status" aria-live="polite">Wähle eine Route, um die 3D-Vorschau zu starten.</p>
+        <div class="actions view-actions" aria-label="3D-Ansicht steuern">
+          <button id="rotate" type="button" class="secondary" disabled>Drehen</button><button id="zoomIn" type="button" class="secondary" disabled>Vergrößern</button><button id="zoomOut" type="button" class="secondary" disabled>Verkleinern</button><button id="resetView" type="button" class="text-button" disabled>Ansicht zurücksetzen</button><button id="retry" type="button" class="secondary" hidden>Erneut laden</button>
+        </div>
+        <p class="hint">Ziehen zum Drehen · Mausrad oder zwei Finger zum Zoomen. Alternativ die Buttons verwenden.</p>
+        <p id="configurationSummary" class="configuration-summary"></p>
+        <div class="preview-note"><strong>Eine erste Idee, keine Produktionsfreigabe.</strong><p>Die Maße entsprechen einem 10 × 10 cm Relief auf 11 × 13,5 cm Holz mit 2 cm Stärke. Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Höhen sind <span id="elevationNote">2-fach</span> skaliert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, Gravur und Geländedetails sind beispielhaft. Deine unveränderte GPX-Datei wird mit der Anfrage gesendet. Deine verbindliche Produktionsvorschau erstellen wir persönlich und fertigen erst nach deiner Freigabe.</p></div>
+        <details class="attribution"><summary>Geländedaten &amp; Quellen</summary>
+          <p>Mapzen Terrain Tiles, bereitgestellt über das <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener noreferrer">AWS Open Data Programm</a>. <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener noreferrer">Datenquellen und Lizenzhinweise</a>:</p>
+          <ul>
+            <li>ArcticDEM DEM(s) created from DigitalGlobe, Inc., imagery and funded under National Science Foundation awards 1043681, 1559691, and 1542736.</li>
+            <li>Australia © Commonwealth of Australia (Geoscience Australia) 2017.</li>
+            <li>Austria © offene Daten Österreichs – Digitales Geländemodell (DGM) Österreich.</li>
+            <li>Canada contains information licensed under the Open Government Licence – Canada.</li>
+            <li>Europe produced using Copernicus data and information funded by the European Union – EU-DEM layers.</li>
+            <li>Global ETOPO1: U.S. National Oceanic and Atmospheric Administration.</li>
+            <li>Mexico: INEGI, Continental relief, 2016.</li>
+            <li>New Zealand Copyright 2011 Crown copyright (c) Land Information New Zealand and the New Zealand Government (All rights reserved).</li>
+            <li>Norway © Kartverket.</li>
+            <li>United Kingdom © Environment Agency copyright and/or database right 2015. All rights reserved.</li>
+            <li>United States 3DEP and global GMTED2010 and SRTM courtesy of the U.S. Geological Survey.</li>
+          </ul>
+        </details>
+      </section>
+    </div>
+    <section class="card inquiry" aria-labelledby="inquiryTitle">
+      <div><p class="eyebrow">DEIN NÄCHSTER SCHRITT</p><h2 id="inquiryTitle">Lass uns deine Route verewigen.</h2><p>Schicke uns deine Route und Gestaltungswünsche. Wir besprechen Format, Preis und die finale Vorschau mit dir. Das ist eine unverbindliche Anfrage, keine Bestellung.</p><p id="inquiryHint" class="hint">Bitte lade deine eigene GPX-Datei hoch. Die Beispielroute kann nicht angefragt werden.</p></div>
+      <form id="inquiryForm">
+        <fieldset id="inquiryFields">
+          <label for="name">Dein Name</label><input id="name" name="name" autocomplete="name" maxlength="200" required>
+          <label for="email">E-Mail-Adresse</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" required>
+          <label for="message">Deine Nachricht</label><textarea id="message" name="message" minlength="5" maxlength="4000" rows="4" required placeholder="Zum Beispiel gewünschtes Format, Datum oder besondere Wünsche"></textarea>
+          <p class="hint">Mit dem Absenden werden deine Kontaktdaten, Nachricht, GPX-Datei und Konfiguration über Cloudflare und Resend an uns übermittelt. <a href="/#datenschutz">Datenschutzhinweise</a></p>
+          <button id="submitInquiry" type="submit" class="primary" disabled>Unverbindlich anfragen</button>
+        </fieldset>
+        <p id="inquiryStatus" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+  <footer><span>PeakMemory · Handgefertigt in Baden-Württemberg</span><div><a href="/#kontakt">Kontakt &amp; Rechtliches</a><a href="/#datenschutz">Datenschutz</a><a href="assets/licenses.txt">Software-Lizenzen</a></div></footer>
+  <script type="module" src="assets/configurator.js"></script>
+</body>
+</html>

@@ -108,6 +108,10 @@ Den Secret-Wert niemals in Dateien eintragen. Die Resend-Absenderdomain
 Reply-To. Den existierenden Secret nicht unnötig ersetzen.
 
 `wrangler.toml` veröffentlicht nur `dist/` und stellt `ASSETS` bereit.
+Die dort konfigurierte Build-Anweisung `npm run build` erzeugt vor
+`wrangler dev` und `wrangler deploy` automatisch die Website und ihre Assets.
+Für Cloudflare Workers Builds kann die Build command leer bleiben; als
+Deploy command genügt `npx wrangler deploy` (Root directory: `/`).
 Der Worker übernimmt `/contact`, `/terrain/...` und den www-Redirect.
 Unbekannte Dateien liefern 404 statt eines vermeintlich erfolgreichen
 Homepage-Fallbacks. Keine Quellen, GPX-Testdateien, Python-Umgebung oder

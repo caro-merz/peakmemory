@@ -1,8 +1,9 @@
 import { MAX_GPX_SIZE, parseGpx, validateFile } from '../shared/gpx.js';
 import { parseConfiguration } from '../shared/configuration.js';
+import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
 
 export const CONTACT_TIMEOUT_MS = 10000;
-export const MAX_CONTACT_SIZE = MAX_GPX_SIZE + 64 * 1024;
+export const MAX_CONTACT_SIZE = MAX_GPX_SIZE + MAX_PREVIEW_SIZE + 64 * 1024;
 const RECIPIENT = 'peak.memory@web.de';
 const SENDER = 'kontakt@peak-memory.de';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -80,7 +81,7 @@ export async function handleContact(request, env) {
       data = await body.json();
     } else {
       const form = await body.formData();
-      for (const key of ['name', 'email', 'type', 'message', 'gpxFile', 'configuration']) {
+      for (const key of ['name', 'email', 'type', 'message', 'gpxFile', 'configuration', 'previewImage']) {
         if (form.getAll(key).length > 1) throw new Error('Doppelte Formularfelder.');
       }
       data = Object.fromEntries(form);
@@ -100,11 +101,31 @@ export async function handleContact(request, env) {
 
   let configuration;
   let attachment;
+  let previewAttachment;
   try {
     configuration = parseConfiguration(data.configuration);
     attachment = await createAttachment(gpxFile);
     if (configuration && !attachment) {
       throw new Error('Bitte deine persönliche GPX-Datei für die Konfigurator-Anfrage hochladen.');
+    }
+    if (data.previewImage != null) {
+      const image = data.previewImage;
+      if (!configuration || configuration.preview !== 'ready' || typeof image !== 'object'
+        || typeof image.arrayBuffer !== 'function' || image.type !== 'image/png'
+        || !image.size || image.size > MAX_PREVIEW_SIZE) {
+        throw new Error('Ungültiges Vorschaubild (PNG, maximal 1 MB).');
+      }
+      const bytes = new Uint8Array(await image.arrayBuffer());
+      const header = [137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82];
+      if (bytes.length !== image.size || bytes.length < 33 || !header.every((value, index) => bytes[index] === value)) {
+        throw new Error('Ungültiges PNG-Vorschaubild.');
+      }
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      const width = view.getUint32(16), height = view.getUint32(20);
+      if (!width || !height || width > MAX_PREVIEW_DIMENSION || height > MAX_PREVIEW_DIMENSION) {
+        throw new Error('Das Vorschaubild hat ungültige Abmessungen.');
+      }
+      previewAttachment = { filename: 'peakmemory-vorschau.png', content: base64(bytes), content_type: 'image/png' };
     }
   } catch (error) {
     return json({ error: error instanceof TypeError ? 'Ungültiger Dateiupload.' : error.message }, 400);
@@ -124,11 +145,13 @@ export async function handleContact(request, env) {
       `Höhenüberhöhung: ${configuration.version === 2 ? configuration.elevationScale : 1.5}×`,
       `Online-Vorschau: ${configuration.preview === 'ready' ? 'bereit (illustrativ)' : 'nicht verfügbar'}`,
       'Die endgültige Produktionsvorschau wird separat abgestimmt.');
+    lines.push(previewAttachment ? 'Vorschaubild: als PNG angehängt (illustrative Online-Konfiguration).'
+      : 'Vorschaubild: nicht angehängt.');
   }
   const payload = {
     from: SENDER, to: RECIPIENT, reply_to: safeEmail,
     subject: `Anfrage von ${safeName} – ${safeType}`, text: lines.join('\n'),
-    ...(attachment ? { attachments: [attachment] } : {}),
+    ...(attachment ? { attachments: [attachment, ...(previewAttachment ? [previewAttachment] : [])] } : {}),
   };
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CONTACT_TIMEOUT_MS);

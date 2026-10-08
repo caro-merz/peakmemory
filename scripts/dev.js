@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import worker from '../worker.js';
+import { MAX_CONTACT_SIZE } from '../src/server/contact.js';
 
 const types = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -42,7 +43,7 @@ export async function startDevServer(port = 8000) {
       let size = 0;
       for await (const chunk of incoming) {
         size += chunk.length;
-        if (size > 6 * 1024 * 1024) { outgoing.writeHead(413); outgoing.end('Request too large'); return; }
+        if (size > MAX_CONTACT_SIZE) { outgoing.writeHead(413); outgoing.end('Request too large'); return; }
         chunks.push(chunk);
       }
       const request = new Request(`http://127.0.0.1:${server.address().port}${incoming.url}`, {

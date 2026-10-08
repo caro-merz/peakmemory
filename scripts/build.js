@@ -43,7 +43,7 @@ for (let index = 0; index < packages.length; index += 1) {
 }
 await writeFile('assets/licenses.txt', licenses + '\nQuicksand Book\n' + await readFile('fonts/OFL.txt', 'utf8'));
 await mkdir('dist', { recursive: true });
-for (const entry of ['index.html', 'configurator.html', 'images', 'fonts', 'assets', '_headers', '_redirects', 'robots.txt', 'sitemap.xml']) {
+for (const entry of ['index.html', 'configurator.html', 'gpx-hilfe.html', 'images', 'fonts', 'assets', '_headers', '_redirects', 'robots.txt', 'sitemap.xml']) {
   await cp(entry, path.join('dist', entry), { recursive: true });
 }
 const configurator = await readFile('configurator.html', 'utf8');

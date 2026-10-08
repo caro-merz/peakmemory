@@ -66,6 +66,15 @@
 .configurator-embedded .section-subtitle{font-size:1.1rem;color:var(--muted);max-width:600px;margin-bottom:3rem}
 .configurator-embedded .preview{top:96px}
 .configurator-embedded .attribution ul{list-style:disc}
+.configurator .gpx-guide{max-width:1100px}
+.configurator .guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+.configurator .guide-options{display:flex;flex-wrap:wrap;gap:12px}
+.configurator .guide-options a{display:inline-block;padding:10px 16px;border-radius:8px;text-decoration:none}
+.configurator .gpx-guide ol{padding-left:24px;margin:0 0 20px}
+.configurator .gpx-guide li{padding-left:4px;margin-bottom:12px}
+.configurator .gpx-guide section[id]{scroll-margin-top:24px}
+.configurator .guide-cta{display:inline-block;padding:12px 20px;border-radius:8px;background:var(--accent);color:white;text-decoration:none;font-weight:600}
+@media(max-width:700px){.configurator .guide-grid{grid-template-columns:1fr}}
 @media(max-width:960px){.configurator .workspace{grid-template-columns:290px minmax(0,1fr);gap:16px}.configurator .card{padding:20px}.configurator .viewer{height:360px}.configurator .preview-heading{display:block}.configurator .badge{display:inline-block;margin-bottom:12px}.configurator .inquiry{gap:30px}}
-@media(max-width:700px){.configurator .site-header{padding:16px 20px;gap:12px}.configurator .site-header img{height:34px}.configurator nav{gap:12px;font-size:.75rem}.configurator .page{padding:0 16px}.configurator .intro{padding-top:32px}.configurator .workspace,.configurator .inquiry{grid-template-columns:1fr}.configurator .preview{position:static}.configurator .viewer{height:350px}.configurator .settings{display:contents}.configurator .settings .card:nth-child(2){grid-row:3}.configurator .inquiry{gap:20px}.configurator .inquiry>div{padding:0}.configurator footer{flex-direction:column;padding:24px 16px}.configurator footer div{flex-wrap:wrap}}
+@media(max-width:700px){.configurator .site-header{padding:16px 20px;gap:12px}.configurator .site-header img{height:34px}.configurator nav{gap:12px;font-size:.75rem}.configurator .page{padding:0 16px}.configurator .intro{padding-top:32px}.configurator .workspace,.configurator .inquiry{grid-template-columns:1fr}.configurator .preview{position:static}.configurator .viewer{height:350px}.configurator .settings{display:contents}.configurator .inquiry{gap:20px}.configurator .inquiry>div{padding:0}.configurator footer{flex-direction:column;padding:24px 16px}.configurator footer div{flex-wrap:wrap}}
 @media(prefers-reduced-motion:no-preference){.configurator button,.configurator a{transition:background-color .15s,color .15s}.configurator button:not(:disabled):hover{filter:brightness(.95)}}

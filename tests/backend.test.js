@@ -7,6 +7,7 @@ import { onRequest as pagesTerrain } from '../functions/terrain/[[path]].js';
 import { handleContact, MAX_CONTACT_SIZE } from '../src/server/contact.js';
 import { handleTerrain, MAX_TILE_SIZE, TERRAIN_CACHE_TTL } from '../src/server/terrain.js';
 import { MAX_GPX_SIZE } from '../src/shared/gpx.js';
+import { MAX_PREVIEW_SIZE } from '../src/shared/preview.js';
 
 const originalFetch = globalThis.fetch;
 const originalCaches = globalThis.caches;
@@ -132,6 +133,45 @@ test('configurator requests require a personal file even for unavailable preview
     const response = await handleContact(formContact({ configuration: JSON.stringify({ ...configuration, preview }) }), env);
     assert.equal(response.status, 400);
     assert.match((await response.json()).error, /persönliche GPX/);
+  }
+});
+
+test('configurator screenshot is attached as PNG alongside unchanged GPX', async () => {
+  const payloads = captureMail();
+  const image = new File([png()], 'arbitrary-name.png', { type: 'image/png' });
+  const response = await handleContact(formContact({
+    configuration: JSON.stringify(configuration), previewImage: image,
+  }, new File([gpx], 'personal.gpx')), env);
+  assert.equal(response.status, 200);
+  assert.equal(payloads[0].attachments.length, 2);
+  assert.equal(Buffer.from(payloads[0].attachments[0].content, 'base64').toString(), gpx);
+  assert.equal(payloads[0].attachments[1].filename, 'peakmemory-vorschau.png');
+  assert.equal(payloads[0].attachments[1].content_type, 'image/png');
+  assert.deepEqual(Buffer.from(payloads[0].attachments[1].content, 'base64'), Buffer.from(png()));
+  assert.match(payloads[0].text, /Vorschaubild: als PNG angehängt/);
+});
+
+test('invalid, oversized or unconfigured screenshots reject before mail delivery', async () => {
+  globalThis.fetch = () => assert.fail('Invalid screenshot must not send mail');
+  const oversizedDimensions = png();
+  new DataView(oversizedDimensions.buffer).setUint32(16, 2049);
+  for (const image of [
+    'not-a-file',
+    new File([png()], 'preview.jpg', { type: 'image/jpeg' }),
+    new File([], 'preview.png', { type: 'image/png' }),
+    new File(['not png'], 'preview.png', { type: 'image/png' }),
+    new File([oversizedDimensions], 'preview.png', { type: 'image/png' }),
+    new File([new Uint8Array(MAX_PREVIEW_SIZE + 1)], 'preview.png', { type: 'image/png' }),
+  ]) {
+    assert.equal((await handleContact(formContact({
+      configuration: JSON.stringify(configuration), previewImage: image,
+    }, new File([gpx], 'personal.gpx')), env)).status, 400);
+  }
+  for (const config of [undefined, { ...configuration, preview: 'unavailable' }]) {
+    assert.equal((await handleContact(formContact({
+      ...(config ? { configuration: JSON.stringify(config) } : {}),
+      previewImage: new File([png()], 'preview.png', { type: 'image/png' }),
+    }, new File([gpx], 'personal.gpx')), env)).status, 400);
   }
 });
 

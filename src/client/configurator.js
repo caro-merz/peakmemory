@@ -203,6 +203,10 @@ form.addEventListener('submit', async event => {
   get('inquiryStatus').textContent = '';
   updateActions();
   try {
+    if (preview === 'ready') {
+      if (!viewer) throw new Error('Die Vorschau ist nicht mehr verfügbar. Bitte lade sie erneut.');
+      body.set('previewImage', await viewer.screenshot(), 'peakmemory-vorschau.png');
+    }
     const response = await fetch('/contact', { method: 'POST', body, signal: AbortSignal.timeout(30000) });
     const result = await response.json();
     if (!response.ok || result.ok !== true) throw new Error(result.error || 'Die Anfrage konnte nicht gesendet werden.');

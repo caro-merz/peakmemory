@@ -8,12 +8,18 @@ Datei und keine verbindliche Produktionsfreigabe.
 ## Funktionen
 
 - Eigene GPX-Datei oder unverbindliche Beispielroute in interaktivem 3D-Gelände.
+  `gpx-hilfe.html` erklärt den GPX-Export aus Komoot, Strava und Garmin Connect
+  sowie Alternativen ohne Aufzeichnung. Die Hilfe ist neben den Uploads verlinkt,
+  öffnet sich ohne Verlust der Konfiguration in einem neuen Tab und funktioniert
+  auch ohne JavaScript. Anbieter-Hilfelinks bei Änderungen der Export-Menüs prüfen.
   „Beispielroute testen“ verwendet die bereitgestellte Marathon-Strecke des
   Allgäu Panorama Marathons aus `src/client/sample.gpx`, beim Build lokal gebündelt.
 - Vollständiger Konfigurator direkt nach dem Hero auf der Startseite, zusätzlich
   weiterhin separat unter `configurator.html`. Der Build übernimmt die gemeinsame
   Oberfläche aus dieser Datei in den Platzhalter von `index.html`; keine zweite
   Kopie pflegen. Konfigurator-CSS ist auf `.configurator` begrenzt.
+  Auf dem Smartphone folgen Route, Erinnerungsstück und Live-Vorschau
+  untereinander; am Desktop bleiben die Einstellungen links neben der Vorschau.
 - Relief auf Eiche-Holzsockel (ohne Produktvariantenauswahl), Gravurwunsch und Geländerand.
 - Höhenüberhöhung von 1× bis 8×, Standard 2×. Änderungen skalieren Gelände
   und Route gemeinsam ohne erneuten Geländeabruf.
@@ -29,6 +35,9 @@ Datei und keine verbindliche Produktionsfreigabe.
   Überschreitet die längste Zeile 8 cm, werden alle Zeilen proportional
   verkleinert. Kürzere Texte werden nicht künstlich auf volle Breite gestreckt.
 - Unverbindliche Anfrage mit Original-GPX und Konfiguration per E-Mail.
+  Bei verfügbarer Vorschau wird die aktuelle 3D-Ansicht als PNG angehängt
+  (maximal 1 MB und 2048 Pixel je Seite). Screenshot-Fehler werden vor dem Versand
+  angezeigt; ohne verfügbare Vorschau bleibt die Anfrage ohne Bild möglich.
 - Etsy bleibt der Bestellkanal; keine Bezahlung oder automatische Preisberechnung.
 - Die finale Produktionsvorschau wird persönlich erstellt und vor Fertigung freigegeben.
 
@@ -175,6 +184,9 @@ schützt diese alternativen Zugänge nicht.
   Holz für die mittig platzierte Gravur.
 - Die Produktvorschau verwendet eine perspektivische Kamera. Die Holzmaße werden
   am gerenderten Mesh getestet.
+- Die Eiche-Vorschau verwendet lokal erzeugte, deterministische Maserung mit
+  feinen Poren und dezenter Bump-Struktur. Flächen und Stirnholz haben getrennte
+  Texturen; die Maserung ist exemplarisch, nicht die eines konkreten Holzstücks.
 - Auf der vorderen Stirnseite links erscheint das PeakMemory-Logo als
   dunkle Lasergravur ohne Hintergrundfläche, auch ohne persönlichen Gravurtext.
   Nach der Produktfoto-Referenz ist es ca. 2,2 cm breit und 1 cm hoch,
@@ -194,7 +206,7 @@ nach einem Timeout vor erneutem Senden nachfragen, um Duplikate zu vermeiden.
 ## Öffentliche Höhendaten, Lizenzen und Datenschutz
 
 Der Browser liest GPX lokal. Erst das Absenden einer Anfrage überträgt
-Original-GPX, Kontaktdaten und Konfiguration an Cloudflare und über Resend an
+Original-GPX, Kontaktdaten, Konfiguration und bei verfügbarer Vorschau das PNG-Bild an Cloudflare und über Resend an
 PeakMemory. Es gibt keine Route-Konten, öffentlich teilbaren Routen oder
 persistente Speicherung der GPX-Datei im Browser.
 

@@ -5,6 +5,7 @@ import { drawEngraving, loadEngravingFont } from './engraving.js';
 import { PRODUCT_LAYOUT } from '../shared/product.js';
 import { loadLogoCanvas } from './logo.js';
 import { createWoodBase } from './wood.js';
+import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
 
 function terrainMesh(grid) {
   const positions = [], indices = [];
@@ -67,11 +68,17 @@ function routeMesh(path) {
 }
 
 function dispose(object) {
+  const textures = new Set(), materials = new Set();
   object.traverse(child => {
     child.geometry?.dispose();
-    const materials = child.material ? (Array.isArray(child.material) ? child.material : [child.material]) : [];
-    for (const material of materials) { material.map?.dispose(); material.dispose(); }
+    for (const material of child.material ? (Array.isArray(child.material) ? child.material : [child.material]) : []) {
+      materials.add(material);
+      if (material.map) textures.add(material.map);
+      if (material.bumpMap) textures.add(material.bumpMap);
+    }
   });
+  for (const texture of textures) texture.dispose();
+  for (const material of materials) material.dispose();
 }
 
 export async function createViewer(container, onUnavailable) {
@@ -171,6 +178,20 @@ export async function createViewer(container, onUnavailable) {
   resize(); reset();
   return {
     show, personalize, clear, reset,
+    async screenshot() {
+      renderer.render(scene, camera);
+      const canvas = document.createElement('canvas');
+      const source = renderer.domElement;
+      const scale = Math.min(1, MAX_PREVIEW_DIMENSION / Math.max(source.width, source.height));
+      canvas.width = Math.max(1, Math.round(source.width * scale));
+      canvas.height = Math.max(1, Math.round(source.height * scale));
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Das Vorschaubild konnte nicht erstellt werden.');
+      context.drawImage(source, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob || blob.size > MAX_PREVIEW_SIZE) throw new Error('Das Vorschaubild konnte nicht erstellt werden oder ist zu groß. Bitte verkleinere die Vorschau und versuche es erneut.');
+      return blob;
+    },
     setElevationScale(elevationScale, engraving) {
       if (grid) show(grid, elevationScale, engraving);
     },

@@ -1,0 +1,2 @@
+export const MAX_PREVIEW_SIZE = 1024 * 1024;
+export const MAX_PREVIEW_DIMENSION = 2048;

@@ -35,10 +35,11 @@
           <p id="fileName" class="file-name" aria-live="polite">Noch keine Route ausgewählt.</p>
           <div class="actions"><button id="sample" type="button" class="secondary">Beispielroute testen</button><button id="remove" type="button" class="text-button" disabled>Entfernen</button></div>
           <p class="hint">Exportiere deine Tour zum Beispiel aus Komoot, Strava oder Garmin als GPX-Datei. Höhendaten in der Datei sind nicht erforderlich.</p>
+          <p class="hint"><a href="gpx-hilfe.html" target="_blank" rel="noopener noreferrer">Wie bekomme ich meine GPX-Datei? ↗</a></p>
           <details><summary>Was passiert mit meiner Route?</summary><p>Die GPX-Datei wird für die Vorschau nur in deinem Browser verarbeitet. Erst mit deiner Anfrage wird sie an uns gesendet. Über Cloudflare laden wir öffentliche Geländekacheln von AWS; diese Kacheladressen verraten die ungefähre Region, aber nicht deine vollständige Route. Keine Anmeldung, keine Routenspeicherung im Browser.</p></details>
         </fieldset>
         <fieldset id="productControls" class="card">
-          <legend><span class="step">2</span> Dein Erinnerungsstück</legend>
+          <legend><span class="step">2</span> Deine Personalisierung</legend>
           <label for="engraving">Gravurwunsch <span class="hint">(optional)</span></label>
           <textarea id="engraving" maxlength="120" rows="3" aria-describedby="engravingHint">Deine Route
 100 km | 1000 hm | 10 h
@@ -89,7 +90,7 @@
           <label for="name">Dein Name</label><input id="name" name="name" autocomplete="name" maxlength="200" required>
           <label for="email">E-Mail-Adresse</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" required>
           <label for="message">Deine Nachricht</label><textarea id="message" name="message" minlength="5" maxlength="4000" rows="4" required placeholder="Zum Beispiel gewünschtes Format, Datum oder besondere Wünsche"></textarea>
-          <p class="hint">Mit dem Absenden werden deine Kontaktdaten, Nachricht, GPX-Datei und Konfiguration über Cloudflare und Resend an uns übermittelt. <a href="/#datenschutz">Datenschutzhinweise</a></p>
+          <p class="hint">Mit dem Absenden werden deine Kontaktdaten, Nachricht, GPX-Datei, Konfiguration und bei verfügbarer Vorschau ein Bild der aktuellen 3D-Ansicht über Cloudflare und Resend an uns übermittelt. <a href="/#datenschutz">Datenschutzhinweise</a></p>
           <button id="submitInquiry" type="submit" class="primary" disabled>Unverbindlich anfragen</button>
         </fieldset>
         <p id="inquiryStatus" role="status" aria-live="polite"></p>

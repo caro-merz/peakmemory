@@ -31,6 +31,22 @@ function terrainPng() {
 }
 
 const server = await startDevServer(0);
+async function assertMobileOrder(page) {
+  const route = await page.locator('#routeControls').boundingBox();
+  const product = await page.locator('#productControls').boundingBox();
+  const preview = await page.locator('.preview').boundingBox();
+  assert.ok(route.y + route.height <= product.y);
+  assert.ok(product.y + product.height <= preview.y);
+}
+
+async function assertDesktopLayout(page) {
+  const route = await page.locator('#routeControls').boundingBox();
+  const product = await page.locator('#productControls').boundingBox();
+  const preview = await page.locator('.preview').boundingBox();
+  assert.equal(route.x, product.x);
+  assert.ok(route.x + route.width <= preview.x);
+}
+
 let browser;
 try {
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -39,7 +55,7 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   const png = terrainPng();
-  let terrainFailure = false, terrainOffline = false, emailFailure = false, submitted = null, terrainDelay = 0, terrainRequests = 0;
+  let terrainFailure = false, terrainOffline = false, emailFailure = false, submitted = null, submittedImage = null, terrainDelay = 0, terrainRequests = 0;
   await page.route('**/terrain/**', async request => {
     terrainRequests += 1;
     if (terrainOffline) { await request.abort('connectionrefused'); return; }
@@ -49,14 +65,26 @@ try {
       : {status:200,contentType:'image/png',body:png});
   });
   await page.route('**/contact', async request => {
-    submitted = request.request().postDataBuffer().toString();
+    const bytes = request.request().postDataBuffer();
+    submitted = bytes.toString();
+    const multipart = await new Response(bytes, { headers: { 'Content-Type': request.request().headers()['content-type'] } }).formData();
+    const image = multipart.get('previewImage');
+    submittedImage = image ? Buffer.from(await image.arrayBuffer()) : null;
+    if (image) {
+      assert.equal(image.name, 'peakmemory-vorschau.png');
+      assert.equal(image.type, 'image/png');
+      assert.ok(image.size > 1000 && image.size <= 1024 * 1024);
+      assert.deepEqual([...submittedImage.subarray(0, 8)], [137,80,78,71,13,10,26,10]);
+    }
     await request.fulfill({status:emailFailure?502:200,contentType:'application/json',
       body:emailFailure?'{"error":"Test: E-Mail nicht gesendet"}':'{"ok":true}'});
   });
   const url = `http://127.0.0.1:${server.address().port}`;
   await page.goto(url + '/configurator.html');
+  await assertDesktopLayout(page);
   const defaultEngraving = 'Deine Route\n100 km | 1000 hm | 10 h\n01.01.2026';
   assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
+  assert.equal(await page.locator('#routeControls a[href="gpx-hilfe.html"]').getAttribute('target'), '_blank');
   assert.equal(await page.locator('#submitInquiry').isDisabled(), true);
   await page.locator('#sample').click();
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Beispielroute');
@@ -92,6 +120,18 @@ try {
   assert.equal(await page.locator('#submitInquiry').isEnabled(), true);
   await page.locator('#name').fill('Test Person'); await page.locator('#email').fill('test@example.invalid');
   await page.locator('#message').fill('Automatisierte Testanfrage ohne echten Versand.');
+  await page.evaluate(() => {
+    globalThis.originalToBlob = HTMLCanvasElement.prototype.toBlob;
+    HTMLCanvasElement.prototype.toBlob = function(callback) { callback(null); };
+  });
+  await page.locator('#submitInquiry').click();
+  await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Vorschaubild'));
+  assert.equal(submitted, null);
+  assert.equal(await page.locator('#name').inputValue(), 'Test Person');
+  await page.evaluate(() => {
+    HTMLCanvasElement.prototype.toBlob = globalThis.originalToBlob;
+    delete globalThis.originalToBlob;
+  });
   emailFailure = true;
   await page.locator('#submitInquiry').click();
   await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Versand fehlgeschlagen'));
@@ -103,6 +143,12 @@ try {
   assert.ok(submitted.includes('"elevationScale":8'));
   assert.ok(submitted.includes('"preview":"ready"'));
   assert.ok(submitted.includes('"engraving":"Meine Tour\\nSommer 2026\\nFür dich"'));
+  assert.ok(submittedImage);
+  const firstImage = submittedImage;
+  await page.locator('#rotate').click();
+  await page.locator('#submitInquiry').click();
+  await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Versand fehlgeschlagen'));
+  assert.notDeepEqual(submittedImage, firstImage);
   if (process.env.SCREENSHOT_PATH) await page.screenshot({path:process.env.SCREENSHOT_PATH,fullPage:true});
   emailFailure = false;
   await page.locator('#submitInquiry').click();
@@ -137,6 +183,7 @@ try {
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
   await page.setViewportSize({width:390,height:844});
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await assertMobileOrder(page);
   await page.locator('#engraving').focus(); await page.keyboard.press('Tab');
   assert.equal(await page.locator('#margin').evaluate(element => element === document.activeElement), true);
   await page.locator('#margin').fill('5'); await page.locator('#margin').fill('35');
@@ -156,6 +203,9 @@ try {
   await page.setViewportSize({width:800,height:800});
   assert.ok(await page.locator('.navbar .container').evaluate(element => element.scrollWidth <= element.clientWidth));
   assert.equal(await page.locator('#hero + #konfigurator + #produkt').count(), 1);
+  await assertDesktopLayout(page);
+  assert.equal(await page.locator('#routeControls a[href="gpx-hilfe.html"]').count(), 1);
+  assert.equal(await page.locator('#kontakt a[href="gpx-hilfe.html"]').count(), 1);
   assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
   assert.equal(await page.locator('.navbar a[href="#konfigurator"]').count(), 1);
   assert.deepEqual(await page.evaluate(() => {
@@ -178,8 +228,10 @@ try {
   await page.locator('#submitInquiry').click();
   await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Deine Anfrage wurde gesendet'));
   assert.match(submitted, /Startseite/);
+  assert.ok(submittedImage);
   await page.setViewportSize({width:390,height:844});
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await assertMobileOrder(page);
   assert.equal(await page.locator('#viewer canvas').count(), 1);
   const unavailable = await browser.newContext();
   await unavailable.addInitScript(() => {
@@ -196,8 +248,38 @@ try {
   await noWebgl.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Nicht verfügbar');
   assert.equal(await noWebgl.locator('#submitInquiry').isEnabled(), true);
   assert.equal(await noWebgl.locator('#viewer canvas').count(), 0);
+  let unavailableImage = 'not submitted';
+  await noWebgl.route('**/contact', async request => {
+    const form = await new Response(request.request().postDataBuffer(), {
+      headers: { 'Content-Type': request.request().headers()['content-type'] },
+    }).formData();
+    unavailableImage = form.get('previewImage');
+    await request.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
+  });
+  await noWebgl.locator('#name').fill('No WebGL');
+  await noWebgl.locator('#email').fill('no-webgl@example.invalid');
+  await noWebgl.locator('#message').fill('Request without an available preview.');
+  await noWebgl.locator('#submitInquiry').click();
+  await noWebgl.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('wurde gesendet'));
+  assert.equal(unavailableImage, null);
+  const guideContext = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1365, height: 950 } });
+  const guide = await guideContext.newPage();
+  assert.equal((await guide.goto(url + '/gpx-hilfe.html')).status(), 200);
+  assert.equal(await guide.getByRole('heading', { level: 1 }).innerText(), 'Wie bekomme ich meine GPX-Datei?');
+  for (const id of ['komoot', 'strava', 'garmin', 'ohne-aufzeichnung']) {
+    assert.equal(await guide.locator(`#${id}`).count(), 1);
+    assert.equal(await guide.locator(`a[href="#${id}"]`).count(), 1);
+  }
+  assert.equal(await guide.locator('.guide-cta').getAttribute('href'), '/#konfigurator');
+  await guide.setViewportSize({ width: 390, height: 844 });
+  const guideWidth = await guide.locator('body').boundingBox();
+  for (const card of await guide.locator('main .card').all()) {
+    const box = await card.boundingBox();
+    assert.ok(box.x >= 0 && box.x + box.width <= guideWidth.width);
+  }
+  await guideContext.close();
   assert.deepEqual(errors, []);
-  console.log('Browser checks passed: standalone and homepage configurator, independent contact upload, sample, personal upload/drop, 3D controls, customization, margin, inquiry success/failure, retry, removal, mobile, privacy, no WebGL.');
+  console.log('Browser checks passed: standalone and homepage configurator, GPX guide without JavaScript, independent contact upload, sample, personal upload/drop, 3D controls, customization, margin, inquiry success/failure, retry, removal, mobile, privacy, no WebGL.');
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

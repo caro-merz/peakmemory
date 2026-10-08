@@ -187,6 +187,9 @@ schützt diese alternativen Zugänge nicht.
 - Die Eiche-Vorschau verwendet lokal erzeugte, deterministische Maserung mit
   feinen Poren und dezenter Bump-Struktur. Flächen und Stirnholz haben getrennte
   Texturen; die Maserung ist exemplarisch, nicht die eines konkreten Holzstücks.
+- Die Holzkanten sind leicht gerundet (illustrativer Radius 2 mm), um die
+  gebrochenen Kanten des Produkts darzustellen. Außenmaße, flache Auflagefläche
+  des Reliefs und Gravurflächen bleiben unverändert.
 - Auf der vorderen Stirnseite links erscheint das PeakMemory-Logo als
   dunkle Lasergravur ohne Hintergrundfläche, auch ohne persönlichen Gravurtext.
   Nach der Produktfoto-Referenz ist es ca. 2,2 cm breit und 1 cm hoch,

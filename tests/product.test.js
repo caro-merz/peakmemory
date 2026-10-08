@@ -34,6 +34,19 @@ test('oak textures have deterministic grain and different top, side and end patt
 
 test('wood face materials use local grain textures and subtle bump without changing dimensions', () => {
   const base = createWoodBase();
+  assert.equal(base.geometry.type, 'RoundedBoxGeometry');
+  assert.equal(base.geometry.parameters.radius * 100, 2);
+  assert.deepEqual(base.geometry.groups.map(group => group.materialIndex), [0, 1, 2, 3, 4, 5]);
+  const normals = base.geometry.getAttribute('normal');
+  let bevelVertices = 0;
+  for (let index = 0; index < normals.count; index += 1) {
+    const components = [normals.getX(index), normals.getY(index), normals.getZ(index)];
+    if (components.filter(value => Math.abs(value) > 0.01).length > 1) bevelVertices += 1;
+  }
+  assert.ok(bevelVertices > 0);
+  const flatTop = PRODUCT_LAYOUT.woodDepth / 2 - PRODUCT_LAYOUT.woodEdgeRadius;
+  assert.ok(PRODUCT_LAYOUT.engravingCenterZ + PRODUCT_LAYOUT.engravingDepth / 2 - PRODUCT_LAYOUT.woodCenterZ < flatTop);
+  assert.ok(PRODUCT_LAYOUT.logoHeight / 2 < PRODUCT_LAYOUT.woodThickness / 2 - PRODUCT_LAYOUT.woodEdgeRadius);
   assert.equal(base.material.length, 6);
   assert.equal(new Set(base.material).size, 3);
   for (const material of new Set(base.material)) {

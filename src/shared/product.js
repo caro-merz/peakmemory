@@ -4,6 +4,7 @@ export const PRODUCT_DIMENSIONS_CM = Object.freeze({
   woodDepth: 13.5,
   topBorder: 0.5,
   woodThickness: 2,
+  woodEdgeRadius: 0.2,
   engravingWidth: 8,
   engravingFontSize: 0.5,
 });
@@ -21,6 +22,7 @@ export const PRODUCT_LAYOUT = Object.freeze({
   engravingWidth: PRODUCT_DIMENSIONS_CM.engravingWidth / relief,
   engravingDepth: 0.2,
   woodThickness: PRODUCT_DIMENSIONS_CM.woodThickness / relief,
+  woodEdgeRadius: PRODUCT_DIMENSIONS_CM.woodEdgeRadius / relief,
   woodCenterY: 0.02 - PRODUCT_DIMENSIONS_CM.woodThickness / relief / 2,
   logoWidth: 0.22,
   logoHeight: 0.22 * 323 / 708,

@@ -1,4 +1,5 @@
-import { BoxGeometry, DataTexture, LinearFilter, LinearMipmapLinearFilter, Mesh, MeshStandardMaterial, RGBAFormat, SRGBColorSpace } from 'three';
+import { DataTexture, LinearFilter, LinearMipmapLinearFilter, Mesh, MeshStandardMaterial, RGBAFormat, SRGBColorSpace } from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { PRODUCT_LAYOUT } from '../shared/product.js';
 
 function random(x, y) {
@@ -50,7 +51,7 @@ function woodMaterial(face) {
 }
 
 export function createWoodBase() {
-  const geometry = new BoxGeometry(PRODUCT_LAYOUT.woodWidth, PRODUCT_LAYOUT.woodThickness, PRODUCT_LAYOUT.woodDepth);
+  const geometry = new RoundedBoxGeometry(PRODUCT_LAYOUT.woodWidth, PRODUCT_LAYOUT.woodThickness, PRODUCT_LAYOUT.woodDepth, 2, PRODUCT_LAYOUT.woodEdgeRadius);
   const top = woodMaterial('top'), side = woodMaterial('side'), end = woodMaterial('end');
   // BoxGeometry material order: +x, -x (end grain), +y, -y, +z, -z.
   const base = new Mesh(geometry, [end, end, top, top, side, side]);

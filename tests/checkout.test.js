@@ -173,13 +173,15 @@ async function webhook(event, { timestamp = Math.floor(Date.now() / 1000), secre
 }
 function state(context, id) { return context.db.prepare('SELECT * FROM checkout_orders WHERE id=?').get(id); }
 
-for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCTS)) {
-  test(`${mode} ${product.id}: server price, verified payment and product-specific emails`, async () => {
+for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCTS)) for (const version of [3, 5]) {
+  test(`${mode} ${product.id} v${version}: server price, verified payment and product-specific emails`, async () => {
     const context = environment();
     if (mode === 'live') configureLive(context);
     const storage = mode === 'live' ? context.live : context;
     const services = mockServices();
-    const configuration = { ...config, version: 3, product: product.id, engraving: product.engraving ? 'Meine Tour' : '' };
+    const configuration = { ...config, version, product: product.id, engraving: product.engraving ? 'Meine Tour' : '',
+      ...(version >= 4 ? { wallMount: false } : {}) };
+    const expectedPrice = configurationPrice(configuration);
     const response = await handleCheckout(checkout(key(), {
       configuration: JSON.stringify(configuration), price: '1', currency: 'usd',
     }), context.env, mode);
@@ -187,13 +189,13 @@ for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCT
     const { orderId } = await response.json();
     const order = state(storage, orderId);
     const params = services.calls[0].params;
-    assert.equal(params.get('line_items[0][price_data][unit_amount]'), String(product.priceEur * 100));
+    assert.equal(params.get('line_items[0][price_data][unit_amount]'), String(expectedPrice * 100));
     assert.ok(params.get('line_items[0][price_data][product_data][name]').includes(product.name));
     assert.deepEqual(JSON.parse(order.configuration), configuration);
     const event = eventFor(order, {}, 'checkout.session.completed', mode === 'live');
     const options = { mode, secret: mode === 'live' ? 'whsec_livemock' : 'whsec_mock' };
     const wrongAmount = { ...event, id: `evt_${key().replaceAll('-', '')}`,
-      data: { object: { ...event.data.object, amount_total: product.priceEur * 100 + 100 } } };
+      data: { object: { ...event.data.object, amount_total: expectedPrice * 100 + 100 } } };
     assert.equal((await handleStripeWebhook(await webhook(wrongAmount, options), context.env, mode)).status, 400);
     assert.equal(state(storage, orderId).status, 'pending');
     assert.equal(services.emails.length, 0);
@@ -202,7 +204,7 @@ for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCT
     assert.equal(services.emails.length, 2);
     for (const { payload } of services.emails) {
       assert.ok(payload.text.includes(product.name));
-      assert.ok(payload.text.includes(`${product.priceEur} EUR`));
+      assert.ok(payload.text.includes(`${expectedPrice} EUR`));
       assert.ok(payload.text.includes(product.dimensions));
       assert.ok(payload.text.includes(product.engraving ? 'Meine Tour' : 'Ohne Gravur'));
     }

@@ -22,7 +22,7 @@ export function parseConfiguration(value) {
     throw new Error('Die Konfiguration ist kein gültiges JSON.');
   }
   if (!configuration || Array.isArray(configuration) || typeof configuration !== 'object'
-    || ![1, 2, 3, 4].includes(configuration.version)
+    || ![1, 2, 3, 4, 5].includes(configuration.version)
     || !(configuration.version >= 3 ? ['base', 'compact', 'frame'] : ['base', 'frame']).includes(configuration.product)
     || (configuration.version === 2 && (configuration.product !== 'base'
       || typeof configuration.elevationScale !== 'number' || !Number.isFinite(configuration.elevationScale)

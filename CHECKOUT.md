@@ -84,7 +84,7 @@ The subsequent temporary sandbox deployment
 
 The configured variants are engraved oak base **50 EUR** (`base`, default),
 compact oak base without engraving **45 EUR** (`compact`) and white frame with
-engraved white passepartout **55 EUR** (`frame`). Each relief is 10 × 10 cm;
+engraved white passepartout **60 EUR** (`frame`). Each relief is 10 × 10 cm;
 bases are 11 × 13.5 × 2 cm / 11 × 11 × 2 cm; the frame exterior is 20 × 20 cm.
 All prices include shipping, **Germany only**.
 Both oak bases include four transparent protective feet. Optional `wallMount:true`
@@ -112,11 +112,12 @@ no-referrer`. No CORS access is enabled.
   * `email`: valid address, ≤200 characters;
   * `gpxFile`: original `.gpx` bytes, nonempty, ≤5 MiB, valid bounded GPX
     (existing shared GPX validation);
-  * `configuration`: JSON, ≤4096 characters, `version:4`, `product:"base"|"compact"|"frame"`,
+  * `configuration`: JSON, ≤4096 characters, `version:5`, `product:"base"|"compact"|"frame"`,
     `preview:"ready"`, validated `engraving`, `margin`, `elevationScale`;
     `wallMount` is a required boolean, false for frame.
     `compact` requires an empty engraving. Legacy `version:2`, `product:"base"`
     is still accepted for existing clients and stored orders.
+    Frame configurations through version 4 retain their 55 EUR price; version 5 uses 60 EUR.
     Version 3 remains compatible without wall mount; older versions cannot
     include a `wallMount` field.
   * `previewImage`: required PNG, ≤1 MiB, nonzero dimensions ≤2048×2048,
@@ -129,7 +130,7 @@ no-referrer`. No CORS access is enabled.
     identity. No other fields or duplicate fields are accepted.
   → `{ "orderId":"<uuid>", "url":"https://checkout.stripe.com/…",
   "statusUrl":"https://<configured-origin>/order-status?order=<uuid>&token=<secret>" }`.
-  Stripe receives a server-defined 5000/4500/5500-cent EUR line item (plus 100 cents
+  Stripe receives a server-defined 5000/4500/6000-cent EUR line item (plus 100 cents
   for the explicitly chosen wood wall mount) based on the
   validated variant (never the supplied price), zero shipping, DE-only shipping
   collection, hosted UI and `submit_type=pay`. Original GPX, PNG and validated

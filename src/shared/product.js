@@ -10,7 +10,7 @@ export const PRODUCTS = Object.freeze({
     description: '10 × 10 cm Relief auf kompaktem Eiche-Holzsockel, ohne Gravur.',
   }),
   frame: Object.freeze({
-    id: 'frame', name: 'Weißer Rahmen mit graviertem Passepartout', priceEur: 55, engraving: true, engravingMaxLines: 2,
+    id: 'frame', name: 'Weißer Rahmen mit graviertem Passepartout', priceEur: 60, engraving: true, engravingMaxLines: 2,
     dimensions: '20 × 20 cm Außenmaß', support: 'Weißer Rahmen / weißes Passepartout',
     description: '10 × 10 cm Relief im weißen Rahmen mit Gravur auf weißem Passepartout.',
   }),
@@ -29,7 +29,8 @@ export const WALL_MOUNT_PRICE_EUR = 1;
 
 export function configurationPrice(configuration) {
   const product = getProduct(configuration.product);
-  return product.priceEur + (configuration.version >= 4 && configuration.wallMount === true
+  const price = product.id === 'frame' && configuration.version < 5 ? 55 : product.priceEur;
+  return price + (configuration.version >= 4 && configuration.wallMount === true
     && product.id !== 'frame' ? WALL_MOUNT_PRICE_EUR : 0);
 }
 

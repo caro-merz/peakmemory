@@ -16,7 +16,7 @@ let checkout;
 
 function configuration() {
   return parseConfiguration({
-    version: 4, product: get('product').value,
+    version: 5, product: get('product').value,
     wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
     engraving: getProduct(get('product').value).engraving ? get('engraving').value : '',
     elevationScale: Number(get('elevationScale').value),
@@ -35,7 +35,7 @@ function summary() {
   get('wallMountControls').hidden = product.id === 'frame';
   get('wallMount').disabled = sending || product.id === 'frame';
   get('modelPrice').textContent = formatPrice(configurationPrice({
-    version: 4, product: product.id, wallMount: product.id !== 'frame' && get('wallMount').value === 'yes',
+    version: 5, product: product.id, wallMount: product.id !== 'frame' && get('wallMount').value === 'yes',
   }));
   get('orderProduct').textContent = product.name;
   get('orderSupport').textContent = product.support;

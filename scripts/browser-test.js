@@ -168,7 +168,7 @@ try {
   assert.equal(await page.locator('#modelPrice').innerText(), '46 €');
   const compactImage = await page.locator('#viewer canvas').screenshot();
   await page.locator('#product').selectOption('frame');
-  assert.equal(await page.locator('#modelPrice').innerText(), '55 €');
+  assert.equal(await page.locator('#modelPrice').innerText(), '60 €');
   assert.equal(await page.locator('#wallMountControls').isHidden(), true);
   assert.doesNotMatch(await page.locator('#configurationSummary').innerText(), /Wandaufhängung/);
   assert.equal(await page.locator('#engraving').isEnabled(), true);
@@ -226,7 +226,7 @@ try {
   assert.equal(await page.locator('#submitInquiry').isEnabled(), true);
   assert.ok(submitted.includes(personal));
   assert.ok(submitted.includes('"product":"base"'));
-  assert.ok(submitted.includes('"version":4'));
+  assert.ok(submitted.includes('"version":5'));
   assert.ok(submitted.includes('"elevationScale":8'));
   assert.ok(submitted.includes('"preview":"ready"'));
   assert.ok(submitted.includes('"engraving":"Meine Tour\\nSommer 2026\\nFür dich"'));
@@ -471,7 +471,7 @@ try {
     assert.equal(body.get('name'), 'Test Checkout');
     assert.equal(body.get('email'), 'checkout@example.invalid');
     assert.equal(await body.get('gpxFile').text(), personal);
-    assert.equal(JSON.parse(body.get('configuration')).version, 4);
+    assert.equal(JSON.parse(body.get('configuration')).version, 5);
     assert.equal(body.get('previewImage').type, 'image/png');
     assert.equal(body.has('price'), false);
     checkoutSubmissions.push(body);
@@ -501,7 +501,7 @@ try {
   await shop.locator('#submitCheckout').click();
   assert.equal(checkoutAttempt, 0, 'Acceptance is required before creating checkout');
   await shop.locator('#checkoutAcceptance').check();
-  for (const [product, price] of [['compact', '45'], ['frame', '55'], ['base', '50']]) {
+  for (const [product, price] of [['compact', '45'], ['frame', '60'], ['base', '50']]) {
     await shop.locator('#product').selectOption(product);
     assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false, 'Product changes require final selection approval');
     assert.match(await shop.locator('#submitCheckout').innerText(), new RegExp(`${price}.*€`));
@@ -583,7 +583,7 @@ try {
     await variants.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Variant test captured'));
     assert.equal(variantSubmissions.at(-1).product, product);
     assert.equal(variantSubmissions.at(-1).engraving, product === 'compact' ? '' : 'Mein Text');
-    assert.equal(variantSubmissions.at(-1).version, 4);
+    assert.equal(variantSubmissions.at(-1).version, 5);
     assert.equal(variantSubmissions.at(-1).wallMount, product !== 'frame');
     assert.equal(await variants.locator('#selectionControls').isEnabled(), true);
   }

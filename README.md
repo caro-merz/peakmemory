@@ -23,7 +23,7 @@ Datei und kein exaktes Fertigungsbild.
   untereinander; am Desktop bleiben die Einstellungen links neben der Vorschau.
 - Produktauswahl als Schritt 2: Eiche-Holzsockel mit Gravur (Standard, 11 × 13,5 × 2 cm, 50 EUR),
   Eiche-Holzsockel ohne Gravur (11 × 11 × 2 cm, 45 EUR) oder weißer Rahmen
-  mit weißem, graviertem Passepartout (20 × 20 cm Außenmaß, 55 EUR).
+  mit weißem, graviertem Passepartout (20 × 20 cm Außenmaß, 60 EUR).
   Das Relief ist bei allen Varianten 10 × 10 cm groß. Vorschau, Preis,
   Anfrage, Stripe-Checkout und Bestell-E-Mails verwenden die gewählte Variante.
 - Beide Holzsockel haben vier transparente Schutzfüße. Die Wandaufhängung
@@ -66,7 +66,7 @@ Datei und kein exaktes Fertigungsbild.
   Details und sichere Aktivierung: [CHECKOUT.md](./CHECKOUT.md).
   Unverbindliche Anfragen bleiben als Fallback und für Sonderwünsche möglich.
   Etsy ist eine alternative Bestellmöglichkeit; Event-Serien ab 5 Stück.
-  Die Produkte im Konfigurator kosten 45, 50 bzw. 55 EUR inklusive Versand
+  Die Produkte im Konfigurator kosten 45, 50 bzw. 60 EUR inklusive Versand
   innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.
   Lieferzeit: 5–10 Werktage nach bestätigter Zahlung bei echten Bestellungen.
   Die serverseitig festgelegten Produktpreise stehen in `src/shared/product.js` und werden
@@ -258,9 +258,11 @@ schützt diese alternativen Zugänge nicht.
   vertikal mittig und mit 0,6 cm Abstand zum linken Rand; das Originalseitenverhältnis bleibt erhalten.
 - Höhen sind von 1× bis 8× einstellbar (Standard 2×). Material und
   endgültige Gravurposition sind exemplarisch; Preise werden nicht erfunden.
-- Neue Konfigurator-Anfragen verwenden Konfiguration Version 4 mit Pflichtfeldern
+- Neue Konfigurator-Anfragen verwenden Konfiguration Version 5 mit Pflichtfeldern
   `elevationScale`, `wallMount` (Boolean) und Produkt `base`, `compact` oder `frame`.
-  Der Rahmen erfordert `wallMount:false`. Version 3 bleibt für alle drei
+  Der Rahmen erfordert `wallMount:false`. Rahmen-Konfigurationen bis Version 4
+  behalten ihren bisherigen Preis von 55 EUR; Version 5 verwendet 60 EUR.
+  Version 3 bleibt für alle drei
   Varianten ohne diese Zusatzoption kompatibel.
   Version 2 bleibt für das bisherige Produkt `base` kompatibel, Version 1 für alte
   Anfragen (damalige Höhenüberhöhung 1,5×).

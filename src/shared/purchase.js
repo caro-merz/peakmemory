@@ -5,7 +5,7 @@ export const PURCHASE_INFORMATION = [
   },
   {
     title: 'Produkt und Gesamtpreis',
-    text: 'Der Direktkauf umfasst ein individuell nach deiner GPX-Route und Konfiguration gefertigtes 3D-Geländerelief (10 × 10 cm). Du wählst eine von drei Ausführungen: Eiche-Holzsockel (11 × 13,5 × 2 cm) mit Gravur auf Holz für 50 EUR; kompakter Eiche-Holzsockel (11 × 11 × 2 cm) ohne Gravur für 45 EUR; weißer Rahmen (20 × 20 cm Außenmaß) mit weißem, graviertem Passepartout für 55 EUR. Ein Stück pro Bestellung. Alle Gesamtpreise enthalten den Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß § 19 UStG. Holzmaserung, Rahmenprofil, Passepartout und Fertigungsdetails können von der illustrativen Online-Vorschau abweichen; die gesetzlichen Mängelrechte bleiben unberührt.',
+    text: 'Der Direktkauf umfasst ein individuell nach deiner GPX-Route und Konfiguration gefertigtes 3D-Geländerelief (10 × 10 cm). Du wählst eine von drei Ausführungen: Eiche-Holzsockel (11 × 13,5 × 2 cm) mit Gravur auf Holz für 50 EUR; kompakter Eiche-Holzsockel (11 × 11 × 2 cm) ohne Gravur für 45 EUR; weißer Rahmen (20 × 20 cm Außenmaß) mit weißem, graviertem Passepartout für 60 EUR. Ein Stück pro Bestellung. Alle Gesamtpreise enthalten den Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß § 19 UStG. Holzmaserung, Rahmenprofil, Passepartout und Fertigungsdetails können von der illustrativen Online-Vorschau abweichen; die gesetzlichen Mängelrechte bleiben unberührt.',
   },
   {
     title: 'Wandaufhängung und Schutzfüße bei Holzsockeln',

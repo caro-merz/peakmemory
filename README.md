@@ -74,7 +74,9 @@ Datei und kein exaktes Fertigungsbild.
   Die Website verspricht keine feste Antwortzeit; Anfragen werden persönlich beantwortet.
 - Bildvarianten unter `images/optimized/` verkleinern die Übertragung; der Build
   bindet responsive WebP-Dateien, Bildabmessungen und Lazy Loading ein.
-  `npm run optimize:images` aktualisiert diese Varianten nach neuen Fotos.
+  Der Build aktualisiert diese Varianten automatisch aus den Originalfotos und
+  versieht ihre URLs mit einer Inhaltsversion, damit Browser keine alten Bilder zeigen.
+  `npm run optimize:images` kann die Varianten auch separat aktualisieren.
 - Höhenänderungen behalten Kamerawinkel und Zoom bei. Technische Vorschauhinweise
   sind einklappbar, Beispielwerte der Gravur ausdrücklich gekennzeichnet.
 - Kontaktfelder haben sichtbare Labels; Rechtsdialoge isolieren den Hintergrund

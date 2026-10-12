@@ -1,4 +1,5 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -57,8 +58,9 @@ for (const filename of homepageImages) {
       .toFile(outputPath);
 
     console.log(`${path.relative(projectDirectory, outputPath)} ${result.width}x${result.height} ${result.size} bytes`);
+    const version = createHash('sha256').update(await readFile(outputPath)).digest('hex').slice(0, 16);
     variants.push({
-      src: `images/optimized/${stem}-${width}.webp`,
+      src: `images/optimized/${stem}-${width}.webp?v=${version}`,
       width: result.width,
       height: result.height,
       bytes: result.size,

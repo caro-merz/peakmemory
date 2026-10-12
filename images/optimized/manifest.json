@@ -4,13 +4,13 @@
     "height": 1437,
     "variants": [
       {
-        "src": "images/optimized/classic-480.webp",
+        "src": "images/optimized/classic-480.webp?v=fef37f75ff100c20",
         "width": 480,
         "height": 431,
         "bytes": 30370
       },
       {
-        "src": "images/optimized/classic-960.webp",
+        "src": "images/optimized/classic-960.webp?v=af0ab953f0fb0764",
         "width": 960,
         "height": 862,
         "bytes": 90378
@@ -22,19 +22,19 @@
     "height": 2766,
     "variants": [
       {
-        "src": "images/optimized/main-480.webp",
+        "src": "images/optimized/main-480.webp?v=9f7934f068f439c3",
         "width": 480,
         "height": 439,
         "bytes": 38174
       },
       {
-        "src": "images/optimized/main-960.webp",
+        "src": "images/optimized/main-960.webp?v=dcc9bb5856b17c11",
         "width": 960,
         "height": 878,
         "bytes": 105714
       },
       {
-        "src": "images/optimized/main-1440.webp",
+        "src": "images/optimized/main-1440.webp?v=044d3fe117875d8c",
         "width": 1440,
         "height": 1317,
         "bytes": 194320
@@ -43,37 +43,37 @@
   },
   "images/compact.jpeg": {
     "width": 3024,
-    "height": 4032,
+    "height": 2426,
     "variants": [
       {
-        "src": "images/optimized/compact-480.webp",
+        "src": "images/optimized/compact-480.webp?v=6e7a262d3f43bf06",
         "width": 480,
-        "height": 640,
-        "bytes": 26910
+        "height": 385,
+        "bytes": 23282
       },
       {
-        "src": "images/optimized/compact-960.webp",
+        "src": "images/optimized/compact-960.webp?v=41fcdd81306b313d",
         "width": 960,
-        "height": 1280,
-        "bytes": 78586
+        "height": 770,
+        "bytes": 70672
       }
     ]
   },
   "images/custom.jpeg": {
     "width": 3840,
-    "height": 5120,
+    "height": 2810,
     "variants": [
       {
-        "src": "images/optimized/custom-480.webp",
+        "src": "images/optimized/custom-480.webp?v=3b12b2bf3689c6bb",
         "width": 480,
-        "height": 640,
-        "bytes": 23534
+        "height": 351,
+        "bytes": 19402
       },
       {
-        "src": "images/optimized/custom-960.webp",
+        "src": "images/optimized/custom-960.webp?v=dcb7ded4be2d206e",
         "width": 960,
-        "height": 1280,
-        "bytes": 64416
+        "height": 703,
+        "bytes": 55640
       }
     ]
   },
@@ -82,13 +82,13 @@
     "height": 4032,
     "variants": [
       {
-        "src": "images/optimized/rahmen-480.webp",
+        "src": "images/optimized/rahmen-480.webp?v=1f236d97d3d76a47",
         "width": 480,
         "height": 640,
         "bytes": 26808
       },
       {
-        "src": "images/optimized/rahmen-960.webp",
+        "src": "images/optimized/rahmen-960.webp?v=617a06496e3e9c03",
         "width": 960,
         "height": 1280,
         "bytes": 63664
@@ -100,13 +100,13 @@
     "height": 4032,
     "variants": [
       {
-        "src": "images/optimized/rahmen2-480.webp",
+        "src": "images/optimized/rahmen2-480.webp?v=748d953b5d5b9f23",
         "width": 480,
         "height": 640,
         "bytes": 32718
       },
       {
-        "src": "images/optimized/rahmen2-960.webp",
+        "src": "images/optimized/rahmen2-960.webp?v=fccaf3efb1c530b6",
         "width": 960,
         "height": 1280,
         "bytes": 97606
@@ -118,13 +118,13 @@
     "height": 1600,
     "variants": [
       {
-        "src": "images/optimized/XXL_Fuji-480.webp",
+        "src": "images/optimized/XXL_Fuji-480.webp?v=50624a2c039daa02",
         "width": 480,
         "height": 640,
         "bytes": 41448
       },
       {
-        "src": "images/optimized/XXL_Fuji-960.webp",
+        "src": "images/optimized/XXL_Fuji-960.webp?v=530e838ea1ebe070",
         "width": 960,
         "height": 1280,
         "bytes": 111884
@@ -136,13 +136,13 @@
     "height": 1600,
     "variants": [
       {
-        "src": "images/optimized/XXL_E5-480.webp",
+        "src": "images/optimized/XXL_E5-480.webp?v=6809f14f9c538338",
         "width": 480,
         "height": 640,
         "bytes": 63672
       },
       {
-        "src": "images/optimized/XXL_E5-960.webp",
+        "src": "images/optimized/XXL_E5-960.webp?v=bde1334ab1ee3ffd",
         "width": 960,
         "height": 1280,
         "bytes": 165670
@@ -154,13 +154,13 @@
     "height": 4384,
     "variants": [
       {
-        "src": "images/optimized/insights1-480.webp",
+        "src": "images/optimized/insights1-480.webp?v=8cd465f5161e2cdc",
         "width": 480,
         "height": 640,
         "bytes": 28970
       },
       {
-        "src": "images/optimized/insights1-960.webp",
+        "src": "images/optimized/insights1-960.webp?v=41b2d91cc8e4d2ee",
         "width": 960,
         "height": 1280,
         "bytes": 82948
@@ -172,13 +172,13 @@
     "height": 4032,
     "variants": [
       {
-        "src": "images/optimized/insight2-480.webp",
+        "src": "images/optimized/insight2-480.webp?v=15a1bb470837ae25",
         "width": 480,
         "height": 640,
         "bytes": 51926
       },
       {
-        "src": "images/optimized/insight2-960.webp",
+        "src": "images/optimized/insight2-960.webp?v=50d2b3dad20f7658",
         "width": 960,
         "height": 1280,
         "bytes": 140424
@@ -190,13 +190,13 @@
     "height": 4032,
     "variants": [
       {
-        "src": "images/optimized/insights3-480.webp",
+        "src": "images/optimized/insights3-480.webp?v=ac1ef79cfb1bdd18",
         "width": 480,
         "height": 640,
         "bytes": 60484
       },
       {
-        "src": "images/optimized/insights3-960.webp",
+        "src": "images/optimized/insights3-960.webp?v=2d57e83ce3fa168f",
         "width": 960,
         "height": 1280,
         "bytes": 181800
@@ -208,13 +208,13 @@
     "height": 4032,
     "variants": [
       {
-        "src": "images/optimized/insights4-480.webp",
+        "src": "images/optimized/insights4-480.webp?v=814ee6888c559ece",
         "width": 480,
         "height": 640,
         "bytes": 26462
       },
       {
-        "src": "images/optimized/insights4-960.webp",
+        "src": "images/optimized/insights4-960.webp?v=5319e33909fe7389",
         "width": 960,
         "height": 1280,
         "bytes": 71772
@@ -226,13 +226,13 @@
     "height": 4032,
     "variants": [
       {
-        "src": "images/optimized/insights5-480.webp",
+        "src": "images/optimized/insights5-480.webp?v=28d74353ed5aad30",
         "width": 480,
         "height": 640,
         "bytes": 32950
       },
       {
-        "src": "images/optimized/insights5-960.webp",
+        "src": "images/optimized/insights5-960.webp?v=337927ad9ad99ae7",
         "width": 960,
         "height": 1280,
         "bytes": 107604
@@ -244,13 +244,13 @@
     "height": 4032,
     "variants": [
       {
-        "src": "images/optimized/insights6-480.webp",
+        "src": "images/optimized/insights6-480.webp?v=dbd865598c4ff565",
         "width": 480,
         "height": 640,
         "bytes": 46536
       },
       {
-        "src": "images/optimized/insights6-960.webp",
+        "src": "images/optimized/insights6-960.webp?v=5dacb05e799d88e6",
         "width": 960,
         "height": 1280,
         "bytes": 128302
@@ -262,13 +262,13 @@
     "height": 4032,
     "variants": [
       {
-        "src": "images/optimized/insights7-480.webp",
+        "src": "images/optimized/insights7-480.webp?v=de7e2a106fb4fbfa",
         "width": 480,
         "height": 640,
         "bytes": 63294
       },
       {
-        "src": "images/optimized/insights7-960.webp",
+        "src": "images/optimized/insights7-960.webp?v=62e53985f2d6b2a8",
         "width": 960,
         "height": 1280,
         "bytes": 175478
@@ -280,13 +280,13 @@
     "height": 1600,
     "variants": [
       {
-        "src": "images/optimized/ABM1-480.webp",
+        "src": "images/optimized/ABM1-480.webp?v=c450c457517a486f",
         "width": 480,
         "height": 640,
         "bytes": 40356
       },
       {
-        "src": "images/optimized/ABM1-960.webp",
+        "src": "images/optimized/ABM1-960.webp?v=9bd5e9134b624edf",
         "width": 960,
         "height": 1280,
         "bytes": 109508
@@ -298,13 +298,13 @@
     "height": 1600,
     "variants": [
       {
-        "src": "images/optimized/ABM2-480.webp",
+        "src": "images/optimized/ABM2-480.webp?v=6d8f35701bc6b5fe",
         "width": 480,
         "height": 640,
         "bytes": 35272
       },
       {
-        "src": "images/optimized/ABM2-960.webp",
+        "src": "images/optimized/ABM2-960.webp?v=361c64af14d997b6",
         "width": 960,
         "height": 1280,
         "bytes": 102728
@@ -316,13 +316,13 @@
     "height": 1600,
     "variants": [
       {
-        "src": "images/optimized/ABM3-480.webp",
+        "src": "images/optimized/ABM3-480.webp?v=ccd0973ae9edfb5b",
         "width": 480,
         "height": 640,
         "bytes": 47732
       },
       {
-        "src": "images/optimized/ABM3-960.webp",
+        "src": "images/optimized/ABM3-960.webp?v=f63367483f59e248",
         "width": 960,
         "height": 1280,
         "bytes": 134026
@@ -334,13 +334,13 @@
     "height": 1600,
     "variants": [
       {
-        "src": "images/optimized/ABM4-480.webp",
+        "src": "images/optimized/ABM4-480.webp?v=5de11e2b38d4c1f1",
         "width": 480,
         "height": 640,
         "bytes": 57958
       },
       {
-        "src": "images/optimized/ABM4-960.webp",
+        "src": "images/optimized/ABM4-960.webp?v=dcdcec5dc0a151d5",
         "width": 960,
         "height": 1280,
         "bytes": 149544
@@ -352,13 +352,13 @@
     "height": 1600,
     "variants": [
       {
-        "src": "images/optimized/APM_recap1-480.webp",
+        "src": "images/optimized/APM_recap1-480.webp?v=0a62289a4afb0b62",
         "width": 480,
         "height": 640,
         "bytes": 22522
       },
       {
-        "src": "images/optimized/APM_recap1-960.webp",
+        "src": "images/optimized/APM_recap1-960.webp?v=42537fdb3068575a",
         "width": 960,
         "height": 1280,
         "bytes": 56654
@@ -370,13 +370,13 @@
     "height": 1600,
     "variants": [
       {
-        "src": "images/optimized/APM_recap2-480.webp",
+        "src": "images/optimized/APM_recap2-480.webp?v=95f08e41fbb81edc",
         "width": 480,
         "height": 640,
         "bytes": 72930
       },
       {
-        "src": "images/optimized/APM_recap2-960.webp",
+        "src": "images/optimized/APM_recap2-960.webp?v=c873504f8bc08548",
         "width": 960,
         "height": 1280,
         "bytes": 204542
@@ -388,13 +388,13 @@
     "height": 1600,
     "variants": [
       {
-        "src": "images/optimized/APM_recap3-480.webp",
+        "src": "images/optimized/APM_recap3-480.webp?v=3290d26cb2ec9031",
         "width": 480,
         "height": 640,
         "bytes": 73508
       },
       {
-        "src": "images/optimized/APM_recap3-960.webp",
+        "src": "images/optimized/APM_recap3-960.webp?v=f8588928bb91ef54",
         "width": 960,
         "height": 1280,
         "bytes": 274888
@@ -406,13 +406,13 @@
     "height": 1536,
     "variants": [
       {
-        "src": "images/optimized/APM1-480.webp",
+        "src": "images/optimized/APM1-480.webp?v=a056c8bfad3280f6",
         "width": 480,
         "height": 720,
         "bytes": 94022
       },
       {
-        "src": "images/optimized/APM1-960.webp",
+        "src": "images/optimized/APM1-960.webp?v=fad9860cd9065662",
         "width": 960,
         "height": 1440,
         "bytes": 405562
@@ -424,7 +424,7 @@
     "height": 768,
     "variants": [
       {
-        "src": "images/optimized/caro_new-480.webp",
+        "src": "images/optimized/caro_new-480.webp?v=ec75fdd0da940b48",
         "width": 480,
         "height": 480,
         "bytes": 14322
@@ -436,7 +436,7 @@
     "height": 768,
     "variants": [
       {
-        "src": "images/optimized/alex_new-480.webp",
+        "src": "images/optimized/alex_new-480.webp?v=73f9e47bbaadecab",
         "width": 480,
         "height": 480,
         "bytes": 21702

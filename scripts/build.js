@@ -3,6 +3,8 @@ import { mkdir, cp, readFile, writeFile, readdir, unlink } from 'node:fs/promise
 import path from 'node:path';
 import { PURCHASE_INFORMATION } from '../src/shared/purchase.js';
 
+await import('./optimize-images.js');
+
 await mkdir('assets', { recursive: true });
 for (const directory of ['assets', path.join('dist', 'assets')]) {
   let files;

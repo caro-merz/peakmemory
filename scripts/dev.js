@@ -11,6 +11,7 @@ const types = {
   '.jpeg': 'image/jpeg', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml',
   '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml',
   '.otf': 'font/otf',
+  '.woff2': 'font/woff2',
 };
 
 export async function startDevServer(port = 8000) {

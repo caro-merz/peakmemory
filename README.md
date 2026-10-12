@@ -3,7 +3,7 @@
 PeakMemory verwandelt GPS-Routen in handgefertigte 3D-Reliefs. Die Website unter
 https://peak-memory.de bleibt eine statische HTML-Seite mit Cloudflare-Endpunkten.
 Der Konfigurator liefert eine **illustrative Online-Vorschau**, keine druckfertige
-Datei und keine verbindliche Produktionsfreigabe.
+Datei und kein exaktes Fertigungsbild.
 
 ## Funktionen
 
@@ -14,7 +14,7 @@ Datei und keine verbindliche Produktionsfreigabe.
   auch ohne JavaScript. Anbieter-Hilfelinks bei Änderungen der Export-Menüs prüfen.
   „Beispielroute testen“ verwendet die bereitgestellte Marathon-Strecke des
   Allgäu Panorama Marathons aus `src/client/sample.gpx`, beim Build lokal gebündelt.
-- Vollständiger Konfigurator direkt nach dem Hero auf der Startseite, zusätzlich
+- Vollständiger Konfigurator direkt nach dem Hero,
   ausschließlich auf der Startseite. Frühere `/configurator`- und
   `/configurator.html`-Links leiten zu `/#konfigurator` weiter. Der Build übernimmt die gemeinsame
   Oberfläche aus dieser Datei in den Platzhalter von `index.html`; keine zweite
@@ -35,17 +35,28 @@ Datei und keine verbindliche Produktionsfreigabe.
   Die Standardschriftgröße beträgt 5 mm, unabhängig von der Zeilenzahl.
   Überschreitet die längste Zeile 8 cm, werden alle Zeilen proportional
   verkleinert. Kürzere Texte werden nicht künstlich auf volle Breite gestreckt.
+- Die Homepage-Schrift Inter wird lokal aus `fonts/InterVariable.woff2` geladen,
+  ohne Google-Fonts-Anfragen. Quelle: Inter-Projekt (`rsms/inter`), SIL Open Font
+  License unter `fonts/Inter-OFL.txt`; beide Schriftlizenzen sind im Build enthalten.
 - Unverbindliche Anfrage mit Original-GPX und Konfiguration per E-Mail.
   Bei verfügbarer Vorschau wird die aktuelle 3D-Ansicht als PNG angehängt
   (maximal 1 MB und 2048 Pixel je Seite). Screenshot-Fehler werden vor dem Versand
   angezeigt; ohne verfügbare Vorschau bleibt die Anfrage ohne Bild möglich.
-- Hauptweg: Upload → Personalisierung → unverbindliche Anfrage → finale Freigabe
-  → persönlich abgestimmte Bestellung und Bezahlung → Produktion.
-  Etsy ist eine alternative Bestellmöglichkeit. Kein automatischer Checkout
-  und keine automatische Preisberechnung; Event-Serien ab 5 Stück.
-  Das Modell im Konfigurator kostet 50 EUR zzgl. persönlich abgestimmter
-  Versandkosten. Der feste Modellpreis steht in `src/shared/product.js` und wird
-  in der Oberfläche sowie serverseitig in der Anfrage verwendet.
+- Direktkauf: Upload → Personalisierung → Auswahl prüfen → Stripe-Zahlung
+  → Produktion ohne zusätzliche persönliche Freigabe. Test- und Live-Modus
+  verwenden getrennte Endpunkte und getrennte private Speicher. Beide sind
+  nur nach expliziter Freigabe nutzbar. Die aktuelle Konfiguration aktiviert
+  vorübergehend den Sandbox-Checkout für einen vom Betreiber angeforderten Test;
+  neue Live-Checkouts sind pausiert. Bestehende Live-Zahlungen und deren
+  Benachrichtigungen werden weiterhin verarbeitet.
+  Details und sichere Aktivierung: [CHECKOUT.md](./CHECKOUT.md).
+  Unverbindliche Anfragen bleiben als Fallback und für Sonderwünsche möglich.
+  Etsy ist eine alternative Bestellmöglichkeit; Event-Serien ab 5 Stück.
+  Das Modell im Konfigurator kostet insgesamt 50 EUR inklusive Versand
+  innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.
+  Lieferzeit: 5–10 Werktage nach bestätigter Zahlung bei echten Bestellungen.
+  Der feste Modellpreis steht in `src/shared/product.js` und wird
+  in Oberfläche, Anfrage und Checkout serverseitig verwendet.
   Die Website verspricht keine feste Antwortzeit; Anfragen werden persönlich beantwortet.
 - Bildvarianten unter `images/optimized/` verkleinern die Übertragung; der Build
   bindet responsive WebP-Dateien, Bildabmessungen und Lazy Loading ein.
@@ -56,7 +67,9 @@ Datei und keine verbindliche Produktionsfreigabe.
   und stellen den Fokus beim Schließen wieder her. Die Homepage und die
   Rechtsinformationen bleiben ohne JavaScript lesbar; reduzierte Bewegung
   deaktiviert Animationen und weiches Scrollen.
-- Die finale Produktionsvorschau wird persönlich erstellt und vor Fertigung freigegeben.
+- Beim Direktkauf sind Route, Gravur und Einstellungen final. Die illustrative
+  Online-Vorschau ist keine druckfertige Datei; Holz und Fertigungsdetails können
+  abweichen. Testzahlungen lösen keine Produktion aus.
 
 ## Projektstruktur
 
@@ -86,7 +99,7 @@ npm run build
 npm run dev
 ```
 
-Danach http://127.0.0.1:8000/configurator.html öffnen. `PORT` kann einen anderen
+Danach http://127.0.0.1:8000/#konfigurator öffnen. `PORT` kann einen anderen
 Port vorgeben. Der lokale Node-Server versendet **keine echten E-Mails**.
 Die Vorschau benötigt Netzwerkzugriff auf öffentliche Geländedaten. Nur
 `index.html` direkt zu öffnen reicht für den Konfigurator nicht.
@@ -114,6 +127,22 @@ transitive Miniflare-Abhängigkeit auf der korrigierten Patchversion 0.35.5;
 entfernen, sobald Wrangler diese Version selbst mitliefert.
 
 ## Cloudflare Worker (primärer Betrieb)
+
+### Stripe-Werkzeuge in VS Code
+
+`.vscode/mcp.json` konfiguriert den offiziellen HTTP-MCP-Server
+`https://mcp.stripe.com` ohne API-Schlüssel. In VS Code über
+**MCP: List Servers** den Stripe-Server starten und die OAuth-Anmeldung
+bestätigen. Danach die Agent-Werkzeuge neu laden bzw. eine neue Sitzung öffnen.
+Ein vorhandener MCP-Eintrag bedeutet nicht, dass OAuth bereits erfolgt ist oder
+`stripe_implementation_planner` in jeder Agent-Sitzung verfügbar ist.
+
+Geheime Schlüssel niemals in Chat, Quellcode, MCP-Konfiguration oder
+Kommandozeilenargumente eintragen. Geteilte Schlüssel im Stripe Dashboard
+widerrufen und ersetzen. Für Entwicklung ein separates Stripe-Sandbox-Projekt
+und möglichst einen eingeschränkten Testschlüssel verwenden. Lokale
+`.dev.vars`-Dateien sind von Git ausgeschlossen; produktive Cloudflare-Secrets
+werden ausschließlich über die Secret-Eingabe von Wrangler gesetzt.
 
 ```powershell
 npm ci
@@ -225,10 +254,18 @@ nach einem Timeout vor erneutem Senden nachfragen, um Duplikate zu vermeiden.
 
 ## Öffentliche Höhendaten, Lizenzen und Datenschutz
 
-Der Browser liest GPX lokal. Erst das Absenden einer Anfrage überträgt
+Der Browser liest GPX lokal. Erst das Absenden einer Anfrage oder der Checkout-Start überträgt
 Original-GPX, Kontaktdaten, Konfiguration und bei verfügbarer Vorschau das PNG-Bild an Cloudflare und über Resend an
 PeakMemory. Es gibt keine Route-Konten, öffentlich teilbaren Routen oder
-persistente Speicherung der GPX-Datei im Browser.
+persistente Speicherung der GPX-Datei im Browser. Für Checkout-Tests werden
+Original-GPX, Vorschau und Bestelldaten privat in Cloudflare R2/D1 gespeichert.
+Stripe erhält keine GPX-Datei, sondern E-Mail-Adresse und Bestellreferenz.
+Testzahlungen werden ausschließlich durch verifizierte Webhooks bestätigt.
+Speicherfristen und Einrichtung sind in [CHECKOUT.md](./CHECKOUT.md) dokumentiert.
+Vor echten Zahlungen müssen insbesondere Vertragsbedingungen, Widerrufs-
+informationen für personalisierte Produkte, Lieferbedingungen, Datenschutz,
+steuerliche Angaben und der finale zahlungspflichtige Bestellschritt rechtlich
+geprüft werden. Der Testmodus ist keine rechtliche Freigabe eines Live-Shops.
 
 Geländekacheln werden über `/terrain/{z}/{x}/{y}.png` von einem fest vorgegebenen
 AWS-Endpunkt abgerufen und gecacht. Die Kacheladressen geben die ungefähre

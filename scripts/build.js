@@ -1,6 +1,7 @@
 import { build } from 'esbuild';
 import { mkdir, cp, readFile, writeFile, readdir, unlink } from 'node:fs/promises';
 import path from 'node:path';
+import { PURCHASE_INFORMATION } from '../src/shared/purchase.js';
 
 await mkdir('assets', { recursive: true });
 for (const directory of ['assets', path.join('dist', 'assets')]) {
@@ -41,7 +42,9 @@ for (let index = 0; index < packages.length; index += 1) {
   if (!license) throw new Error(`Missing license for ${name}`);
   licenses += `${name} ${manifest.version}\n${license}\n\n`;
 }
-await writeFile('assets/licenses.txt', licenses + '\nQuicksand Book\n' + await readFile('fonts/OFL.txt', 'utf8'));
+await writeFile('assets/licenses.txt', licenses
+  + '\nQuicksand Book\n' + await readFile('fonts/OFL.txt', 'utf8')
+  + '\nInter Variable\n' + await readFile('fonts/Inter-OFL.txt', 'utf8'));
 await mkdir('dist', { recursive: true });
 try { await unlink(path.join('dist', 'configurator.html')); }
 catch (error) { if (error.code !== 'ENOENT') throw error; }
@@ -56,6 +59,13 @@ if (!content || !placeholder.test(homepage)) throw new Error('Missing shared con
 const imageManifest = JSON.parse(await readFile(path.join('images', 'optimized', 'manifest.json'), 'utf8'));
 const srcset = image => image.variants.map(variant => `${variant.src} ${variant.width}w`).join(', ');
 let builtHomepage = homepage.replace(placeholder, () => content);
+const purchasePlaceholder = '<!-- PURCHASE_INFORMATION -->';
+if (!builtHomepage.includes(purchasePlaceholder)) throw new Error('Missing purchase information placeholder');
+const escapeHtml = text => text.replace(/[&<>"']/g, character => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+})[character]);
+builtHomepage = builtHomepage.replace(purchasePlaceholder, () => PURCHASE_INFORMATION
+  .map(section => `<h3>${escapeHtml(section.title)}</h3><p>${escapeHtml(section.text)}</p>`).join('\n'));
 builtHomepage = builtHomepage.replace(/<img\b[^>]*>/g, tag => {
   const source = tag.match(/\bsrc="([^"]+)"/)?.[1];
   const image = imageManifest[source];

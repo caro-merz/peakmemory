@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
   <meta name="description" content="Gestalte dein PeakMemory: GPX hochladen, 3D-Relief personalisieren und unverbindlich anfragen. Handgefertigt in Baden-Württemberg. Etsy als alternative Bestellmöglichkeit.">
   <meta name="keywords" content="PeakMemory, Etsy, personalisierte 3D Topografie, GPX Geschenk, Hiking Geschenk, Trailrunning Geschenk, Mountainbike Geschenk">
   <meta name="robots" content="index, follow">
@@ -14,14 +15,18 @@
   <meta property="og:image" content="https://peak-memory.de/images/classic.jpeg">
   <meta name="twitter:card" content="summary_large_image">
   <title>PeakMemory | Personalisierte 3D-Topografie aus deiner GPX-Route</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="image" href="images/main.jpeg" fetchpriority="high">
   <link rel="icon" href="images/logo_grey.png" type="image/png">
   <link rel="stylesheet" href="assets/configurator.css">
   <script type="module" src="assets/configurator.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: swap;
+      src: url('fonts/InterVariable.woff2') format('woff2');
+    }
 
     /* ========== CSS VARIABLES ========== */
     :root {
@@ -1443,7 +1448,7 @@
         </div>
         <p class="hero-secondary">Alternativ <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer">auf Etsy bestellen</a> · <a href="https://www.instagram.com/peak.memory" target="_blank" rel="noopener noreferrer">Einblicke auf Instagram</a></p>
         <div class="shop-facts" aria-label="Über PeakMemory" style="justify-content: center; margin-top: 1.5rem;">
-          <span class="shop-fact">Persönliche Freigabe vor Fertigung</span>
+          <span class="shop-fact">Relief auf Eiche · 50 € inkl. Versand in Deutschland</span>
           <span class="shop-fact">Handgefertigt in Baden-Württemberg</span>
         </div>
       </div>
@@ -1511,7 +1516,7 @@
 
       <div class="process-section">
         <h3 class="process-heading fade-in">So funktioniert's</h3>
-        <p class="process-intro fade-in">Vom GPX-Upload bis zum fertigen Unikat: Du entscheidest erst nach der persönlichen Abstimmung. Etsy bleibt eine alternative Bestellmöglichkeit.</p>
+        <p class="process-intro fade-in">Ein Direktkauf ist nur möglich, wenn er im Konfigurator ausdrücklich als verfügbar angezeigt wird. Andernfalls kannst du dein Relief unverbindlich anfragen. Etsy bleibt eine alternative Bestellmöglichkeit.</p>
 
         <div class="process-grid">
           <div class="process-card fade-in">
@@ -1526,23 +1531,18 @@
           </div>
           <div class="process-card fade-in">
             <span class="process-step-number">3</span>
-            <h3>Unverbindlich anfragen</h3>
-            <p>Sende uns deine Route und Wünsche. Wir besprechen Format und Preis mit dir – eine Anfrage ist noch keine Bestellung.</p>
+            <h3>Auswahl prüfen</h3>
+            <p>Prüfe deine Route, Gravur und Einstellungen. Beim Direktkauf sind sie final – eine weitere Produktionsfreigabe erfolgt nicht. Die Online-Vorschau bleibt illustrativ.</p>
           </div>
           <div class="process-card fade-in">
             <span class="process-step-number">4</span>
-            <h3>Finale Freigabe</h3>
-            <p>Du erhältst deine persönliche Produktionsvorschau inklusive Gravur. Erst wenn alles passt, gibst du sie frei.</p>
+            <h3>Sicher bezahlen</h3>
+            <p id="processPaymentInfo">Bei aktiviertem Direktkauf bezahlst du 50 € inklusive Versand innerhalb Deutschlands über Stripe. Ob gerade echte Bestellungen möglich sind, zeigt der Konfigurator.</p>
           </div>
           <div class="process-card fade-in">
             <span class="process-step-number">5</span>
-            <h3>Bestellung &amp; Bezahlung</h3>
-            <p>Nach deiner Freigabe stimmen wir Bestellung, Zahlungsweg und Versanddetails persönlich mit dir ab.</p>
-          </div>
-          <div class="process-card fade-in">
-            <span class="process-step-number">6</span>
             <h3>Produktion &amp; Versand</h3>
-            <p>Nach der abgestimmten Bestellung und Bezahlung fertigen wir dein Unikat und senden es zu dir nach Hause.</p>
+            <p id="processProductionInfo">Bei einer echten Bestellung beginnt die Produktion nach bestätigter Zahlung. Die Lieferung innerhalb Deutschlands erfolgt in 5–10 Werktagen nach Zahlung. Testzahlungen lösen keine Produktion aus.</p>
           </div>
         </div>
       </div>
@@ -1755,7 +1755,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <div class="faq-answer">
-            Du kannst deine GPX-Datei schon vor einer Bestellung in unserem <a href="#konfigurator" style="color:var(--accent);">Konfigurator</a> hochladen und dein Relief unverbindlich anfragen. Wie du die Datei aus Strava, Komoot oder Garmin Connect bekommst, erklären wir in unserer <a href="/gpx-hilfe" style="color:var(--accent);text-decoration:underline;">GPX-Anleitung</a>. Alternativ schickst du sie uns per Kontaktformular oder E-Mail an <a href="mailto:peak.memory@web.de" style="color:var(--accent);">peak.memory@web.de</a>. Die Online-Vorschau ist beispielhaft; die finale Produktionsvorschau erhältst du persönlich zur Freigabe.
+            Du kannst deine GPX-Datei in unserem <a href="#konfigurator" style="color:var(--accent);">Konfigurator</a> hochladen, dein Relief in 3D ansehen und deine Gravur gestalten. Der Direktkauf ist aktuell nur im Testbetrieb; echte Bestellungen werden dort noch nicht angenommen. Du kannst uns weiterhin unverbindlich anfragen. Wie du die Datei aus Strava, Komoot oder Garmin Connect bekommst, erklären wir in unserer <a href="/gpx-hilfe" style="color:var(--accent);text-decoration:underline;">GPX-Anleitung</a>. Die Online-Vorschau ist illustrativ. Beim Direktkauf sind deine Einstellungen final; es gibt keine zusätzliche Produktionsfreigabe.
           </div>
         </div>
 
@@ -1785,7 +1785,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <div class="faq-answer">
-            Nach deiner finalen Freigabe und der abgestimmten Bestellung und Bezahlung dauert die Fertigung in der Regel 7–10 Werktage. Danach kommt das Paket per Versand direkt zu dir. Den konkreten Zeitplan besprechen wir persönlich.
+            Für das Relief im Konfigurator beträgt die Lieferzeit innerhalb Deutschlands bei einer echten, bestätigten Zahlung 5–10 Werktage. Der Preis von 50 € enthält den Versand innerhalb Deutschlands; gemäß §19 UStG wird keine Umsatzsteuer ausgewiesen. Für Rahmen und Sonderformate besprechen wir den Zeitplan persönlich. Testzahlungen lösen keine Produktion oder Lieferung aus.
           </div>
         </div>
 
@@ -1795,7 +1795,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <div class="faq-answer">
-            Ja, absolut! Teile uns bei der Abstimmung eine abweichende Lieferadresse mit. Auf Wunsch fügen wir auch eine persönliche Grußkarte bei – erwähne das einfach in deiner Anfrage. Alternativ kannst du über Etsy bestellen.
+            Ja! Beim Direktkauf kannst du bei Stripe eine Lieferadresse innerhalb Deutschlands angeben. Für eine persönliche Grußkarte oder besondere Wünsche kontaktiere uns bitte vor einer Bestellung. Alternativ kannst du über Etsy bestellen.
           </div>
         </div>
 
@@ -1830,6 +1830,7 @@
       <div class="footer-links">
         <a href="#impressumModal" id="impressumLink">Impressum</a>
         <a href="#datenschutzModal" id="datenschutzLink">Datenschutz</a>
+        <a href="#kaufbedingungen" id="kaufbedingungenLink">Kauf &amp; Widerruf</a>
       </div>
       <div class="footer-copy">
         &copy; 2026 PeakMemory – Baden-Württemberg
@@ -1848,25 +1849,35 @@
       <button class="modal-close" id="impressumClose" aria-label="Schließen">&times;</button>
       <h2 id="impressumTitle">Impressum</h2>
 
-      <h3>Peak Memory</h3>
+      <p>Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG).</p>
 
       <h3>Anschrift</h3>
-      <p>Peak Memory GbR<br>Poststr. 29<br>71229 Leonberg</p>
+      <p>Peak Memory GbR<br>Poststr. 29<br>71229 Leonberg<br>Deutschland</p>
 
       <h3>Vertreten durch</h3>
       <p>Carolin Merz<br>Alexander Weimer</p>
 
       <h3>Kontakt</h3>
-      <p><a href="mailto:peak.memory@web.de" style="color: var(--accent);">peak.memory@web.de</a></p>
+      <p>E-Mail: <a href="mailto:peak.memory@web.de" style="color: var(--accent);">peak.memory@web.de</a><br>
+        Telefon: <a href="tel:+491622701613" style="color: var(--accent);">0162 2701613</a></p>
 
       <h3>Haftung für Inhalte</h3>
-      <p>Als Diensteanbieter sind wir gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.</p>
+      <p>Für eigene Inhalte auf diesen Seiten sind wir nach den allgemeinen gesetzlichen Vorschriften verantwortlich. Wenn Sie auf rechtswidrige Inhalte aufmerksam werden, kontaktieren Sie uns bitte über die oben genannten Kontaktdaten.</p>
 
       <h3>Haftung für Links</h3>
-      <p>Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.</p>
+      <p>Unser Angebot enthält Links zu externen Websites Dritter, deren Inhalte von den jeweiligen Anbietern verantwortet werden. Bei Hinweisen auf rechtswidrige Inhalte prüfen wir die betreffende Verlinkung. Unsere gesetzlichen Pflichten bleiben unberührt.</p>
 
       <h3>Urheberrecht</h3>
       <p>Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.</p>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="kaufbedingungenModal" role="dialog" aria-modal="true" aria-labelledby="kaufbedingungenTitle">
+    <div class="modal">
+      <button class="modal-close" id="kaufbedingungenClose" aria-label="Schließen">&times;</button>
+      <h2 id="kaufbedingungenTitle">Kaufhinweise &amp; Widerruf</h2>
+      <p>Stand: 12. Oktober 2026. Diese Hinweise gelten für den personalisierten Direktkauf auf dieser Website.</p>
+      <!-- PURCHASE_INFORMATION -->
     </div>
   </div>
 
@@ -1877,27 +1888,28 @@
       <h2 id="datenschutzTitle">Datenschutzerklärung</h2>
 
       <h3 id="m716">Präambel</h3>
-      <p>Mit der folgenden Datenschutzerklärung möchten wir Sie darüber aufklären, welche Arten Ihrer personenbezogenen Daten wir zu welchen Zwecken und in welchem Umfang verarbeiten. Die Datenschutzerklärung gilt für alle von uns durchgeführten Verarbeitungen personenbezogener Daten, sowohl im Rahmen der Erbringung unserer Leistungen als auch insbesondere auf unseren Webseiten und externen Onlinepräsenzen, wie z. B. unserer Social-Media-Profile.</p>
+      <p>Diese Datenschutzerklärung erläutert die Verarbeitung personenbezogener Daten beim Besuch von peak-memory.de, bei der Nutzung der GPX-Vorschau, bei Anfragen und bei einem freigegebenen Direktkauf. Für externe Plattformen wie Etsy und Instagram gelten zusätzlich die Datenschutzhinweise des jeweiligen Anbieters; diese Erklärung ersetzt keine gesonderten Hinweise zu unseren dortigen Präsenzen.</p>
       <p>Die verwendeten Begriffe sind nicht geschlechtsspezifisch.</p>
-      <p>Stand: 10. Mai 2026</p>
+      <p>Stand: 12. Oktober 2026</p>
 
       <h3 id="m3">Verantwortlicher</h3>
-      <p>Peak Memory<br>Poststr. 29<br>71229 Leonberg</p>
-      <p>E-Mail: <a href="mailto:peak.memory@web.de" style="color: var(--accent);">peak.memory@web.de</a></p>
+      <p>Peak Memory GbR<br>Poststr. 29<br>71229 Leonberg<br>Deutschland<br>Vertreten durch Carolin Merz und Alexander Weimer.</p>
+      <p>E-Mail: <a href="mailto:peak.memory@web.de" style="color: var(--accent);">peak.memory@web.de</a><br>
+        Telefon: <a href="tel:+491622701613" style="color: var(--accent);">0162 2701613</a></p>
 
       <h3 id="mOverview">Übersicht der Verarbeitungen</h3>
       <p>Die nachfolgende Übersicht fasst die Arten der verarbeiteten Daten und die Zwecke ihrer Verarbeitung zusammen.</p>
-      <p><strong>Arten der verarbeiteten Daten:</strong> Kontaktdaten, Inhaltsdaten, Nutzungsdaten, Meta- und Kommunikationsdaten, Protokolldaten.</p>
-      <p><strong>Kategorien betroffener Personen:</strong> Kommunikationspartner, Nutzer.</p>
-      <p><strong>Zwecke der Verarbeitung:</strong> Kommunikation, Sicherheitsmaßnahmen, Bereitstellung des Onlineangebotes, Feedback.</p>
+      <p><strong>Arten der verarbeiteten Daten:</strong> Name, E-Mail-Adresse, Nachrichten, GPX-Dateien mit Orts- und gegebenenfalls Zeitangaben, Gravur und Konfiguration, Vorschaubilder, Lieferadresse, Bestell- und Zahlungsreferenzen, Zahlungsstatus sowie IP-Adresse, technische Verbindungsdaten und Sicherheitsprotokolle.</p>
+      <p><strong>Kategorien betroffener Personen:</strong> Besucher, Anfragende und Käufer.</p>
+      <p><strong>Zwecke der Verarbeitung:</strong> Website und Vorschau bereitstellen, Anfragen beantworten, Bestellungen und Zahlungen zuordnen, personalisierte Produkte fertigen und liefern, Bestätigungen versenden, Missbrauch verhindern und gesetzliche Pflichten erfüllen.</p>
 
       <h3 id="m2427">Maßgebliche Rechtsgrundlagen</h3>
       <p><strong>Maßgebliche Rechtsgrundlagen nach der DSGVO:</strong> Im Folgenden erhalten Sie eine Übersicht der Rechtsgrundlagen der DSGVO, auf deren Basis wir personenbezogene Daten verarbeiten.</p>
       <ul style="padding-left: 1.2rem; font-size: 0.92rem; color: var(--text-light); line-height: 1.7;">
-        <li style="margin-bottom: 8px;"><strong>Einwilligung (Art. 6 Abs. 1 S. 1 lit. a) DSGVO)</strong> – Die betroffene Person hat ihre Einwilligung gegeben.</li>
-        <li style="margin-bottom: 8px;"><strong>Vertragserfüllung und vorvertragliche Anfragen (Art. 6 Abs. 1 S. 1 lit. b) DSGVO)</strong> – Die Verarbeitung ist für die Erfüllung eines Vertrags erforderlich.</li>
-        <li style="margin-bottom: 8px;"><strong>Rechtliche Verpflichtung (Art. 6 Abs. 1 S. 1 lit. c) DSGVO)</strong> – Die Verarbeitung ist zur Erfüllung einer rechtlichen Verpflichtung erforderlich.</li>
-        <li><strong>Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO)</strong> – Die Verarbeitung ist zur Wahrung berechtigter Interessen notwendig.</li>
+        <li style="margin-bottom: 8px;"><strong>Vertragserfüllung und vorvertragliche Anfragen (Art. 6 Abs. 1 lit. b DSGVO)</strong> – Bearbeitung Ihrer Anfragen, angeforderte Personalisierung, Bestellabwicklung, Zahlung und Lieferung.</li>
+        <li style="margin-bottom: 8px;"><strong>Rechtliche Verpflichtung (Art. 6 Abs. 1 lit. c DSGVO)</strong> – Insbesondere erforderliche steuer- und handelsrechtliche Dokumentation.</li>
+        <li style="margin-bottom: 8px;"><strong>Berechtigte Interessen (Art. 6 Abs. 1 lit. f DSGVO)</strong> – Sichere Bereitstellung der Website, Schutz vor Missbrauch und Nachweis sowie Abwehr von Ansprüchen.</li>
+        <li><strong>Einwilligung (Art. 6 Abs. 1 lit. a DSGVO)</strong> – Soweit wir für eine gesonderte, freiwillige Verarbeitung eine Einwilligung einholen. Die Bestätigung Ihrer finalen Produktauswahl ist keine pauschale Datenschutz-Einwilligung.</li>
       </ul>
       <p>Zusätzlich gelten nationale Datenschutzregelungen in Deutschland, insbesondere das Bundesdatenschutzgesetz (BDSG).</p>
 
@@ -1905,34 +1917,54 @@
       <p>Wir treffen nach Maßgabe der gesetzlichen Vorgaben geeignete technische und organisatorische Maßnahmen, um ein dem Risiko angemessenes Schutzniveau zu gewährleisten. Zu den Maßnahmen gehören insbesondere die Sicherung der Vertraulichkeit, Integrität und Verfügbarkeit von Daten. Online-Verbindungen werden durch TLS-/SSL-Verschlüsselungstechnologie (HTTPS) gesichert.</p>
 
       <h3 id="m24">Internationale Datentransfers</h3>
-      <p>Sofern wir Daten in ein Drittland übermitteln, erfolgt dies stets im Einklang mit den gesetzlichen Vorgaben, insbesondere auf Basis von Standardvertragsklauseln oder dem EU-US Data Privacy Framework.</p>
+      <p>Die unten genannten Dienste können Daten auch außerhalb des Europäischen Wirtschaftsraums verarbeiten, insbesondere in den USA. Ein europäischer Speicherstandort allein schließt Zugriffe aus Drittländern nicht aus. Angaben zu beteiligten Gesellschaften, Unterauftragnehmern und den von den Anbietern vorgesehenen Übermittlungsmechanismen finden Sie in deren verlinkten Datenschutz- und Vertragsinformationen. Informationen und gegebenenfalls Kopien der für die konkrete Verarbeitung maßgeblichen Garantien können Sie über unsere oben genannten Kontaktdaten anfordern. Die Nennung eines Anbieters bedeutet nicht, dass für sämtliche seiner Dienste eine Zertifizierung nach dem EU-US Data Privacy Framework besteht.</p>
 
       <h3 id="m12">Allgemeine Informationen zur Datenspeicherung und Löschung</h3>
-      <p>Wir löschen personenbezogene Daten, sobald die zugrundeliegenden Einwilligungen widerrufen werden oder keine weiteren rechtlichen Grundlagen für die Verarbeitung bestehen. Ausnahmen bestehen, wenn gesetzliche Pflichten eine längere Aufbewahrung erfordern.</p>
+      <p>Die Speicherdauer richtet sich nach dem jeweiligen Zweck und gesetzlichen Aufbewahrungspflichten. Anfragekorrespondenz und Anhänge werden für die Bearbeitung und gegebenenfalls die anschließende Bestellung benötigt. Fertigungsdateien werden für die Herstellung und erforderliche Nachbearbeitung genutzt. Nach Wegfall dieser Zwecke werden Daten gelöscht, sofern keine gesetzlichen Pflichten oder die notwendige Geltendmachung, Ausübung oder Verteidigung von Ansprüchen eine weitere Speicherung erfordern.</p>
+      <p>Im privaten Cloudflare-Checkout-Speicher beginnt die automatisierte Bereinigung unbezahlter Vorgänge nach 7 Tagen ab Checkout-Start. Bei bezahlten Vorgängen beginnt sie nach 90 Tagen ab Zahlungsbestätigung, sobald der E-Mail-Dienst beide Bestellbenachrichtigungen angenommen hat. Bei noch ausstehenden Benachrichtigungen bleiben die Daten für die erneute Zustellung erhalten; bei technischen Fehlern wird die Bereinigung wiederholt. Gelöscht werden dort insbesondere GPX, Vorschaubild, Kontakt-, Konfigurations- und Versanddaten. Ein technischer Restdatensatz mit Bestell- und Zahlungsreferenz, Status, Zeitangaben und Prüfdaten bleibt zur Vermeidung doppelter Zahlungen erhalten; seine Zuordenbarkeit wird durch diese Bereinigung nicht vollständig ausgeschlossen.</p>
+      <p>Diese Bereinigung löscht keine Kopien in E-Mail-Postfächern, beim Zahlungsdienst oder in Fertigungs- und Buchhaltungsunterlagen. Für diese gelten die jeweiligen Bearbeitungszwecke und gesetzlichen Aufbewahrungspflichten. Steuer- und handelsrechtlich erforderliche Unterlagen werden nicht durch die 90-Tage-Bereinigung ersetzt. Soweit eine Verarbeitung auf Einwilligung beruht, wirkt deren Widerruf für die Zukunft; andere gesetzliche Aufbewahrungsgründe bleiben unberührt.</p>
 
       <h3 id="m10">Rechte der betroffenen Personen</h3>
       <p>Ihnen stehen als Betroffene nach der DSGVO folgende Rechte zu:</p>
       <ul style="padding-left: 1.2rem; font-size: 0.92rem; color: var(--text-light); line-height: 1.7;">
-        <li style="margin-bottom: 6px;"><strong>Widerspruchsrecht</strong> gegen die Verarbeitung Ihrer Daten</li>
-        <li style="margin-bottom: 6px;"><strong>Widerrufsrecht</strong> bei erteilten Einwilligungen</li>
-        <li style="margin-bottom: 6px;"><strong>Auskunftsrecht</strong> über verarbeitete Daten</li>
-        <li style="margin-bottom: 6px;"><strong>Recht auf Berichtigung</strong> unrichtiger Daten</li>
-        <li style="margin-bottom: 6px;"><strong>Recht auf Löschung</strong> und Einschränkung der Verarbeitung</li>
-        <li style="margin-bottom: 6px;"><strong>Recht auf Datenübertragbarkeit</strong></li>
-        <li><strong>Beschwerderecht</strong> bei einer Aufsichtsbehörde</li>
+        <li style="margin-bottom: 6px;"><strong>Auskunft, Berichtigung, Löschung und Einschränkung</strong> nach Maßgabe der Art. 15 bis 18 DSGVO.</li>
+        <li style="margin-bottom: 6px;"><strong>Datenübertragbarkeit</strong> unter den Voraussetzungen des Art. 20 DSGVO.</li>
+        <li style="margin-bottom: 6px;"><strong>Widerspruch</strong> aus Gründen Ihrer besonderen Situation gegen Verarbeitungen auf Grundlage berechtigter Interessen (Art. 21 DSGVO); gegen Direktwerbung jederzeit.</li>
+        <li style="margin-bottom: 6px;"><strong>Widerruf einer Einwilligung</strong> jederzeit mit Wirkung für die Zukunft, ohne die Rechtmäßigkeit der vorherigen Verarbeitung zu berühren.</li>
+        <li><strong>Beschwerde</strong> bei einer Datenschutzaufsichtsbehörde, insbesondere am Aufenthaltsort, Arbeitsplatz oder Ort des vermuteten Verstoßes. Für Baden-Württemberg: <a href="https://www.baden-wuerttemberg.datenschutz.de/" target="_blank" rel="noopener noreferrer">Landesbeauftragter für den Datenschutz und die Informationsfreiheit</a>.</li>
       </ul>
+      <p>Zur Ausübung Ihrer Rechte wenden Sie sich bitte an die oben genannten Kontaktdaten. Wir treffen im Website-Checkout keine ausschließlich automatisierte Entscheidung mit rechtlicher oder ähnlich erheblicher Wirkung im Sinne von Art. 22 DSGVO. Zahlungsdienstleister können eigene Sicherheits- und Betrugsprüfungen durchführen; hierzu informieren sie in ihren Datenschutzhinweisen.</p>
 
       <h3 id="m225">Bereitstellung des Onlineangebots und Webhosting</h3>
-      <p>Wir verarbeiten die IP-Adresse des Nutzers, um Inhalte und Funktionen unserer Online-Dienste bereitzustellen. Zugriffe werden in Server-Logfiles protokolliert (max. 30 Tage). Rechtsgrundlage: Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
+      <p>Unsere Website, Kontaktformulare, Gelände-Endpunkte und der private Bestellspeicher werden über Cloudflare bereitgestellt. Dabei werden IP-Adresse, angefragte URL, Zeit und technische Verbindungsdaten verarbeitet. Sicherheits- und Fehlerdaten dienen der Bereitstellung, Fehleranalyse und Missbrauchsabwehr. IP-Adressen werden außerdem als kurzlebige Schlüssel zur Ratenbegrenzung von Gelände-, Checkout- und Statusanfragen verwendet. Die Dauer der Speicherung technischer Protokolle richtet sich nach dem Sicherheits- und Fehleranalysezweck sowie den eingesetzten Cloudflare-Diensten; eine pauschale Höchstfrist von 30 Tagen wird hier nicht zugesichert. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO, berechtigtes Interesse an einem sicheren und funktionsfähigen Onlineangebot.</p>
 
-      <h3 id="m134">Einsatz von Cookies</h3>
-      <p>Wir verwenden Cookies gemäß den gesetzlichen Vorschriften. Soweit keine Einwilligung erforderlich ist, stützen wir uns auf berechtigte Interessen. Nutzer können Cookies über die Einstellungen ihres Browsers ablehnen oder löschen. Rechtsgrundlage: Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
+      <h3 id="m134">Cookies und Speicherung auf Ihrem Endgerät</h3>
+      <p>Im eigenen Website-Code setzen wir keine Analyse- oder Werbe-Cookies und speichern die GPX-Datei nicht dauerhaft im Browser. Cloudflare kann abhängig von den eingesetzten Sicherheitsfunktionen Cookies verwenden; beim Wechsel auf die gehostete Stripe-Zahlungsseite gelten deren Hinweise zu Cookies und Endgerätespeicherung. Technisch erforderliche Speicherung oder Zugriffe für einen ausdrücklich gewünschten Dienst können unter § 25 Abs. 2 TDDDG fallen. Für nicht erforderliche Speicherung oder Zugriffe ist grundsätzlich eine vorherige Einwilligung nach § 25 Abs. 1 TDDDG notwendig. Die Rechtsgrundlage einer anschließenden Verarbeitung personenbezogener Daten ist gesondert nach der DSGVO zu beurteilen; berechtigte Interessen ersetzen keine erforderliche Einwilligung für den Endgerätezugriff.</p>
 
       <h3 id="m182">Kontakt- und Anfrageverwaltung</h3>
-      <p>Bei der Kontaktaufnahme verarbeiten wir Name, E-Mail-Adresse, Nachrichteninhalt und gegebenenfalls die beigefügte GPX-Datei sowie Produkt- und Gravurwünsche zur Beantwortung Ihrer Anfrage. Bei einer Konfigurator-Anfrage mit verfügbarer Vorschau wird zusätzlich ein Bild der aktuellen 3D-Ansicht als E-Mail-Anhang übermittelt. Kontaktformulare werden über Cloudflare verarbeitet und mit dem E-Mail-Dienst Resend an uns zugestellt. GPX-Dateien und Vorschaubilder können sensible Orts- und Bewegungsdaten enthalten; laden Sie nur Dateien hoch, die Sie uns zur Bearbeitung Ihrer Anfrage übermitteln möchten. Rechtsgrundlagen: Vertragserfüllung und vorvertragliche Anfragen (Art. 6 Abs. 1 S. 1 lit. b) DSGVO), Berechtigte Interessen (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
+      <p>Bei der Kontaktaufnahme verarbeiten wir Name, E-Mail-Adresse, Nachrichteninhalt und gegebenenfalls die beigefügte GPX-Datei sowie Produkt- und Gravurwünsche zur Beantwortung Ihrer Anfrage. Bei einer Konfigurator-Anfrage mit verfügbarer Vorschau wird zusätzlich ein Bild der aktuellen 3D-Ansicht als E-Mail-Anhang übermittelt. Das Formular verarbeitet die Daten über Cloudflare und versendet sie mit Resend an unser WEB.DE-Postfach. Anders als beim Checkout legt der Kontakt-Endpunkt keine Bestellung in unserem Cloudflare-Bestellspeicher an. GPX-Dateien und Vorschaubilder können genaue Orts- und Bewegungsdaten enthalten; übermitteln Sie nur Dateien und Angaben, die für Ihre Anfrage oder Personalisierung benötigt werden, und keine fremden Daten ohne Berechtigung. Produktbezogene Anfragen werden nach Art. 6 Abs. 1 lit. b DSGVO verarbeitet; sonstige Korrespondenz nach Art. 6 Abs. 1 lit. f DSGVO mit dem berechtigten Interesse, eingehende Anliegen zu beantworten.</p>
 
       <h3>GPX-Dateien und interaktive Gelände-Vorschau</h3>
-      <p>Für die Online-Vorschau wird Ihre GPX-Datei lokal im Browser gelesen und nicht dauerhaft im Browser gespeichert. Die vollständige Datei wird erst mit dem Absenden einer Anfrage an uns übermittelt. Zur Darstellung des Geländes fordert der Browser über unsere Cloudflare-Endpunkte öffentliche Mapzen-Geländekacheln aus dem AWS Open Data Programm an. Die Kacheladressen lassen Rückschlüsse auf die ungefähre Region zu, enthalten aber nicht die vollständige Route. Cloudflare verarbeitet bei diesen Anfragen die IP-Adresse; AWS erhält die Kachelanfragen von unserem Server. Für die Begrenzung von Gelände-Anfragen wird die IP-Adresse als kurzlebiger Ratenbegrenzungsschlüssel verwendet. Es werden keine Routen-Konten oder öffentlich teilbaren Routen angelegt. Die Verarbeitung dient der Bereitstellung der angeforderten Vorschau (Art. 6 Abs. 1 S. 1 lit. f) DSGVO).</p>
+      <p>Für die Online-Vorschau wird Ihre GPX-Datei lokal im Browser gelesen und nicht dauerhaft im Browser gespeichert. Die vollständige Datei wird erst mit dem Absenden einer Anfrage oder dem Start des Checkouts an uns übermittelt. Zur Darstellung des Geländes fordert der Browser über unsere Cloudflare-Endpunkte öffentliche Mapzen-Geländekacheln aus dem AWS Open Data Programm an. Die Kacheladressen lassen Rückschlüsse auf die ungefähre Region zu, enthalten aber nicht die vollständige Route. Cloudflare verarbeitet bei diesen Anfragen die IP-Adresse; AWS erhält die Kachelanfragen von unserem Server, nicht unmittelbar von Ihrem Browser. Es werden keine Routen-Konten oder öffentlich teilbaren Routen angelegt. Die Verarbeitung dient der von Ihnen angeforderten Produktvorschau und vorvertraglichen Personalisierung (Art. 6 Abs. 1 lit. b DSGVO); technische Absicherung und Ratenbegrenzung erfolgen nach Art. 6 Abs. 1 lit. f DSGVO.</p>
+      <h3>Stripe-Checkout und Bestelldaten</h3>
+      <p>Ob der Direktkauf freigegeben ist und ob ein Test- oder Live-Modus vorliegt, wird im Konfigurator angezeigt. Bei einem freigegebenen Checkout speichern wir vor der Weiterleitung Name, E-Mail-Adresse, Original-GPX, Gravur und Konfiguration, Vorschaubild, Bestellreferenz, Bestätigung der finalen Auswahl sowie technische Zuordnungsdaten privat bei Cloudflare. Diese Angaben werden benötigt, um die personalisierte Bestellung zuzuordnen und abzuwickeln. Ohne die erforderlichen Kontakt- und Konfigurationsdaten kann der Checkout nicht gestartet werden; eine unverbindliche Anfrage bleibt möglich.</p>
+      <p>Für die Zahlung leiten wir auf die gehostete Stripe-Zahlungsseite weiter. Stripe erhält von uns E-Mail-Adresse, Bestellreferenz und Angaben zum Angebot, nicht die GPX-Datei oder das Vorschaubild. Stripe erfasst dort Liefer- und Zahlungsdaten sowie technische Verbindungsdaten. Kartennummern und Kartenprüfziffern werden nicht in unserem Website-Formular erfasst. Über authentifizierte Stripe-Mitteilungen erhalten und speichern wir Zahlungsstatus, Zahlungsreferenz sowie Käufer- und Versandinformationen. Diese dienen der Zahlungszuordnung und bei echten Bestellungen der Fertigung und Lieferung. Für die Lieferung werden die erforderlichen Empfänger- und Adressdaten an den beauftragten Versanddienstleister übermittelt, nicht die GPX-Datei.</p>
+      <p>Nach verifizierter Zahlung versendet Resend Bestelldaten einschließlich GPX, Konfiguration und Vorschaubild an unser WEB.DE-Postfach und eine Bestätigung mit Bestell- und Versandinformationen an die angegebene Käufer-E-Mail-Adresse. Die Verarbeitung zur Vertragsanbahnung, Zahlung, Fertigung und Lieferung beruht auf Art. 6 Abs. 1 lit. b DSGVO, gesetzlich erforderliche Dokumentation auf Art. 6 Abs. 1 lit. c DSGVO und Sicherheits- sowie Doppelzahlungsschutz auf Art. 6 Abs. 1 lit. f DSGVO. Stripe verarbeitet Daten für bestimmte eigene Zwecke, etwa Betrugsprävention und gesetzliche Pflichten, auch in eigener Verantwortung; Einzelheiten erläutert Stripe in seinen Datenschutzhinweisen.</p>
+      <p>Im ausdrücklich gekennzeichneten Sandbox-Testmodus werden keine echten Zahlungen oder Fertigungsaufträge ausgelöst. Verwenden Sie dort nur Testdaten und Stripe-Testkarten. E-Mails werden auch im Testmodus tatsächlich versendet. Test- und Live-Bestellspeicher sind getrennt; die beschriebenen technischen Bereinigungsfristen gelten für beide.</p>
+
+      <h3>Empfänger und eingesetzte Dienste</h3>
+      <ul style="padding-left: 1.2rem; font-size: 0.92rem; color: var(--text-light); line-height: 1.7;">
+        <li style="margin-bottom: 8px;"><strong>Cloudflare:</strong> Cloudflare, Inc., USA, für Hosting, Anfrageverarbeitung, Sicherheitsfunktionen und privaten Bestellspeicher. <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a>.</li>
+        <li style="margin-bottom: 8px;"><strong>Stripe:</strong> Stripe-Gesellschaften entsprechend Dienst und Region, für Zahlungsabwicklung und eigene Sicherheits- und gesetzliche Zwecke. Welche Gesellschaft in welcher Rolle handelt, erläutert das <a href="https://stripe.com/legal/privacy-center" target="_blank" rel="noopener noreferrer">Stripe-Datenschutzcenter</a>; siehe auch <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a>.</li>
+        <li style="margin-bottom: 8px;"><strong>Resend:</strong> Plus Five Five, Inc., USA, für Versand von Anfrage- und Bestell-E-Mails einschließlich der beschriebenen Anhänge. <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a> und <a href="https://resend.com/legal/dpa" target="_blank" rel="noopener noreferrer">Informationen zur Auftragsverarbeitung</a>.</li>
+        <li style="margin-bottom: 8px;"><strong>WEB.DE:</strong> 1&amp;1 Mail &amp; Media GmbH, Deutschland, für Empfang und Speicherung unserer Anfrage- und Bestellkorrespondenz. <a href="https://web.de/datenschutz/" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a>.</li>
+        <li><strong>Amazon Web Services:</strong> Bereitstellung öffentlicher Geländekacheln, abgerufen durch unseren Server wie oben beschrieben. <a href="https://aws.amazon.com/privacy/" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a>.</li>
+      </ul>
+      <p>Cloudflare und Resend werden für die Verarbeitung unserer Website- und Kommunikationsdaten als technische Dienstleister eingesetzt. Anbieter können zusätzlich Daten für eigene gesetzliche oder Sicherheitszwecke verarbeiten. Bestellinformationen können außerdem an Versanddienstleister und, soweit erforderlich, Steuerberatung oder Behörden gelangen. Wir veröffentlichen Ihre GPX-Datei und Bestelldaten nicht.</p>
+
+      <h3>Schriftarten und externe Links</h3>
+      <p>Die Schriftarten Inter und Quicksand werden von unserer Website geladen. Für die Schriftarten werden keine Anfragen an Google Fonts gesendet. Dabei fallen dieselben technischen Verbindungsdaten an wie beim Abruf anderer Website-Dateien über unser Hosting.</p>
+      <p>Etsy und Instagram sind auf dieser Website als externe Links eingebunden, nicht als eingebettete Shop- oder Social-Media-Widgets. Wenn Sie einem Link folgen, gelten die Datenverarbeitung und Datenschutzhinweise der jeweiligen Plattform. Für einen Kauf auf Etsy gelten dessen eigener Bestell- und Zahlungsablauf und die zugehörigen Datenschutzhinweise.</p>
 
       <h3 id="m15">Änderung und Aktualisierung</h3>
       <p>Wir passen die Datenschutzerklärung an, sobald Änderungen der von uns durchgeführten Datenverarbeitungen dies erforderlich machen. Wir informieren Sie, sobald durch die Änderungen eine Mitwirkungshandlung Ihrerseits erforderlich wird.</p>
@@ -2178,7 +2210,7 @@
     // Shared legal dialogs: isolate background and restore the invoking focus.
     (function() {
       var active = null;
-      ['datenschutz', 'impressum'].forEach(function(name) {
+      ['datenschutz', 'impressum', 'kaufbedingungen'].forEach(function(name) {
         var modal = document.getElementById(name + 'Modal');
         var openBtn = document.getElementById(name + 'Link');
         var closeBtn = document.getElementById(name + 'Close');

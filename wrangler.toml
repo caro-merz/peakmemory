@@ -2,6 +2,36 @@ name               = "peakmemory"
 main               = "worker.js"
 compatibility_date = "2026-07-19"
 
+[vars]
+CHECKOUT_ENABLED = "true"
+CHECKOUT_LIVE_ENABLED = "false"
+CHECKOUT_LIVE_LEGAL_REVIEWED = "true"
+CHECKOUT_LIVE_WAF_REVIEWED = "true"
+CHECKOUT_ORIGIN = "https://peak-memory.de"
+
+[[d1_databases]]
+binding = "CHECKOUT_DB"
+database_name = "peakmemory-checkout-test"
+database_id = "fc876b4c-15df-4876-aa77-532e1af4ddf9"
+migrations_dir = "migrations"
+
+[[d1_databases]]
+binding = "CHECKOUT_LIVE_DB"
+database_name = "peakmemory-checkout-live"
+database_id = "f78a39cc-5ac0-48ed-8296-f2ae610127f5"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "CHECKOUT_FILES"
+bucket_name = "peakmemory-checkout-test-files"
+
+[[r2_buckets]]
+binding = "CHECKOUT_LIVE_FILES"
+bucket_name = "peakmemory-checkout-live-files"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
 [build]
 command = "npm run build"
 
@@ -15,3 +45,8 @@ not_found_handling = "none"
 name = "TERRAIN_RATE_LIMITER"
 namespace_id = "1001"
 simple = { limit = 120, period = 60 }
+
+[[ratelimits]]
+name = "CHECKOUT_RATE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 30, period = 60 }

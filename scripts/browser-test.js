@@ -53,9 +53,18 @@ try {
   const context = await browser.newContext({ viewport: { width: 1365, height: 950 } });
   const page = await context.newPage();
   const errors = [];
+  const externalFontRequests = [];
+  page.on('request', request => {
+    if (['fonts.googleapis.com', 'fonts.gstatic.com'].includes(new URL(request.url()).hostname)) {
+      externalFontRequests.push(request.url());
+    }
+  });
   page.on('pageerror', error => errors.push(error.message));
   const png = terrainPng();
   let terrainFailure = false, terrainOffline = false, emailFailure = false, submitted = null, submittedImage = null, terrainDelay = 0, terrainRequests = 0;
+  await page.route('**/shop-status', request => request.fulfill({
+    status: 200, contentType: 'application/json', body: '{"enabled":false,"testMode":true,"mode":"test"}',
+  }));
   await page.route('**/terrain/**', async request => {
     terrainRequests += 1;
     if (terrainOffline) { await request.abort('connectionrefused'); return; }
@@ -83,6 +92,8 @@ try {
   await page.goto(url + '/configurator.html');
   assert.equal(page.url(), url + '/#konfigurator');
   assert.equal(await page.locator('#modelPrice').innerText(), '50 €');
+  assert.match(await page.locator('.model-price').innerText(), /Inkl. Versand innerhalb Deutschlands/);
+  assert.equal(await page.locator('#checkoutForm').isHidden(), true);
   await assertDesktopLayout(page);
   const defaultEngraving = 'Deine Route\n100 km | 1000 hm | 10 h\n01.01.2026';
   assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
@@ -209,6 +220,17 @@ try {
   await page.reload();
   await page.goto(url + '/#datenschutz');
   assert.equal(await page.locator('#datenschutzModal').evaluate(element => element.classList.contains('open')), true);
+  const privacy = await page.locator('#datenschutzModal').innerText();
+  assert.match(privacy, /Peak Memory GbR/);
+  assert.match(privacy, /Stripe-Checkout und Bestelldaten/);
+  assert.match(privacy, /7 Tagen/);
+  assert.match(privacy, /90 Tagen/);
+  assert.match(privacy, /§ 25 Abs. 1 TDDDG/);
+  assert.match(privacy, /WEB.DE/);
+  assert.doesNotMatch(privacy, /max\. 30 Tage|ausschließlich im Testmodus vorbereitet/);
+  await page.evaluate(() => document.fonts.load('400 16px Inter'));
+  assert.equal(await page.evaluate(() => document.fonts.check('400 16px Inter')), true);
+  assert.deepEqual(externalFontRequests, [], 'Fonts must be loaded locally without Google requests');
   assert.equal(await page.locator('#main').evaluate(element => element.inert), true);
   assert.equal(await page.locator('#datenschutzClose').evaluate(element => element === document.activeElement), true);
   await page.keyboard.press('Shift+Tab');
@@ -217,18 +239,30 @@ try {
   assert.equal(await page.locator('#main').evaluate(element => element.inert), false);
   assert.equal(await page.locator('#datenschutzLink').evaluate(element => element === document.activeElement), true);
   await page.locator('#impressumLink').click();
+  assert.match(await page.locator('#impressumModal').innerText(), /Digitale-Dienste-Gesetz/);
+  assert.doesNotMatch(await page.locator('#impressumModal').innerText(), /TMG/);
+  assert.equal(await page.locator('#impressumModal a[href="tel:+491622701613"]').innerText(), '0162 2701613');
   assert.equal(await page.locator('#impressumClose').evaluate(element => element === document.activeElement), true);
   await page.keyboard.press('Shift+Tab');
   await page.keyboard.press('Tab');
   assert.equal(await page.locator('#impressumClose').evaluate(element => element === document.activeElement), true);
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#impressumLink').evaluate(element => element === document.activeElement), true);
+  await page.locator('#kaufbedingungenLink').click();
+  assert.equal(await page.locator('#kaufbedingungenClose').evaluate(element => element === document.activeElement), true);
+  assert.match(await page.locator('#kaufbedingungenModal').innerText(), /§ 312g Abs. 2 Nr. 1 BGB/);
+  assert.match(await page.locator('#kaufbedingungenModal').innerText(), /erfolgreicher Zahlungsbestätigung/);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#main').evaluate(element => element.inert), false);
+  await page.goto(url + '/#kaufbedingungen');
+  assert.equal(await page.locator('#kaufbedingungenModal').evaluate(element => element.classList.contains('open')), true);
+  await page.keyboard.press('Escape');
   await page.setViewportSize({width:800,height:800});
   assert.ok(await page.locator('.navbar .container').evaluate(element => element.scrollWidth <= element.clientWidth));
   assert.equal(await page.locator('#hero + #konfigurator + #produkt').count(), 1);
-  assert.equal(await page.locator('.process-card').count(), 6);
+  assert.equal(await page.locator('.process-card').count(), 5);
   assert.deepEqual(await page.locator('.process-card h3').allTextContents(),
-    ['Route hochladen', 'Personalisieren', 'Unverbindlich anfragen', 'Finale Freigabe', 'Bestellung & Bezahlung', 'Produktion & Versand']);
+    ['Route hochladen', 'Personalisieren', 'Auswahl prüfen', 'Sicher bezahlen', 'Produktion & Versand']);
   assert.equal(await page.locator('.nav-cta').getAttribute('href'), '#konfigurator');
   assert.match(await page.locator('#contactType option[value="event"]').innerText(), /5 Stück/);
   for (const id of ['contactName', 'contactEmail', 'contactType', 'contactMessage']) {
@@ -298,11 +332,15 @@ try {
     };
   });
   const noWebgl = await unavailable.newPage();
+  await noWebgl.route('**/shop-status', request => request.fulfill({
+    status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
+  }));
   await noWebgl.route('**/terrain/**', request => request.fulfill({status:200,contentType:'image/png',body:png}));
   await noWebgl.goto(url + '/configurator.html');
   await noWebgl.locator('#gpxFile').setInputFiles({name:'valid.gpx',mimeType:'application/gpx+xml',buffer:Buffer.from(personal)});
   await noWebgl.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Nicht verfügbar');
   assert.equal(await noWebgl.locator('#submitInquiry').isEnabled(), true);
+  assert.equal(await noWebgl.locator('#submitCheckout').isDisabled(), true, 'Checkout requires a ready preview');
   assert.equal(await noWebgl.locator('#viewer canvas').count(), 0);
   let unavailableImage = 'not submitted';
   await noWebgl.route('**/contact', async request => {
@@ -325,6 +363,8 @@ try {
   assert.equal(await guide.locator('.faq-answer').first().isVisible(), true);
   assert.equal(await guide.locator('#impressumModal').isVisible(), true);
   assert.equal(await guide.locator('#datenschutzModal').isVisible(), true);
+  assert.equal(await guide.locator('#kaufbedingungenModal').isVisible(), true);
+  assert.match(await guide.locator('#kaufbedingungenModal').innerText(), /kein gesetzliches Widerrufsrecht/);
   assert.equal(await guide.locator('#contactForm button[type="submit"]').isVisible(), false);
   assert.equal((await guide.goto(url + '/gpx-hilfe')).status(), 200);
   assert.equal((await guide.goto(url + '/gpx-hilfe.html')).status(), 200);
@@ -341,8 +381,130 @@ try {
     assert.ok(box.x >= 0 && box.x + box.width <= guideWidth.width);
   }
   await guideContext.close();
+  const shop = await context.newPage();
+  shop.on('pageerror', error => errors.push(error.message));
+  await shop.route('**/shop-status', request => request.fulfill({
+    status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
+  }));
+  await shop.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/png', body: png }));
+  let checkoutAttempt = 0;
+  const checkoutSubmissions = [];
+  await shop.route('**/checkout', async request => {
+    const body = await new Response(request.request().postDataBuffer(), {
+      headers: { 'Content-Type': request.request().headers()['content-type'] },
+    }).formData();
+    assert.equal(body.get('acceptance'), 'true');
+    assert.equal(body.get('name'), 'Test Checkout');
+    assert.equal(body.get('email'), 'checkout@example.invalid');
+    assert.equal(await body.get('gpxFile').text(), personal);
+    assert.equal(JSON.parse(body.get('configuration')).version, 2);
+    assert.equal(body.get('previewImage').type, 'image/png');
+    assert.equal(body.has('price'), false);
+    checkoutSubmissions.push(body);
+    checkoutAttempt += 1;
+    await request.fulfill({
+      status: checkoutAttempt === 1 ? 503 : 200, contentType: 'application/json',
+      body: checkoutAttempt === 1 ? '{"error":"Temporary test outage"}'
+        : checkoutAttempt === 2 ? '{"url":"https://example.invalid/not-stripe"}'
+          : '{"url":"https://checkout.stripe.com/c/pay/cs_test_browser"}',
+    });
+  });
+  await shop.route('https://checkout.stripe.com/**', request => request.fulfill({
+    status: 200, contentType: 'text/html', body: '<h1>Mock Stripe checkout</h1>',
+  }));
+  await shop.goto(url + '/');
+  await shop.locator('#checkoutForm').waitFor({ state: 'visible' });
+  await shop.setViewportSize({ width: 390, height: 844 });
+  assert.ok(await shop.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Test checkout fits mobile width');
+  assert.equal(await shop.locator('#submitCheckout').isDisabled(), true);
+  await shop.locator('#sample').click();
+  await shop.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Beispielroute');
+  assert.equal(await shop.locator('#submitCheckout').isDisabled(), true);
+  await shop.locator('#gpxFile').setInputFiles({ name: 'checkout.gpx', mimeType: 'application/gpx+xml', buffer: Buffer.from(personal) });
+  await shop.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
+  await shop.locator('#checkoutName').fill('Test Checkout');
+  await shop.locator('#checkoutEmail').fill('checkout@example.invalid');
+  await shop.locator('#submitCheckout').click();
+  assert.equal(checkoutAttempt, 0, 'Acceptance is required before creating checkout');
+  await shop.locator('#checkoutAcceptance').check();
+  await shop.locator('#engraving').fill('Finale Gravur');
+  assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false, 'Changes require rechecking final selection');
+  await shop.locator('#checkoutAcceptance').check();
+  await shop.locator('#submitCheckout').click();
+  await shop.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Temporary test outage'));
+  assert.equal(await shop.locator('#checkoutName').inputValue(), 'Test Checkout');
+  await shop.locator('#submitCheckout').click();
+  await shop.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('gültige Stripe-Adresse'));
+  assert.equal(checkoutSubmissions[0].get('submissionKey'), checkoutSubmissions[1].get('submissionKey'));
+  assert.deepEqual(Buffer.from(await checkoutSubmissions[0].get('previewImage').arrayBuffer()),
+    Buffer.from(await checkoutSubmissions[1].get('previewImage').arrayBuffer()), 'Retries use identical saved preview');
+  await shop.locator('#submitCheckout').click();
+  await shop.waitForURL('https://checkout.stripe.com/**');
+  assert.equal(checkoutAttempt, 3);
+  let checkedOrder = null;
+  await shop.route('**/order-status?**', request => {
+    checkedOrder = new URL(request.request().url()).searchParams.get('order');
+    return request.fulfill({ status: 200, contentType: 'application/json', body: '{"status":"paid","orderId":"test-order"}' });
+  });
+  await shop.goto(url + '/?checkout=success&order=test-order&token=test-secret');
+  await shop.waitForFunction(() => document.getElementById('paymentStatus').textContent.includes('Testzahlung bestätigt'));
+  assert.equal(checkedOrder, 'test-order');
+  assert.ok(!shop.url().includes('test-secret'), 'Remove private status token from browser address');
+  assert.match(await shop.locator('#paymentStatus').innerText(), /keine echte Bestellung/);
+  assert.equal(await shop.locator('#paymentStatus strong').innerText(), 'Testzahlung bestätigt');
+  assert.equal(await shop.locator('#paymentStatus').evaluate(element => getComputedStyle(element).backgroundColor), 'rgb(237, 245, 232)');
+  await shop.unroute('**/order-status?**');
+  await shop.route('**/order-status?**', request => request.fulfill({
+    status: 404, contentType: 'application/json', body: '{"error":"Test status not found"}',
+  }));
+  await shop.goto(url + '/?checkout=success&order=test-order&token=wrong-token');
+  await shop.waitForFunction(() => document.getElementById('paymentStatus').textContent.includes('Test status not found'));
+  assert.ok(!(await shop.locator('#paymentStatus').innerText()).includes('Testzahlung bestätigt'), 'Redirect alone never confirms payment');
+  await shop.goto(url + '/?checkout=cancelled');
+  await shop.waitForFunction(() => document.getElementById('paymentStatus').textContent.includes('verlassen'));
+  assert.ok(!(await shop.locator('#paymentStatus').innerText()).includes('Testzahlung bestätigt'));
+
+  const liveShop = await context.newPage();
+  liveShop.on('pageerror', error => errors.push(error.message));
+  await liveShop.route('**/shop-status', request => request.fulfill({
+    status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":false,"mode":"live"}',
+  }));
+  await liveShop.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/png', body: png }));
+  let liveCheckoutMode = null;
+  await liveShop.route('**/checkout/live', async request => {
+    liveCheckoutMode = new URL(request.request().url()).pathname;
+    await request.fulfill({
+      status: 200, contentType: 'application/json',
+      body: '{"url":"https://checkout.stripe.com/c/pay/cs_live_browser"}',
+    });
+  });
+  await liveShop.route('https://checkout.stripe.com/**', request => request.fulfill({
+    status: 200, contentType: 'text/html', body: '<h1>Mock live Stripe checkout</h1>',
+  }));
+  await liveShop.goto(url + '/');
+  await liveShop.locator('#checkoutForm').waitFor({ state: 'visible' });
+  assert.equal(await liveShop.locator('#checkoutModeLabel').innerText(), 'ECHTE BESTELLUNGEN');
+  assert.match(await liveShop.locator('#submitCheckout').innerText(), /Zahlungspflichtig bestellen/);
+  await liveShop.locator('#gpxFile').setInputFiles({ name: 'live-checkout.gpx', mimeType: 'application/gpx+xml', buffer: Buffer.from(personal) });
+  await liveShop.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
+  await liveShop.locator('#checkoutName').fill('Live Checkout');
+  await liveShop.locator('#checkoutEmail').fill('live@example.invalid');
+  await liveShop.locator('#checkoutAcceptance').check();
+  await liveShop.locator('#submitCheckout').click();
+  await liveShop.waitForURL('https://checkout.stripe.com/**');
+  assert.equal(liveCheckoutMode, '/checkout/live');
+  let liveStatusMode = null;
+  await liveShop.route('**/order-status?**', request => {
+    liveStatusMode = new URL(request.request().url()).searchParams.get('mode');
+    return request.fulfill({ status: 200, contentType: 'application/json', body: '{"status":"paid","orderId":"live-order"}' });
+  });
+  await liveShop.goto(url + '/?checkout=success&mode=live&order=live-order&token=live-token');
+  await liveShop.waitForFunction(() => document.getElementById('paymentStatus').textContent.includes('Zahlung bestätigt'));
+  assert.equal(liveStatusMode, 'live');
+  assert.match(await liveShop.locator('#paymentStatus').innerText(), /Wir senden dir und PeakMemory/);
+  assert.equal(await liveShop.locator('#paymentStatus strong').innerText(), 'Zahlung bestätigt');
   assert.deepEqual(errors, []);
-  console.log('Browser checks passed: homepage configurator and legacy redirects, fixed price, GPX guide without JavaScript, independent contact upload, sample, personal upload/drop, 3D controls, customization, margin, inquiry success/failure, retry, removal, mobile, privacy, no WebGL.');
+  console.log('Browser checks passed: homepage configurator, mobile galleries, inquiry flow, privacy, no WebGL, disabled/test/live checkout UI, final-selection acceptance, idempotent retries, Stripe-only redirects and verified payment return states.');
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

@@ -40,7 +40,7 @@
         </fieldset>
         <fieldset id="productControls" class="card">
           <legend><span class="step">2</span> Deine Personalisierung</legend>
-          <p class="model-price"><strong id="modelPrice">50 €</strong> für dein Relief auf Eiche<br><small>Zzgl. Versand. Die Versandkosten stimmen wir persönlich mit dir ab.</small></p>
+          <p class="model-price"><strong id="modelPrice">50 €</strong> für dein Relief auf Eiche<br><small>Inkl. Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.</small></p>
           <label for="engraving">Gravurwunsch <span class="hint">(optional)</span></label>
           <textarea id="engraving" maxlength="120" rows="3" aria-describedby="engravingHint">Deine Route
 100 km | 1000 hm | 10 h
@@ -65,7 +65,7 @@
         </div>
         <p class="hint">Ziehen zum Drehen · Mausrad oder zwei Finger zum Zoomen. Alternativ die Buttons verwenden.</p>
         <p id="configurationSummary" class="configuration-summary"></p>
-        <div class="preview-note"><strong>Eine erste Idee, keine Produktionsfreigabe.</strong><p>Deine verbindliche Produktionsvorschau stimmen wir persönlich mit dir ab. Erst nach deiner Freigabe vereinbaren wir Bestellung und Bezahlung; anschließend fertigen wir dein Unikat.</p><details><summary>Maße &amp; Hinweise zur Vorschau</summary><p>Die Maße entsprechen einem 10 × 10 cm Relief auf 11 × 13,5 cm Holz mit 2 cm Stärke. Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Höhen sind <span id="elevationNote">2-fach</span> skaliert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, Maserung, Gravur und Geländedetails sind beispielhaft. Deine unveränderte GPX-Datei wird mit der Anfrage gesendet.</p></details></div>
+        <div class="preview-note"><strong>Illustrative Vorschau, kein exaktes Fertigungsbild.</strong><p>Beim Direktkauf gelten deine Route und Einstellungen als final. Die Fertigung beginnt nach bestätigter Zahlung, ohne zusätzliche Vorschau-Freigabe. Prüfe deshalb besonders deine Gravur.</p><details><summary>Maße &amp; Hinweise zur Vorschau</summary><p>Die Maße entsprechen einem 10 × 10 cm Relief auf 11 × 13,5 cm Holz mit 2 cm Stärke. Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Höhen sind <span id="elevationNote">2-fach</span> skaliert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, natürliche Holzmaserung, Gravur und Geländedetails können vom gefertigten Produkt abweichen. Deine unveränderte GPX-Datei wird mit der Bestellung oder Anfrage gesendet.</p></details></div>
         <details class="attribution"><summary>Geländedaten &amp; Quellen</summary>
           <p>Mapzen Terrain Tiles, bereitgestellt über das <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener noreferrer">AWS Open Data Programm</a>. <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener noreferrer">Datenquellen und Lizenzhinweise</a>:</p>
           <ul>
@@ -84,8 +84,40 @@
         </details>
       </section>
     </div>
+    <section class="card checkout" aria-labelledby="checkoutTitle">
+      <div>
+        <p class="eyebrow">DIREKTKAUF · <span id="checkoutModeLabel">TESTBETRIEB</span></p>
+        <h2 id="checkoutTitle">Dein PeakMemory bestellen.</h2>
+        <p>Ein Relief auf Eiche, genau mit deiner Route und deinen Einstellungen. Lieferadresse und Zahlung erfasst Stripe im nächsten Schritt.</p>
+        <dl class="order-details">
+          <dt>Relief</dt><dd>10 × 10 cm</dd>
+          <dt>Eiche-Holzsockel</dt><dd>11 × 13,5 × 2 cm</dd>
+          <dt>Gesamtpreis</dt><dd><strong>50 € inkl. Versand</strong></dd>
+          <dt>Liefergebiet</dt><dd>Deutschland</dd>
+          <dt>Lieferzeit</dt><dd>5–10 Werktage nach Zahlung</dd>
+        </dl>
+        <p class="hint">Kein Umsatzsteuerausweis gemäß §19 UStG. Ein Stück pro Bestellung. Sonderformate und Rahmen bitte separat anfragen.</p>
+        <p id="checkoutAvailability" role="status">Der Direktkauf ist noch nicht aktiviert. Du kannst dein Relief weiterhin unverbindlich anfragen.</p>
+        <p id="paymentStatus" role="status" aria-live="polite"></p>
+      </div>
+      <form id="checkoutForm" hidden>
+        <fieldset id="checkoutFields">
+          <p id="testNotice" class="test-notice"><strong>Stripe-Testmodus:</strong> Keine echte Zahlung, keine echte Bestellung und keine Produktion. Keine echten Kartendaten eingeben. Test-Bestelldaten werden privat gespeichert.</p>
+          <label for="checkoutName">Dein Name</label><input id="checkoutName" name="name" autocomplete="name" maxlength="200" required>
+          <label for="checkoutEmail">E-Mail-Adresse</label><input id="checkoutEmail" name="email" type="email" autocomplete="email" maxlength="200" required>
+          <p><strong>Deine Auswahl</strong></p>
+          <p id="checkoutSummary" class="configuration-summary"></p>
+          <label class="acceptance" for="checkoutAcceptance"><input id="checkoutAcceptance" type="checkbox" required> <span>Ich habe meine Route, Gravur und Einstellungen geprüft. Beim Direktkauf sind sie final; eine weitere Produktionsfreigabe erfolgt nicht. Die 3D-Vorschau ist illustrativ.</span></label>
+          <p class="hint"><strong>Kein gesetzliches Widerrufsrecht:</strong> Dein Relief wird individuell nach deiner GPX-Route und Konfiguration angefertigt (§ 312g Abs. 2 Nr. 1 BGB). Gesetzliche Mängelrechte bleiben unberührt. <a href="/#kaufbedingungen">Kaufhinweise, Vertragsschluss &amp; Widerruf</a></p>
+          <p class="hint">Beim Start des Checkouts werden deine Kontaktdaten, GPX-Datei, Konfiguration und das Vorschaubild privat bei Cloudflare gespeichert. Stripe erhält E-Mail-Adresse und Bestellreferenz sowie anschließend deine Liefer- und Zahlungsdaten. <a href="/#datenschutz">Datenschutzhinweise</a></p>
+          <button id="submitCheckout" type="submit" class="primary" disabled>Zur Testzahlung bei Stripe · 50 €</button>
+          <p class="hint">Die Zahlung wird erst auf der Stripe-Seite bestätigt. Im Testmodus wird kein Geld abgebucht.</p>
+        </fieldset>
+        <p id="checkoutStatus" role="status" aria-live="polite"></p>
+      </form>
+    </section>
     <section class="card inquiry" aria-labelledby="inquiryTitle">
-      <div><p class="eyebrow">DEIN NÄCHSTER SCHRITT</p><h2 id="inquiryTitle">Lass uns deine Route verewigen.</h2><p>Schicke uns deine Route und Gestaltungswünsche. Wir besprechen Format und Preis und erstellen deine finale Vorschau zur Freigabe. Bestellung und Bezahlung stimmen wir danach persönlich mit dir ab. Diese Anfrage ist unverbindlich, keine Bestellung.</p><p id="inquiryHint" class="hint">Bitte lade deine eigene GPX-Datei hoch. Die Beispielroute kann nicht angefragt werden.</p></div>
+      <div><p class="eyebrow">FRAGEN ODER BESONDERE WÜNSCHE?</p><h2 id="inquiryTitle">Lieber persönlich abstimmen?</h2><p>Schicke uns deine Route und Gestaltungswünsche. Du kannst dein Relief hier unverbindlich anfragen. Sonderformate, Rahmen und offene Fragen besprechen wir persönlich. Eine Anfrage ist keine Bestellung.</p><p id="inquiryHint" class="hint">Bitte lade deine eigene GPX-Datei hoch. Die Beispielroute kann nicht angefragt werden.</p></div>
       <form id="inquiryForm">
         <fieldset id="inquiryFields">
           <label for="name">Dein Name</label><input id="name" name="name" autocomplete="name" maxlength="200" required>

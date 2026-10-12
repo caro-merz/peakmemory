@@ -146,8 +146,8 @@ export async function handleContact(request, env) {
       `Höhenüberhöhung: ${configuration.version === 2 ? configuration.elevationScale : 1.5}×`,
       `Online-Vorschau: ${configuration.preview === 'ready' ? 'bereit (illustrativ)' : 'nicht verfügbar'}`,
       'Die endgültige Produktionsvorschau wird separat abgestimmt.');
-    if (configuration.version === 2) lines.push(`Modellpreis: ${CONFIGURATOR_PRICE_EUR} EUR zzgl. persönlich abgestimmter Versandkosten.`,
-      'Bestellung und Bezahlung werden nach der finalen Freigabe persönlich abgestimmt.');
+    if (configuration.version === 2) lines.push(`Modellpreis: ${CONFIGURATOR_PRICE_EUR} EUR inkl. Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.`,
+      'Dies ist eine unverbindliche Anfrage, keine bezahlte Bestellung.');
     lines.push(previewAttachment ? 'Vorschaubild: als PNG angehängt (illustrative Online-Konfiguration).'
       : 'Vorschaubild: nicht angehängt.');
   }

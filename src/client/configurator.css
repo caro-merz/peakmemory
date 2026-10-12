@@ -59,6 +59,18 @@
 .configurator .attribution{font-size:.7rem}.configurator .attribution ul{padding-left:18px}
 .configurator .inquiry{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:60px}
 .configurator .inquiry>div{padding-top:12px}.configurator .inquiry form label:first-child{margin-top:0}
+.configurator .checkout{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.configurator .order-details{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin:16px 0;font-size:.9rem}
+.configurator .order-details dd{margin:0}
+.configurator .test-notice{background:#fff4d5;border:1px solid #c4a459;border-radius:8px;padding:14px;font-size:.85rem}
+.configurator .acceptance{display:flex;align-items:start;gap:12px;font-weight:400}
+.configurator .acceptance input[type=checkbox]{width:20px;min-width:20px;height:20px;padding:0;margin-top:3px;accent-color:var(--accent)}
+.configurator #checkoutSummary{white-space:pre-line}
+.configurator #checkoutStatus,.configurator #paymentStatus{font-size:.9rem;margin-top:16px;overflow-wrap:anywhere}
+.configurator #paymentStatus.success{padding:24px;border:2px solid #2d5016;border-radius:12px;background:#edf5e8;color:#244212;font-size:1rem;line-height:1.6}
+.configurator #paymentStatus.success strong{display:block;font-size:1.5rem;line-height:1.3;margin-bottom:12px}
+.configurator #paymentStatus.success span{display:block;margin-top:8px}
+@media(max-width:700px){.configurator .checkout{grid-template-columns:1fr;gap:20px}}
 .configurator #inquiryStatus{margin-top:16px;font-size:.9rem}
 .configurator .error{color:#9c2920!important}.configurator .success{color:var(--accent)}
 .configurator footer{max-width:1248px;margin:32px auto 0;padding:32px 24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:24px;color:var(--muted);font-size:.8rem}

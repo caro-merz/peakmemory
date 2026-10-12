@@ -182,7 +182,7 @@ test('current inquiries include validated oak-base and height scaling settings',
     assert.equal((await handleContact(formContact({configuration:JSON.stringify(config)}, new File([gpx], 'personal.gpx')), env)).status, 200);
     assert.match(payloads.at(-1).text, /Relief auf Eichenholzsockel/);
     assert.ok(payloads.at(-1).text.includes(`Höhenüberhöhung: ${elevationScale}×`));
-    assert.match(payloads.at(-1).text, /Modellpreis: 50 EUR zzgl/);
+    assert.match(payloads.at(-1).text, /Modellpreis: 50 EUR inkl. Versand innerhalb Deutschlands/);
   }
   globalThis.fetch = () => assert.fail('Invalid height scale must not send mail');
   for (const elevationScale of [null,'2',0.99,8.01]) {

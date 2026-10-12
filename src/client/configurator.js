@@ -5,6 +5,7 @@ import { terrainPlan } from '../shared/geometry.js';
 import { loadTerrain } from './terrain.js';
 import sampleXml from './sample.gpx';
 import { CONFIGURATOR_PRICE_EUR } from '../shared/product.js';
+import { initializeCheckout } from './checkout.js';
 
 const get = id => document.getElementById(id);
 const fileInput = get('gpxFile'), dropzone = get('dropzone'), form = get('inquiryForm');
@@ -12,6 +13,7 @@ const viewButtons = ['rotate', 'zoomIn', 'zoomOut', 'resetView'].map(get);
 get('modelPrice').textContent = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(CONFIGURATOR_PRICE_EUR);
 let file = null, route = null, sample = false, preview = 'unavailable', viewer = null;
 let generation = 0, controller = null, marginTimer = null, sending = false;
+let checkout;
 
 function configuration() {
   return parseConfiguration({
@@ -44,12 +46,13 @@ function updateActions() {
   get('submitInquiry').disabled = sending || !file || !route || sample || preview === 'loading' || !get('engraving').validity.valid;
   get('remove').disabled = sending || !route && !file;
   get('retry').hidden = !route || preview !== 'unavailable';
-  for (const button of viewButtons) button.disabled = preview !== 'ready';
+  for (const button of viewButtons) button.disabled = sending || preview !== 'ready';
   get('inquiryHint').textContent = !route || sample
     ? 'Bitte lade deine eigene GPX-Datei hoch. Die Beispielroute kann nicht angefragt werden.'
     : preview === 'loading' ? 'Deine Vorschau wird geladen.'
       : preview === 'ready' ? 'Deine Originaldatei und Gestaltungswünsche werden mit der Anfrage gesendet.'
         : 'Die Vorschau ist nicht verfügbar. Du kannst deine gültige GPX-Datei trotzdem unverbindlich anfragen.';
+  checkout?.update();
 }
 function status(message, error = false) {
   get('previewStatus').textContent = message;
@@ -229,4 +232,21 @@ form.addEventListener('submit', async event => {
 });
 window.addEventListener('pagehide', () => { controller?.abort(); viewer?.dispose(); viewer = null; });
 window.addEventListener('pageshow', event => { if (event.persisted && route) renderPreview(); });
+checkout = initializeCheckout({
+  state: () => ({
+    file, sample, preview, busy: sending, valid: get('engraving').validity.valid,
+    configuration: get('engraving').validity.valid ? configuration() : null,
+    summary: get('configurationSummary').textContent,
+  }),
+  capture: () => {
+    if (!viewer || preview !== 'ready') throw new Error('Die 3D-Vorschau ist nicht verfügbar. Bitte erneut laden.');
+    return viewer.screenshot();
+  },
+  setBusy: busy => {
+    sending = busy;
+    for (const id of ['routeControls', 'productControls', 'inquiryFields']) get(id).disabled = busy;
+    for (const button of viewButtons) button.disabled = busy || preview !== 'ready';
+    updateActions();
+  },
+});
 summary(); updateActions();

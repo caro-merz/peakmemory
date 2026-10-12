@@ -1,0 +1,338 @@
+# Stripe Checkout
+
+## Editing order confirmations
+
+The branded HTML and plain-text email templates are in
+`src/server/order-email.js`. Buyer emails show readable personalization and
+shipping information; owner emails additionally show the GPX filename and Stripe
+reference and retain the original three attachments. User-entered content is
+HTML-escaped. Live confirmations include the shared purchase information from
+`src/shared/purchase.js`; sandbox emails explicitly exclude manufacturing.
+Update both formats together and run the checkout tests before deploying.
+Already accepted emails are not resent by a template edit.
+
+Payment-return confirmations use a prominent green panel with a bold heading,
+separate reference and test/live explanation. A redirect alone never shows success:
+the panel appears only after authenticated order-status polling reports paid.
+
+**Temporary sandbox checkout deployed and verified with owner authorization on
+2026-10-12. New live checkouts are paused.**
+Live checkout was previously enabled with owner authorization. This temporary
+switch does not disable live webhook processing or paid-order notification
+retries. Existing Stripe live sessions remain live and must not be used for tests.
+The owner has created a Stripe sandbox and reports that rotated test API and
+webhook secrets were uploaded through the Cloudflare secret prompt. Secret
+values are never retrieved or stored in this repository.
+The private D1 database `peakmemory-checkout-test` and R2 bucket
+`peakmemory-checkout-test-files` are now bound in `wrangler.toml`, and the
+order migration is applied remotely. Public r2.dev access is disabled.
+The owner has provisioned separate live resources `peakmemory-checkout-live`
+and `peakmemory-checkout-live-files`; their `CHECKOUT_LIVE_DB` and
+`CHECKOUT_LIVE_FILES` bindings are configured locally. The owner reports
+`0001_checkout.sql` successfully applied to the remote live database.
+The live bucket's r2.dev URL is disabled and no public custom domains are attached.
+Cloudflare lists both live Stripe secret names; their values and Stripe endpoint
+association have not been verified. Deployment succeeded on 2026-10-12 after
+Cloudflare API 504 responses. The live webhook rejects unsigned requests with
+HTTP 400 without a browser challenge. A subsequent public
+shop-status probe confirmed the current response including `"mode":"test"`;
+the earlier response mismatch is no longer present.
+The test payment flow has been exercised end to end; the public test checkout
+was then switched off. Test payments do not constitute real orders or authorize
+manufacturing. Live-mode support remains separately gated.
+
+The website legal notices were factually updated on 2026-10-12 with the owner's
+confirmed GbR identity and telephone contact. The owner reports no register
+entry, VAT ID, or W-ID. The owner has acknowledged completion and approved the
+disclosures; this is an owner acknowledgement, not independent legal certification.
+The owner's operational responsibilities include:
+* Confirm actual provider contracting entities, processing agreements,
+  subprocessors, and applicable international-transfer safeguards.
+* Define and implement log, mailbox/attachment, production-file, accounting,
+  and remaining checkout-reference retention/deletion schedules. The automated
+  7/90-day checkout cleanup does not delete those other copies.
+* Confirm the shipping provider and any necessary additional disclosures.
+* Determine consumer-dispute-resolution duties and participation policy;
+  the owner has not yet confirmed these, so no declaration was invented.
+* Maintain purchase/withdrawal disclosures and obtain appropriate business/legal
+  review when the offer or processing changes.
+
+Inter is now hosted locally with its SIL Open Font License, eliminating the
+homepage's Google Fonts requests. The notices distinguish device-access rules
+from GDPR processing and describe the actual checkout cleanup and its exceptions.
+The owner subsequently acknowledged completion of the legal/provider/retention
+checks and WAF protection, but inspection found missing purchase disclosures.
+The owner subsequently approved the newly added purchase information and
+explicitly authorized live activation. Contract
+formation on successful Stripe payment confirmation was explicitly selected by
+the owner. Shared purchase text is displayed before checkout and included in live
+payment confirmation emails; the personalized-product withdrawal exception also
+appears beside the selection confirmation and on Stripe's final payment step.
+No consumer-dispute-resolution declaration is made without the owner's wording.
+The legal/WAF acknowledgement flags remain `true`. The temporary test selects
+`CHECKOUT_ENABLED="true"` and `CHECKOUT_LIVE_ENABLED="false"`.
+A signed live Checkout Session delivery
+and live order email acceptance have not yet been observed. Monitor the first
+genuine order; do not use live cards to create dummy test transactions.
+Deployment `89bdf29a-e4a3-423e-b307-896d9c86a243` was verified on the custom
+domain and workers.dev: shop status reports enabled live mode, sandbox checkout
+returns 503, and unsigned live webhooks return 400. The public browser displays
+the genuine-order label, 50 EUR payment button, and purchase-disclosure link.
+The subsequent temporary sandbox deployment
+`659256d0-f131-4f90-a832-1f672cda60e7` was verified: shop status reports
+`enabled:true`, `testMode:true`, `mode:"test"` and new live checkout returns 503.
+
+The configured offer is **50 EUR total**, shipping included, **Germany only**.
+No VAT is charged/displayed under **§19 UStG (Kleinunternehmer)**. Delivery wording
+is **5–10 working days after payment**. The captured preview is illustrative, not an exact
+manufacturing template. Acceptance covers these terms and no additional manual
+production approval after payment. Only a verified live payment may trigger
+production-labelled notification email. Test-labelled notifications never
+instruct actual production.
+
+## API contract
+
+All responses are JSON with `Cache-Control: no-store` and `Referrer-Policy:
+no-referrer`. No CORS access is enabled.
+
+* `GET /shop-status` → `{ "enabled": false, "testMode": true, "mode": "test" }`
+  while both modes are off, or the configured mode. No secrets are returned.
+  If both modes are requested, checkout is disabled.
+* `POST /checkout` starts **test mode**. `POST /checkout/live` selects the
+  **separately gated live mode**. Both use the same validated `multipart/form-data`:
+  * `name`: nonempty, ≤200 characters, no control characters;
+  * `email`: valid address, ≤200 characters;
+  * `gpxFile`: original `.gpx` bytes, nonempty, ≤5 MiB, valid bounded GPX
+    (existing shared GPX validation);
+  * `configuration`: JSON, ≤4096 characters, `version:2`, `product:"base"`,
+    `preview:"ready"`, validated `engraving`, `margin`, `elevationScale`;
+  * `previewImage`: required PNG, ≤1 MiB, nonzero dimensions ≤2048×2048,
+    supported IHDR format, complete bounded chunks with verified CRCs/IDAT/IEND;
+  * `submissionKey`: randomly generated UUID v4, retained for all retries of
+    this exact selection, files and buyer details;
+  * `acceptance`: the literal string `"true"` (multipart representation of an
+    explicit boolean; `"false"`, `"1"` and missing values are rejected).
+  * Optional `price`/`currency` are ignored for pricing, but included in payload
+    identity. No other fields or duplicate fields are accepted.
+  → `{ "orderId":"<uuid>", "url":"https://checkout.stripe.com/…",
+  "statusUrl":"https://<configured-origin>/order-status?order=<uuid>&token=<secret>" }`.
+  Stripe receives a fixed 5000-cent EUR line item, zero shipping, DE-only shipping
+  collection, hosted UI and `submit_type=pay`. Original GPX, PNG and validated
+  configuration are durably persisted **before** the Stripe call.
+* `GET /order-status?mode=test|live&order=<uuid>&token=<64-hex-secret>` →
+  `{ "orderId":"<uuid>", "status":"pending|paid|failed|expired" }`.
+  No buyer details, attachments, token, session URL or public order listing.
+  Bad/missing tokens and absent orders return the same 404.
+* `POST /stripe-webhook` is test-only. `POST /stripe-webhook/live` is the
+  separately authenticated live endpoint. Both accept raw bodies ≤256 KiB and
+  perform WebCrypto HMAC verification
+  using the exact original bytes and a ±300-second timestamp tolerance. Supports
+  multiple `v1` signatures for secret rotation. Only mode-matched events
+  (`livemode:false` for test, `true` for live) and `cs_test_…` or `cs_live_…`
+  sessions can affect state.
+  Handles `checkout.session.completed`, `.async_payment_succeeded`,
+  `.async_payment_failed`, `.expired`. Other verified mode-matched event types
+  are acknowledged without payment changes.
+
+Successful payment requires a matching durable order and session association,
+5000 EUR cents, zero tax/shipping, `payment_status:"paid"` and a complete German
+shipping address. Completion with unpaid status stays pending. Paid cannot be
+downgraded by later failure/expiry. Redirects **never** prove payment:
+
+```
+https://<configured-origin>/?checkout=success&order=<uuid>&token=<secret>
+https://<configured-origin>/?checkout=cancelled
+```
+
+Return URLs use only `CHECKOUT_ORIGIN`, never an incoming Host header. If an
+Origin header is present on checkout, it must exactly match that trusted origin.
+It must be an HTTPS origin without credentials, port, path, query or fragment.
+
+Errors use 400 (validation/signature/test-mode violations), 403 (origin), 404
+(status access), 405 (method), 409 (changed idempotent payload or stale recovery),
+410 (retained but purged submission), 413 (size), 429 (rate limit), 502 (unconfirmed
+provider response) or 503 (disabled/missing configuration/transient failure).
+On network/503/502 failures, retry the **same request and submission key**, not a
+new payment.
+
+## Enable only after provisioning actual resources
+
+1. Use a **distinct Stripe sandbox** for this integration, isolated from live
+   settings/data. Prefer a least-privilege `rk_test_…` restricted key with Checkout
+   Session creation access; `sk_test_…` is also accepted. Never use publishable
+   keys, `sk_live_…` or `rk_live_…`. Rotate any key pasted into chat; do not save or
+   use exposed credentials. Supply replacements only through secret management.
+2. The test environment already uses a private D1 database and R2 bucket.
+   For live, create a **separate** private D1 database and private R2 bucket.
+   Do not enable an R2 public URL, custom public domain, asset binding or public
+   listing. Orders/GPX/PNG are not build assets.
+3. The test bindings are already configured. Add these **opt-in live** bindings
+   only after provisioning, substituting actual names and the actual database UUID:
+
+   ```toml
+   [[d1_databases]]
+   binding = "CHECKOUT_LIVE_DB"
+   database_name = "<actual-live-database-name>"
+   database_id = "<actual-account-database-uuid>"
+   migrations_dir = "migrations"
+
+   [[r2_buckets]]
+   binding = "CHECKOUT_LIVE_FILES"
+   bucket_name = "<actual-live-private-bucket-name>"
+   ```
+
+   Apply `migrations/0001_checkout.sql` to the live database. Never point the
+   live binding at the test database.
+4. The current configuration temporarily selects sandbox mode:
+   `CHECKOUT_ENABLED="true"` and `CHECKOUT_LIVE_ENABLED="false"`, retaining the
+   owner's legal/WAF acknowledgements for later live restoration.
+   For a new environment, keep both modes disabled until setup and access-control
+   checks pass. Set `CHECKOUT_ORIGIN="https://peak-memory.de"`.
+   Install **secrets** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (`whsec_…`)
+   and `RESEND_API_KEY` with Wrangler/Cloudflare secret management, never in Git.
+   Existing email addresses are reused:
+   `kontakt@peak-memory.de` → owner `peak.memory@web.de`. Buyer confirmation is
+   sent to the submitted email. Verify the Resend sending domain and use
+   controlled buyer inboxes: **Resend sends real emails even for Stripe tests**.
+5. The existing test webhook endpoint is pinned by Stripe to
+   **`2026-08-26.dahlia`**. The application separately pins Checkout Session API
+   requests to **`2026-09-30.endive`**; request and endpoint event versions are
+   intentionally different and independently validated. The configured endpoint
+   subscribes to the four Checkout Session events above. A newly created endpoint
+   must also use `2026-08-26.dahlia`, or update `STRIPE_WEBHOOK_API_VERSION` and
+   run the schema tests to match its pinned version.
+   The `collected_information.shipping_details` schema was introduced in Basil
+   and remains in use for the existing Dahlia event version; the removed
+   top-level `shipping_details` is rejected. See Stripe's authoritative
+   [Basil shipping-field change](https://docs.stripe.com/changelog/basil/2025-03-31/checkout-session-remove-shipping-details),
+   [webhook versioning guide](https://docs.stripe.com/webhooks/versioning)
+   and [versioned Session creation reference](https://docs.stripe.com/api/checkout/sessions/create?api-version=2026-09-30.endive).
+   The pinned Endive UI value is `hosted_page`, per the
+   [Dahlia UI rename](https://docs.stripe.com/changelog/dahlia/2026-03-25/updates-available-checkout-session-ui-modes).
+   Dynamic payment methods remain enabled: no `payment_method_types` allowlist
+   is sent. Adaptive pricing is explicitly disabled to preserve fixed EUR.
+   Each persisted session request includes `integration_identifier` with eight
+   random letters; retries reuse that exact value. Do not upgrade either
+   request or webhook versions independently.
+   Ensure the webhook secret belongs to that exact test endpoint. For live,
+   create a distinct live-mode endpoint at
+   `https://peak-memory.de/stripe-webhook/live`, pin it to
+   `2026-08-26.dahlia`, subscribe to the same four Checkout Session events, and
+   store its signing secret as `STRIPE_LIVE_WEBHOOK_SECRET`. Never reuse the
+   sandbox signing secret. Keep old paid orders processable when disabling new checkout:
+   the switch gates creation, not authenticated webhooks or notification retry.
+6. **Cloudflare WAF/rate protection is mandatory before enabling.** Protect
+   `/checkout` and `/order-status` against abusive request rates/bodies; do not
+   put browser challenges on Stripe's webhook. Limit webhook abuse without
+   blocking legitimate Stripe retries. Optionally bind
+   `CHECKOUT_RATE_LIMITER` (Cloudflare Rate Limiting binding) for server-side
+   checkout/status limiting; configured limiter outages fail closed.
+   A suitable low-volume opt-in Worker binding is:
+
+   ```toml
+   [[ratelimits]]
+   name = "CHECKOUT_RATE_LIMITER"
+   namespace_id = "<distinct-account-rate-limit-namespace-id>"
+   simple = { limit = 30, period = 60 }
+   ```
+
+   Checkout and status share the per-IP bucket; allow the frontend's bounded
+   payment polling. Choose a real distinct namespace ID when configuring this
+   binding. This application limiter supplements, not replaces, the mandatory WAF.
+7. Restrict database/bucket/dashboard access; redact request queries from
+   access/analytics logs. Status tokens are bearer secrets, appear in Stripe
+   return URLs and must not be copied into public logs or analytics.
+8. Live mode uses independent `CHECKOUT_LIVE_DB`, `CHECKOUT_LIVE_FILES`,
+   `STRIPE_LIVE_SECRET_KEY`, and `STRIPE_LIVE_WEBHOOK_SECRET` resources. Provision
+   those only in live Stripe/Cloudflare environments; never reuse sandbox
+   credentials, database, bucket, or webhook secret. Configure a separate live
+   endpoint at `/stripe-webhook/live` and verify it with a real signed live
+   delivery before any sale. Do not create test transactions with live cards.
+9. Before accepting any live order, have the responsible business/legal advisor
+   review and approve the actual Impressum, privacy disclosures, terms and
+   cancellation/withdrawal information for individually manufactured products,
+   §19 UStG wording, delivery promise, and legally compliant final checkout
+   button/mandatory disclosures. Update the site disclosures first, then set
+   `CHECKOUT_LIVE_LEGAL_REVIEWED="true"` only after that review is complete.
+   This software does not determine or warrant German legal compliance.
+   Set `CHECKOUT_LIVE_WAF_REVIEWED="true"` only after verifying that live WAF
+   protection covers `/checkout/live` and `/order-status`, and allows signed
+   Stripe requests to `/stripe-webhook/live` without browser challenges.
+10. Configure and verify live-mode WAF protections and challenge exemptions;
+    ensure checkout/live rate protection works. Keep both checkout switches off
+    until all legal, fulfillment, live-key, live-storage, live-webhook, notification,
+    backup, and monitoring checks are complete. Controlled live activation then
+    requires explicitly setting `CHECKOUT_LIVE_ENABLED="true"`; test mode must
+    remain off. There is no one-click deployment switch to production.
+
+For local preview without bindings, existing Worker asset/contact/terrain routing
+still works; shop status stays disabled and checkout fails gracefully. Tests need
+a recent Node 22 release supporting built-in `node:sqlite` (22.13+ recommended):
+
+```
+node --test tests/checkout.test.js tests/backend.test.js
+```
+
+These tests use an in-memory real SQLite schema, private mocked R2 and mocked
+Stripe/Resend. They make no payments, send no email and call no real APIs.
+
+## Worker and Pages deployment
+
+`worker.js` wires all four routes and an every-15-minutes scheduled maintenance
+handler; the active cron is harmless without bindings. Existing Pages Functions
+also wire all four routes. Pages deployment must configure the same D1/R2
+bindings/secrets in the Pages project (or its opt-in deployment config), and
+apply the migration to the correct bound database. The existing Pages staging
+script copies these handlers/helpers.
+
+**Pages does not run Worker cron triggers.** For a Pages-only deployment, provision
+a separately scheduled Worker using this `worker.js`, bound to the **same**
+database/bucket/secrets. Disable new checkout on that maintenance Worker; enable
+it temporarily only if session-creation recovery is required. Scheduled
+notification retry and cleanup work with new checkout disabled. Do not enable
+Pages checkout without this scheduled maintenance path.
+
+## Durability, retries and retention
+
+* The submission UUID binds to a SHA-256 digest over exact original file bytes
+  and submitted field values (not multipart boundary noise). A differing
+  payload returns 409; identical retries reuse the same order/session.
+* Random UUID order IDs and independent 256-bit status tokens are generated on
+  the server. R2 keys use the order UUID, never user filenames.
+* Database leases serialize creation, delivery and cleanup. D1 transactional
+  batches commit webhook event receipts and payment transitions together.
+  Duplicate/concurrent events cannot cause a second logical payment.
+* Stripe's idempotency key is permanently derived from the order UUID and the
+  exact Stripe request parameters are snapshotted in D1 before its first call. An
+  ambiguous timeout leaves persisted state/snapshots intact. The same exact
+  Stripe request can recover for up to 23 hours; creation is refused afterwards
+  to avoid a second session once Stripe's ≥24-hour idempotency cache expires.
+  Sessions expire within 24 hours. If the session response was lost, a verified
+  webhook can associate it using the matching server-generated order metadata.
+  Older ambiguous orders require operator reconciliation in the **test**
+  dashboard, not a new payment/submission key.
+* Verified paid owner mail includes original GPX, PNG and configuration JSON,
+  buyer details, German shipping address and the offer/acceptance details.
+  Buyer mail confirms test payment. Each has its own stable Resend idempotency
+  key. Delivery flags are set only after a successful response with an email ID.
+  A Resend or storage error returns a retryable non-2xx webhook response while
+  preserving paid state. Scheduled retry also resumes unsent messages.
+  Monitor failed retries; Resend delivery is acceptance by its API, not proof
+  of inbox delivery. Its provider idempotency retention is finite (24 hours),
+  so a lost response followed by a retry after that window can produce a
+  duplicate notification; do not interpret this as another payment.
+* Scheduled sweeps process bounded batches of 25. Unpaid snapshots are purged
+  after **7 days**; successfully notified paid snapshots after **90 days**.
+  Cleanup claims orders before deleting R2 and retries partial deletion; it
+  never races an active creation/delivery lease or resurrects deleting orders.
+  Paid orders with undelivered notifications are deliberately retained for
+  recovery rather than silently losing original attachments. Monitor/escalate
+  these exceptions and resolve them within the 90-day retention policy.
+  Minimal non-contact idempotency tombstones remain so purging does not free
+  an old submission UUID for reuse. Purged tokens, buyer PII and configuration
+  are removed and events deleted. There is no public retrieval route for R2.
+
+Timeouts cover streamed bodies, external requests and storage/database operations.
+Failures never delete a just-created order or interpret a provider timeout as
+payment failure. The backend logs only generic failure messages, without secret
+tokens, original payloads or provider responses.

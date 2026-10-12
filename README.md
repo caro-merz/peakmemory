@@ -268,7 +268,10 @@ schützt diese alternativen Zugänge nicht.
   Rahmenprofil und -tiefe sind illustrativ; das Außenmaß beträgt 20 × 20 cm.
   Die Rahmenvorschau folgt den Produktfoto-Referenzen: weißer Rahmen, weißes
   Passepartout mit größerem Ausschnitt als das Relief, zurückgesetzte helle
-  Rückwand und zentrierte Gravur unter dem Fenster. Nur der Rahmen nutzt Schatten.
+  Rückwand und zentrierte Gravur unter dem Fenster. Die Rückseite zeigt wie auf
+  `rahmen2.jpeg` eine braune Rückwand, schwarze Aufhängung oben und einen
+  ausgeklappten braunen Standfuß mit schwarzem Scharnier. Beschläge und
+  Standfußwinkel sind illustrativ. Nur der Rahmen nutzt Schatten.
 
 Bei fehlendem WebGL oder nicht verfügbarem Gelände kann eine gültige eigene
 Route weiterhin angefragt werden; der Vorschauzustand steht in der E-Mail.

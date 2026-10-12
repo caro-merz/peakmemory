@@ -90,7 +90,7 @@ test('white frame has 20 by 20 cm exterior and engraving stays below the relief 
   frame.traverse(child => {
     child.geometry?.dispose();
     if (child.material) {
-      assert.ok([0xffffff, 0xf5f3ed].includes(child.material.color.getHex()));
+      assert.ok([0xffffff, 0xf5f3ed, 0xb98b58, 0x202020].includes(child.material.color.getHex()));
       materials.add(child.material);
     }
   });
@@ -98,6 +98,31 @@ test('white frame has 20 by 20 cm exterior and engraving stays below the relief 
   assert.ok(layout.matOpening > 1, 'Passepartout opening leaves a visible border around the relief');
   assert.ok(layout.engravingCenterZ - layout.engravingDepth / 2 > layout.matOpening / 2);
   assert.ok(layout.reliefOffsetY < 0, 'Relief is mounted on the recessed backing');
+});
+
+test('frame back has a brown board, top hanger and hinged stand extending behind the frame', () => {
+  const frame = createFrame();
+  const board = frame.getObjectByName('frame-backboard');
+  const hanger = frame.getObjectByName('frame-hanger');
+  const stand = frame.getObjectByName('frame-stand');
+  const hinge = frame.getObjectByName('frame-stand-hinge');
+  assert.equal(board.material.color.getHex(), 0xb98b58);
+  assert.equal(hanger.material.color.getHex(), 0x202020);
+  assert.equal(hanger.geometry.parameters.shapes.holes.length, 1);
+  assert.ok(hanger.position.z < -0.5, 'Hanger sits at the top of the back');
+  assert.ok(hanger.position.y < board.position.y);
+  assert.ok(stand.rotation.x > 0, 'Stand is unfolded');
+  assert.equal(stand.children[0].material, board.material);
+  assert.equal(hinge.material, hanger.material);
+  frame.updateMatrixWorld(true);
+  const standBounds = new Box3().setFromObject(stand);
+  const boardBounds = new Box3().setFromObject(board);
+  assert.ok(standBounds.min.y < boardBounds.min.y - 0.3, 'Stand projects behind the backing');
+  assert.ok(standBounds.max.z < 1, 'Stand stays within the frame footprint');
+  const geometries = new Set(), materials = new Set();
+  frame.traverse(child => { if (child.geometry) geometries.add(child.geometry); if (child.material) materials.add(child.material); });
+  for (const geometry of geometries) geometry.dispose();
+  for (const material of materials) material.dispose();
 });
 
 test('rendered wood mesh measures exactly 11 cm wide, 2 cm high and 13.5 cm long', () => {

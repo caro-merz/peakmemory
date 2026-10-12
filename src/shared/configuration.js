@@ -1,13 +1,14 @@
 import { getProduct } from './product.js';
 
-export function validateEngraving(value) {
+export function validateEngraving(value, productId = 'base') {
   if (typeof value !== 'string' || value.length > 120
     || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value)) {
     throw new Error('Bitte höchstens 120 Zeichen ohne Steuerzeichen als Gravur eingeben.');
   }
   const text = value.replace(/\r\n?/g, '\n');
-  if (text.split('\n').length > 3) {
-    throw new Error('Die Gravur darf maximal 3 Zeilen enthalten.');
+  const maxLines = getProduct(productId).engravingMaxLines || 3;
+  if (text.split('\n').length > maxLines) {
+    throw new Error(`Die Gravur darf maximal ${maxLines} Zeilen enthalten.`);
   }
   return text.trim() ? text : '';
 }
@@ -39,7 +40,7 @@ export function parseConfiguration(value) {
     || (configuration.version < 4 && Object.hasOwn(configuration, 'wallMount'))) {
     throw new Error('Ungültige Auswahl der Wandaufhängung.');
   }
-  const engraving = validateEngraving(configuration.engraving);
+  const engraving = validateEngraving(configuration.engraving, configuration.product);
   if (configuration.version >= 3 && !getProduct(configuration.product).engraving && engraving) {
     throw new Error('Der kompakte Holzsockel wird ohne Gravur gefertigt.');
   }

@@ -68,6 +68,21 @@ test('three variants have fixed prices and validated v3 engraving capabilities',
     margin: 0.15, elevationScale: 2, preview: 'ready' }), /ohne Gravur/);
 });
 
+test('frame engraving allows two lines while engraved wood allows three', () => {
+  for (const version of [1, 3, 4]) {
+    const configuration = { version, product: 'frame', engraving: 'Tour\n2026',
+      margin: 0.15, preview: 'ready',
+      ...(version >= 3 ? { elevationScale: 2 } : {}),
+      ...(version >= 4 ? { wallMount: false } : {}) };
+    assert.equal(parseConfiguration(configuration).engraving, 'Tour\n2026');
+    assert.equal(parseConfiguration({ ...configuration, engraving: 'Tour\r\n2026' }).engraving, 'Tour\n2026');
+    for (const engraving of ['Tour\n2026\nFür dich', 'Tour\r\n2026\rFür dich']) {
+      assert.throws(() => parseConfiguration({ ...configuration, engraving }), /maximal 2 Zeilen/);
+      assert.equal(parseConfiguration({ ...configuration, product: 'base', engraving }).engraving, 'Tour\n2026\nFür dich');
+    }
+  }
+});
+
 test('compact base measures 11 by 11 by 2 cm and centers the relief', () => {
   const layout = productLayout('compact');
   const base = createWoodBase(layout);

@@ -1,6 +1,6 @@
 # Peak Memory - Website
 
-PeakMemory verwandelt GPS-Routen in handgefertigte 3D-Reliefs. Die Website unter
+Peak Memory verwandelt GPS-Routen in handgefertigte 3D-Reliefs. Die Website unter
 https://peak-memory.de bleibt eine statische HTML-Seite mit Cloudflare-Endpunkten.
 Der Konfigurator liefert eine **illustrative Online-Vorschau**, keine druckfertige
 Datei und kein exaktes Fertigungsbild.
@@ -34,7 +34,7 @@ Datei und kein exaktes Fertigungsbild.
   weder gefertigt noch berechnet. Sie wird in Zusammenfassung und E-Mails genannt.
 - Höhenüberhöhung von 1× bis 8×, Standard 2×. Änderungen skalieren Gelände
   und Route gemeinsam ohne erneuten Geländeabruf.
-- Gravur mit maximal 3 Zeilen und insgesamt 120 Zeichen. Die Vorschau übernimmt
+- Gravur mit maximal 3 Zeilen auf Holz bzw. 2 Zeilen auf dem Passepartout und insgesamt 120 Zeichen. Die Vorschau übernimmt
   die eingegebenen Zeilenumbrüche ohne automatischen Umbruch und zeigt die
   Schrift direkt auf dem Holz bzw. auf dem weißen Passepartout, ohne separates Schild.
   Bei Auswahl des kompakten Sockels wird der Text nicht übertragen oder gefertigt;
@@ -43,7 +43,7 @@ Datei und kein exaktes Fertigungsbild.
   Varianten in Schritt 3 einstellbar.
   Ohne Gravurwunsch bleibt das Holz unbeschriftet.
   Der editierbare Standardtext ist `Deine Route`, `100 km | 1000 hm | 10 h`
-  und `01.01.2026` in drei Zeilen; diese Beispielwerte werden nicht aus der GPX ermittelt.
+  in zwei Zeilen ohne Datum; diese Beispielwerte werden nicht aus der GPX ermittelt.
 - Gravurschrift: original Quicksand Book, lokal aus `fonts/Quicksand_Book.otf`
   geladen, mit SIL Open Font License unter `fonts/OFL.txt`.
   Die Standardschriftgröße beträgt 5 mm, unabhängig von der Zeilenzahl.
@@ -250,7 +250,7 @@ schützt diese alternativen Zugänge nicht.
 - Die Holzkanten sind leicht gerundet (illustrativer Radius 2 mm), um die
   gebrochenen Kanten des Produkts darzustellen. Außenmaße, flache Auflagefläche
   des Reliefs und Gravurflächen bleiben unverändert.
-- Auf der vorderen Stirnseite links erscheint das PeakMemory-Logo als
+- Auf der vorderen Stirnseite links erscheint das Peak Memory-Logo als
   dunkle Lasergravur ohne Hintergrundfläche, auch ohne persönlichen Gravurtext.
   Nach der Produktfoto-Referenz ist es ca. 2,2 cm breit und 1 cm hoch,
   vertikal mittig und mit 0,6 cm Abstand zum linken Rand; das Originalseitenverhältnis bleibt erhalten.
@@ -283,7 +283,7 @@ nach einem Timeout vor erneutem Senden nachfragen, um Duplikate zu vermeiden.
 
 Der Browser liest GPX lokal. Erst das Absenden einer Anfrage oder der Checkout-Start überträgt
 Original-GPX, Kontaktdaten, Konfiguration und bei verfügbarer Vorschau das PNG-Bild an Cloudflare und über Resend an
-PeakMemory. Es gibt keine Route-Konten, öffentlich teilbaren Routen oder
+Peak Memory. Es gibt keine Route-Konten, öffentlich teilbaren Routen oder
 persistente Speicherung der GPX-Datei im Browser. Für Checkout-Tests werden
 Original-GPX, Vorschau und Bestelldaten privat in Cloudflare R2/D1 gespeichert.
 Stripe erhält keine GPX-Datei, sondern E-Mail-Adresse und Bestellreferenz.
@@ -320,7 +320,7 @@ weder diese Prüfung noch eine produktive Resend-Konfiguration.
 
 ## Kontakt
 
-PeakMemory - handgefertigt in Baden-Württemberg.
+Peak Memory - handgefertigt in Baden-Württemberg.
 
 - Carolin Merz und Alexander Weimer
 - peak.memory@web.de

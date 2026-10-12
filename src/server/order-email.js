@@ -40,7 +40,7 @@ export function orderEmail(order, details, kind) {
     : 'Keine Produktion und keine Lieferung. Diese E-Mail dient nur zur Prüfung des Bestellablaufs; keine manuelle Produktionsfreigabe ist erforderlich (im späteren echten Verkauf).';
   const note = 'Kein Umsatzsteuerausweis gemäß §19 UStG. Die Online-Vorschau ist illustrativ, keine exakte Fertigungsvorlage.';
   const attachments = owner ? 'Original-GPX, Vorschaubild und Konfiguration findest du in den drei Anhängen.' : '';
-  const subject = `PeakMemory${live ? '' : ' TEST'} · ${title} · ${order.id}`;
+  const subject = `Peak Memory${live ? '' : ' TEST'} · ${title} · ${order.id}`;
   const text = [
     title, introduction, '', ...rows.map(([label, value]) => `${label}: ${value}`),
     '', next, note, attachments,
@@ -51,7 +51,7 @@ export function orderEmail(order, details, kind) {
   const html = `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
 <body style="margin:0;padding:24px 12px;background:#f0efe9;color:#1a1a1a;font-family:Arial,sans-serif">
 <table role="presentation" style="width:100%;max-width:600px;margin:auto;border-collapse:collapse;background:#ffffff"><tr><td style="padding:32px">
-<p style="margin:0 0 24px;color:#2d5016;font-size:24px;font-weight:bold">PeakMemory</p>
+<p style="margin:0 0 24px;color:#2d5016;font-size:24px;font-weight:bold">Peak Memory</p>
 <p style="font-size:12px;letter-spacing:2px;color:#555">${live ? 'DEINE ROUTE. DEINE ERINNERUNG.' : 'SANDBOX · KEINE ECHTE BESTELLUNG'}</p>
 <h1 style="font-size:28px;line-height:1.25;color:#2d5016">${escapeHtml(title)}</h1>
 <p style="line-height:1.6">${escapeHtml(introduction)}</p>

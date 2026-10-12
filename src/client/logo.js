@@ -15,13 +15,13 @@ export async function loadLogoCanvas() {
   try {
     await image.decode();
   } catch {
-    throw new Error('Das PeakMemory-Logo konnte nicht geladen werden. Bitte lade die Vorschau erneut.');
+    throw new Error('Das Peak Memory-Logo konnte nicht geladen werden. Bitte lade die Vorschau erneut.');
   }
   const canvas = document.createElement('canvas');
   canvas.width = image.naturalWidth;
   canvas.height = image.naturalHeight;
   const context = canvas.getContext('2d', { willReadFrequently: true });
-  if (!context) throw new Error('Das PeakMemory-Logo konnte nicht dargestellt werden.');
+  if (!context) throw new Error('Das Peak Memory-Logo konnte nicht dargestellt werden.');
   context.drawImage(image, 0, 0);
   const data = context.getImageData(0, 0, canvas.width, canvas.height);
   laserLogoPixels(data.data);

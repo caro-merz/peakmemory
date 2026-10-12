@@ -112,7 +112,7 @@ try {
   assert.match(await page.locator('.model-price').innerText(), /Inkl. Versand innerhalb Deutschlands/);
   assert.equal(await page.locator('#checkoutForm').isHidden(), true);
   await assertDesktopLayout(page);
-  const defaultEngraving = 'Deine Route\n100 km | 1000 hm | 10 h\n01.01.2026';
+  const defaultEngraving = 'Deine Route\n100 km | 1000 hm | 10 h';
   assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
   assert.equal(await page.locator('#routeControls a[href="gpx-hilfe.html"]').getAttribute('target'), '_blank');
   assert.equal(await page.locator('#submitInquiry').isDisabled(), true);
@@ -627,7 +627,7 @@ try {
   await liveShop.goto(url + '/?checkout=success&mode=live&order=live-order&token=live-token');
   await liveShop.waitForFunction(() => document.getElementById('paymentStatus').textContent.includes('Zahlung bestätigt'));
   assert.equal(liveStatusMode, 'live');
-  assert.match(await liveShop.locator('#paymentStatus').innerText(), /Wir senden dir und PeakMemory/);
+  assert.match(await liveShop.locator('#paymentStatus').innerText(), /Wir senden dir und Peak Memory/);
   assert.equal(await liveShop.locator('#paymentStatus strong').innerText(), 'Zahlung bestätigt');
   assert.deepEqual(errors, []);
   console.log('Browser checks passed: homepage configurator, mobile galleries, inquiry flow, privacy, no WebGL, disabled/test/live checkout UI, final-selection acceptance, idempotent retries, Stripe-only redirects and verified payment return states.');

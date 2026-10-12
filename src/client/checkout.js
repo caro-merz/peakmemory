@@ -163,7 +163,7 @@ async function showPaymentReturn() {
         const message = document.createElement('span');
         message.textContent = testMode
           ? 'Dies ist keine echte Bestellung; es wird kein Produkt gefertigt.'
-          : 'Wir senden dir und PeakMemory eine Bestellbestätigung.';
+          : 'Wir senden dir und Peak Memory eine Bestellbestätigung.';
         output.replaceChildren(heading, reference, message);
         output.className = 'success';
         output.scrollIntoView({ block: 'center' });

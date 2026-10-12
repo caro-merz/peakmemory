@@ -28,6 +28,10 @@ function summary() {
   get('engraving').disabled = sending || !product.engraving;
   get('engravingControls').hidden = !product.engraving;
   get('engravingUnavailable').hidden = product.engraving;
+  if (product.engraving) {
+    get('engraving').rows = product.engravingMaxLines;
+    get('engravingHint').textContent = `Max. ${product.engravingMaxLines} Zeilen und insgesamt 120 Zeichen. Beispielwerte – bitte an deine Tour anpassen.`;
+  }
   get('wallMountControls').hidden = product.id === 'frame';
   get('wallMount').disabled = sending || product.id === 'frame';
   get('modelPrice').textContent = formatPrice(configurationPrice({

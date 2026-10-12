@@ -70,7 +70,7 @@ function parameters(order) {
     expires_at: String(order.created_at + 86400),
     'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'eur',
     'line_items[0][price_data][unit_amount]': String(orderAmount(order)),
-    'line_items[0][price_data][product_data][name]': `PeakMemory · ${product.name}${live ? '' : ' (TEST)'}`,
+    'line_items[0][price_data][product_data][name]': `Peak Memory · ${product.name}${live ? '' : ' (TEST)'}`,
     'line_items[0][price_data][product_data][description]': `${product.description} ${product.dimensions}.${hardware} ${orderAmount(order) / 100} EUR inkl. Versand Deutschland. Kein Umsatzsteuerausweis gemäß §19 UStG. Lieferung 5–10 Werktage nach Zahlung. Illustrative Vorschau; keine weitere Produktionsfreigabe.${live ? '' : ' TEST: keine echte Fertigung.'}`,
     'shipping_address_collection[allowed_countries][0]': 'DE',
     'shipping_options[0][shipping_rate_data][type]': 'fixed_amount',

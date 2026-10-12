@@ -487,7 +487,7 @@ test('verified paid transition is transactional and idempotent, notifications co
   assert.equal(owner.options.headers['Idempotency-Key'], `checkout-${order.id}-owner`);
   assert.equal(buyer.options.headers['Idempotency-Key'], `checkout-${order.id}-buyer`);
   assert.equal(buyer.payload.attachments, undefined);
-  assert.match(buyer.payload.html, /PeakMemory/);
+  assert.match(buyer.payload.html, /Peak Memory/);
   assert.match(buyer.payload.html, /Testzahlung bestätigt/);
   assert.equal(buyer.payload.reply_to, 'peak.memory@web.de');
   assert.equal((await handleStripeWebhook(await webhook(event), context.env)).status, 200);
@@ -752,7 +752,7 @@ test('live checkout isolates storage and verifies live-mode webhook before sendi
   assert.equal(params.get('line_items[0][price_data][unit_amount]'), '5000');
   assert.equal(params.get('metadata[live_order]'), 'true');
   assert.equal(params.has('metadata[test_only]'), false);
-  assert.match(params.get('line_items[0][price_data][product_data][name]'), /PeakMemory/);
+  assert.match(params.get('line_items[0][price_data][product_data][name]'), /Peak Memory/);
   assert.doesNotMatch(params.get('line_items[0][price_data][product_data][name]'), /TEST/);
   assert.equal(params.get('success_url').includes('mode=live'), true);
   assert.match(params.get('custom_text[submit][message]'), /kein gesetzliches Widerrufsrecht/);

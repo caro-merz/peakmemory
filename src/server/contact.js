@@ -1,7 +1,7 @@
 import { MAX_GPX_SIZE, parseGpx, validateFile } from '../shared/gpx.js';
 import { parseConfiguration } from '../shared/configuration.js';
 import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
-import { CONFIGURATOR_PRICE_EUR } from '../shared/product.js';
+import { getProduct, configurationPrice } from '../shared/product.js';
 
 export const CONTACT_TIMEOUT_MS = 10000;
 export const MAX_CONTACT_SIZE = MAX_GPX_SIZE + MAX_PREVIEW_SIZE + 64 * 1024;
@@ -140,13 +140,18 @@ export async function handleContact(request, env) {
   ];
   if (configuration) {
     lines.push('', `Konfiguration (Version ${configuration.version}):`,
-      `Produkt: ${configuration.product === 'base' ? 'Relief auf Eichenholzsockel' : 'Gerahmtes Relief'}`,
+      `Produkt: ${configuration.version >= 3 ? getProduct(configuration.product).name
+        : configuration.product === 'base' ? 'Relief auf Eichenholzsockel' : 'Gerahmtes Relief'}`,
       `Gravur: ${configuration.engraving || '(keine)'}`,
       `Geländerand: ${Math.round(configuration.margin * 100)} %`,
-      `Höhenüberhöhung: ${configuration.version === 2 ? configuration.elevationScale : 1.5}×`,
+      `Höhenüberhöhung: ${configuration.version >= 2 ? configuration.elevationScale : 1.5}×`,
       `Online-Vorschau: ${configuration.preview === 'ready' ? 'bereit (illustrativ)' : 'nicht verfügbar'}`,
       'Die endgültige Produktionsvorschau wird separat abgestimmt.');
-    if (configuration.version === 2) lines.push(`Modellpreis: ${CONFIGURATOR_PRICE_EUR} EUR inkl. Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.`,
+    if (configuration.version >= 3) lines.push(`Ausführung: ${getProduct(configuration.product).dimensions}`);
+    if (configuration.version >= 4 && configuration.product !== 'frame') lines.push(
+      `Wandaufhängung: ${configuration.wallMount ? 'ja (+1 EUR)' : 'nein'}`,
+      'Schutzfüße: 4 transparente Schutzfüße inklusive');
+    if (configuration.version >= 2) lines.push(`Modellpreis: ${configurationPrice(configuration)} EUR inkl. Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.`,
       'Dies ist eine unverbindliche Anfrage, keine bezahlte Bestellung.');
     lines.push(previewAttachment ? 'Vorschaubild: als PNG angehängt (illustrative Online-Konfiguration).'
       : 'Vorschaubild: nicht angehängt.');

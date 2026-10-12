@@ -154,8 +154,8 @@ export async function validateCheckout(request) {
   const rawConfiguration = text('configuration');
   if (rawConfiguration.length > 4096) throw new CheckoutError('Konfiguration zu groß.');
   const configuration = parseConfiguration(rawConfiguration);
-  if (configuration?.version !== 2 || configuration.product !== 'base' || configuration.preview !== 'ready') {
-    throw new CheckoutError('Konfiguration Version 2 mit fertiger Vorschau erforderlich.');
+  if (![2, 3, 4].includes(configuration?.version) || configuration.preview !== 'ready') {
+    throw new CheckoutError('Konfiguration Version 2, 3 oder 4 mit fertiger Vorschau erforderlich.');
   }
   const file = form.get('gpxFile'), image = form.get('previewImage');
   validateFile(file);

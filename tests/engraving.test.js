@@ -19,6 +19,7 @@ test('engraving draws only text over a transparent canvas without wrapping or pl
   const context = {
     clearRect: (...args) => calls.push(['clear', ...args]),
     fillText: (...args) => calls.push(['text', ...args]),
+    strokeText: (...args) => calls.push(['stroke', ...args]),
     fillRect: () => assert.fail('Engraving must not draw a background'),
     measureText: text => ({ width: text.length * parseFloat(context.font.slice(4)) * 0.5 }),
   };
@@ -28,6 +29,10 @@ test('engraving draws only text over a transparent canvas without wrapping or pl
   assert.deepEqual(lines.map(call => call[1]), [longLine, '2026', 'Für dich']);
   assert.ok(lines.every(call => call[2] === 512 && call[3] > 0 && call[3] < 256 && call.length === 4));
   assert.match(context.font, /^400 .*"Quicksand Book"$/);
+  assert.deepEqual(calls.filter(call => call[0] === 'stroke').map(call => call.slice(1)), lines.map(call => call.slice(1)));
+  assert.equal(context.strokeStyle, context.fillStyle);
+  assert.equal(context.lineWidth, parseFloat(context.font.slice(4)) * 0.025);
+  assert.equal(context.lineJoin, 'round');
   calls.length = 0;
   drawEngraving(context, '', 1024, 192);
   assert.deepEqual(calls, [['clear', 0, 0, 1024, 192]]);
@@ -39,14 +44,24 @@ test('engraving uses a fixed 5 mm size for one to three lines and shrinks only b
     clearRect() {},
     measureText(text) { return { width: text.length * parseFloat(this.font.slice(4)) * 0.5 }; },
     fillText(text) { calls.push({ text, size: parseFloat(this.font.slice(4)) }); },
+    strokeText() {},
   };
-  for (const text of ['Tour', 'Tour\n2026', 'Tour\n2026\nFür dich', 'x'.repeat(32)]) {
+  for (const text of ['Tour', 'Tour\n2026', 'Tour\n2026\nFür dich']) {
     calls.length = 0;
     drawEngraving(context, text, 1024, 256);
     assert.ok(calls.every(call => call.size === 64));
   }
   calls.length = 0;
   drawEngraving(context, `${'x'.repeat(40)}\nTour`, 1024, 256);
-  assert.ok(calls.every(call => call.size === 51.2));
-  assert.equal(context.measureText(calls[0].text).width, 1024);
+  assert.ok(calls.every(call => call.size === 1024 / 20.025));
+  assert.ok(Math.abs(context.measureText(calls[0].text).width + context.lineWidth - 1024) < 1e-9);
+});
+
+test('passepartout engraving preserves the physical font size for its wider texture', () => {
+  const context = {
+    clearRect() {}, measureText() { return { width: 100 }; },
+    fillText() {}, strokeText() {},
+  };
+  drawEngraving(context, 'Meine Tour\n2026\nFür dich', 1024, 183, 11.2);
+  assert.equal(parseFloat(context.font.slice(4)), 1024 * 0.5 / 11.2);
 });

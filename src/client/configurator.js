@@ -4,25 +4,40 @@ import { parseConfiguration } from '../shared/configuration.js';
 import { terrainPlan } from '../shared/geometry.js';
 import { loadTerrain } from './terrain.js';
 import sampleXml from './sample.gpx';
-import { CONFIGURATOR_PRICE_EUR } from '../shared/product.js';
+import { getProduct, formatPrice, configurationPrice } from '../shared/product.js';
 import { initializeCheckout } from './checkout.js';
 
 const get = id => document.getElementById(id);
 const fileInput = get('gpxFile'), dropzone = get('dropzone'), form = get('inquiryForm');
-const viewButtons = ['rotate', 'zoomIn', 'zoomOut', 'resetView'].map(get);
-get('modelPrice').textContent = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(CONFIGURATOR_PRICE_EUR);
+const viewButtons = ['resetView'].map(get);
 let file = null, route = null, sample = false, preview = 'unavailable', viewer = null;
 let generation = 0, controller = null, marginTimer = null, sending = false;
 let checkout;
 
 function configuration() {
   return parseConfiguration({
-    version: 2, product: 'base', engraving: get('engraving').value,
+    version: 4, product: get('product').value,
+    wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
+    engraving: getProduct(get('product').value).engraving ? get('engraving').value : '',
     elevationScale: Number(get('elevationScale').value),
     margin: Number(get('margin').value) / 100, preview: preview === 'ready' ? 'ready' : 'unavailable',
   });
 }
 function summary() {
+  const product = getProduct(get('product').value);
+  get('engraving').disabled = sending || !product.engraving;
+  get('engravingControls').hidden = !product.engraving;
+  get('engravingUnavailable').hidden = product.engraving;
+  get('wallMountControls').hidden = product.id === 'frame';
+  get('wallMount').disabled = sending || product.id === 'frame';
+  get('modelPrice').textContent = formatPrice(configurationPrice({
+    version: 4, product: product.id, wallMount: product.id !== 'frame' && get('wallMount').value === 'yes',
+  }));
+  get('orderProduct').textContent = product.name;
+  get('orderSupport').textContent = product.support;
+  get('orderDimensions').textContent = product.dimensions;
+  get('productDescription').textContent = `${product.description} ${product.support}: ${product.dimensions}.`;
+  get('productDimensionsNote').textContent = `10 × 10 cm Relief · ${product.support}: ${product.dimensions}.`;
   let settings;
   try {
     settings = configuration();
@@ -35,7 +50,7 @@ function summary() {
     updateActions();
     return false;
   }
-  get('configurationSummary').textContent = `Eiche-Holzsockel · Rand ${Math.round(settings.margin * 100)} % · Höhen ${settings.elevationScale}× · Gravur: ${settings.engraving || 'keine'}`;
+  get('configurationSummary').textContent = `${product.name} · ${product.dimensions} · Rand ${Math.round(settings.margin * 100)} % · Höhen ${settings.elevationScale}× · Gravur: ${settings.engraving || 'keine'}${product.id !== 'frame' ? ` · Wandaufhängung: ${settings.wallMount ? 'ja (+1 €)' : 'nein'} · 4 transparente Schutzfüße` : ''}`;
   get('elevationValue').textContent = `${settings.elevationScale}×`;
   get('elevationNote').textContent = `${settings.elevationScale}-fach`;
   get('marginValue').textContent = `${Math.round(settings.margin * 100)} %`;
@@ -110,7 +125,8 @@ async function renderPreview() {
       viewer = nextViewer;
     }
     activeController.signal.throwIfAborted();
-    viewer.show(grid, configuration().elevationScale, get('engraving').value);
+    const settings = configuration();
+    viewer.show(grid, settings.elevationScale, settings.engraving, true, settings.product, settings.wallMount);
     get('placeholder').hidden = true;
     preview = 'ready';
     get('previewBadge').textContent = sample ? 'Beispielroute' : 'Deine Route';
@@ -172,11 +188,31 @@ get('sample').addEventListener('click', async () => {
 get('remove').addEventListener('click', clearRoute);
 get('retry').addEventListener('click', renderPreview);
 get('engraving').addEventListener('input', () => {
-  if (summary() && preview === 'ready') viewer?.personalize(get('engraving').value);
+  if (summary() && preview === 'ready') viewer?.personalize(configuration().engraving);
 });
+get('product').addEventListener('change', () => {
+  get('engraving').disabled = sending || !getProduct(get('product').value).engraving;
+  if (summary() && preview === 'ready') {
+    const settings = configuration();
+    viewer?.personalize(settings.engraving, settings.product, settings.wallMount);
+  }
+});
+get('wallMount').addEventListener('change', () => {
+  if (summary() && preview === 'ready') {
+    const settings = configuration();
+    viewer?.personalize(settings.engraving, settings.product, settings.wallMount);
+  }
+});
+for (const link of document.querySelectorAll('[data-configurator-product]')) {
+  link.addEventListener('click', event => {
+    if (sending) { event.preventDefault(); return; }
+    get('product').value = link.dataset.configuratorProduct;
+    get('product').dispatchEvent(new Event('change'));
+  });
+}
 get('elevationScale').addEventListener('input', () => {
   if (summary() && preview === 'ready') {
-    viewer?.setElevationScale(configuration().elevationScale, get('engraving').value);
+    viewer?.setElevationScale(configuration().elevationScale, configuration().engraving);
   }
 });
 get('margin').addEventListener('input', () => {
@@ -187,9 +223,6 @@ get('margin').addEventListener('input', () => {
   status('Der Geländeausschnitt wird angepasst …');
   marginTimer = setTimeout(renderPreview, 350);
 });
-get('rotate').addEventListener('click', () => viewer?.rotate());
-get('zoomIn').addEventListener('click', () => viewer?.zoom(0.85));
-get('zoomOut').addEventListener('click', () => viewer?.zoom(1.15));
 get('resetView').addEventListener('click', () => viewer?.reset());
 form.addEventListener('submit', async event => {
   event.preventDefault();
@@ -203,7 +236,7 @@ form.addEventListener('submit', async event => {
   body.set('type', 'individual'); body.set('gpxFile', file);
   body.set('configuration', JSON.stringify(configuration()));
   sending = true;
-  for (const id of ['routeControls', 'productControls', 'inquiryFields']) get(id).disabled = true;
+  for (const id of ['routeControls', 'productControls', 'selectionControls', 'inquiryFields']) get(id).disabled = true;
   get('submitInquiry').textContent = 'Wird gesendet …';
   get('inquiryStatus').textContent = '';
   updateActions();
@@ -225,7 +258,8 @@ form.addEventListener('submit', async event => {
     get('inquiryStatus').className = 'error';
   } finally {
     sending = false;
-    for (const id of ['routeControls', 'productControls', 'inquiryFields']) get(id).disabled = false;
+    for (const id of ['routeControls', 'productControls', 'selectionControls', 'inquiryFields']) get(id).disabled = false;
+    summary();
     get('submitInquiry').textContent = 'Unverbindlich anfragen';
     updateActions();
   }
@@ -244,7 +278,8 @@ checkout = initializeCheckout({
   },
   setBusy: busy => {
     sending = busy;
-    for (const id of ['routeControls', 'productControls', 'inquiryFields']) get(id).disabled = busy;
+    for (const id of ['routeControls', 'productControls', 'selectionControls', 'inquiryFields']) get(id).disabled = busy;
+    get('engraving').disabled = busy || !getProduct(get('product').value).engraving;
     for (const button of viewButtons) button.disabled = busy || preview !== 'ready';
     updateActions();
   },

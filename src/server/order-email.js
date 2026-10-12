@@ -1,4 +1,5 @@
 import { PURCHASE_INFORMATION, PURCHASE_INFORMATION_TEXT } from '../shared/purchase.js';
+import { getProduct, configurationPrice } from '../shared/product.js';
 
 const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -8,9 +9,10 @@ export function orderEmail(order, details, kind) {
   const live = order.mode === 'live';
   const owner = kind === 'owner';
   const configuration = JSON.parse(order.configuration);
+  const product = getProduct(configuration.product);
   const shipping = details.shipping;
   const address = shipping.address;
-  const title = live ? owner ? 'Neue bezahlte Bestellung' : 'Dein PeakMemory ist bestellt.'
+  const title = live ? owner ? 'Neue bezahlte Bestellung' : 'Dein Erinnerungsstück ist bestellt.'
     : 'Testzahlung bestätigt';
   const introduction = live
     ? owner ? 'Die Zahlung ist bestätigt. Die Bestellung kann gefertigt werden.'
@@ -18,9 +20,13 @@ export function orderEmail(order, details, kind) {
     : 'Dies ist eine Sandbox-Testbestellung. Kein Geld wurde abgebucht; es wird kein Produkt gefertigt.';
   const rows = [
     ['Bestellreferenz', order.id],
-    ['Produkt', '3D-Geländerelief auf Eiche · 1 Stück'],
-    ['Relief / Holzsockel', '10 × 10 cm / 11 × 13,5 × 2 cm'],
-    ['Gesamt', live ? '50 EUR · bezahlt, Versand Deutschland inklusive' : '50 EUR · simulierte Zahlung'],
+    ['Produkt', `${product.name} · 1 Stück`],
+    ['Relief / Ausführung', `10 × 10 cm / ${product.dimensions}`],
+    ['Gesamt', `${configurationPrice(configuration)} EUR · ${live ? 'bezahlt, Versand Deutschland inklusive' : 'simulierte Zahlung'}`],
+    ...(configuration.version >= 4 && product.id !== 'frame' ? [
+      ['Wandaufhängung', configuration.wallMount ? 'Ja · 1 EUR Aufpreis enthalten' : 'Nein'],
+      ['Schutzfüße', '4 transparente Schutzfüße inklusive'],
+    ] : []),
     ['Gravur', configuration.engraving || 'Ohne Gravur'],
     ['Geländerand', `${Math.round(configuration.margin * 100)} %`],
     ['Höhenüberhöhung', `${configuration.elevationScale}×`],

@@ -82,7 +82,15 @@ The subsequent temporary sandbox deployment
 `659256d0-f131-4f90-a832-1f672cda60e7` was verified: shop status reports
 `enabled:true`, `testMode:true`, `mode:"test"` and new live checkout returns 503.
 
-The configured offer is **50 EUR total**, shipping included, **Germany only**.
+The configured variants are engraved oak base **50 EUR** (`base`, default),
+compact oak base without engraving **45 EUR** (`compact`) and white frame with
+engraved white passepartout **55 EUR** (`frame`). Each relief is 10 × 10 cm;
+bases are 11 × 13.5 × 2 cm / 11 × 11 × 2 cm; the frame exterior is 20 × 20 cm.
+All prices include shipping, **Germany only**.
+Both oak bases include four transparent protective feet. Optional `wallMount:true`
+adds **1 EUR** (51 / 46 EUR totals); default is false. Frame does not accept this
+option. Configuration v4 records it explicitly; older orders retain their original
+prices and do not acquire paid hardware retroactively.
 No VAT is charged/displayed under **§19 UStG (Kleinunternehmer)**. Delivery wording
 is **5–10 working days after payment**. The captured preview is illustrative, not an exact
 manufacturing template. Acceptance covers these terms and no additional manual
@@ -104,8 +112,13 @@ no-referrer`. No CORS access is enabled.
   * `email`: valid address, ≤200 characters;
   * `gpxFile`: original `.gpx` bytes, nonempty, ≤5 MiB, valid bounded GPX
     (existing shared GPX validation);
-  * `configuration`: JSON, ≤4096 characters, `version:2`, `product:"base"`,
+  * `configuration`: JSON, ≤4096 characters, `version:4`, `product:"base"|"compact"|"frame"`,
     `preview:"ready"`, validated `engraving`, `margin`, `elevationScale`;
+    `wallMount` is a required boolean, false for frame.
+    `compact` requires an empty engraving. Legacy `version:2`, `product:"base"`
+    is still accepted for existing clients and stored orders.
+    Version 3 remains compatible without wall mount; older versions cannot
+    include a `wallMount` field.
   * `previewImage`: required PNG, ≤1 MiB, nonzero dimensions ≤2048×2048,
     supported IHDR format, complete bounded chunks with verified CRCs/IDAT/IEND;
   * `submissionKey`: randomly generated UUID v4, retained for all retries of
@@ -116,7 +129,9 @@ no-referrer`. No CORS access is enabled.
     identity. No other fields or duplicate fields are accepted.
   → `{ "orderId":"<uuid>", "url":"https://checkout.stripe.com/…",
   "statusUrl":"https://<configured-origin>/order-status?order=<uuid>&token=<secret>" }`.
-  Stripe receives a fixed 5000-cent EUR line item, zero shipping, DE-only shipping
+  Stripe receives a server-defined 5000/4500/5500-cent EUR line item (plus 100 cents
+  for the explicitly chosen wood wall mount) based on the
+  validated variant (never the supplied price), zero shipping, DE-only shipping
   collection, hosted UI and `submit_type=pay`. Original GPX, PNG and validated
   configuration are durably persisted **before** the Stripe call.
 * `GET /order-status?mode=test|live&order=<uuid>&token=<64-hex-secret>` →
@@ -135,7 +150,8 @@ no-referrer`. No CORS access is enabled.
   are acknowledged without payment changes.
 
 Successful payment requires a matching durable order and session association,
-5000 EUR cents, zero tax/shipping, `payment_status:"paid"` and a complete German
+the exact server-defined amount for its stored variant, zero tax/shipping,
+`payment_status:"paid"` and a complete German
 shipping address. Completion with unpaid status stays pending. Paid cannot be
 downgraded by later failure/expiry. Redirects **never** prove payment:
 

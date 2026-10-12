@@ -34,18 +34,37 @@
           </div>
           <p id="fileName" class="file-name" aria-live="polite">Noch keine Route ausgewählt.</p>
           <div class="actions"><button id="sample" type="button" class="secondary">Beispielroute testen</button><button id="remove" type="button" class="text-button" disabled>Entfernen</button></div>
-          <p class="hint">Exportiere deine Tour zum Beispiel aus Komoot, Strava oder Garmin als GPX-Datei. Höhendaten in der Datei sind nicht erforderlich.</p>
+          <p class="hint">Exportiere deine Tour zum Beispiel aus Komoot, Strava oder Garmin als GPX-Datei.</p>
           <p class="hint"><a href="gpx-hilfe.html" target="_blank" rel="noopener noreferrer">Wie bekomme ich meine GPX-Datei? ↗</a></p>
-          <details><summary>Was passiert mit meiner Route?</summary><p>Die GPX-Datei wird für die Vorschau nur in deinem Browser verarbeitet. Erst mit deiner Anfrage wird sie an uns gesendet. Über Cloudflare laden wir öffentliche Geländekacheln von AWS; diese Kacheladressen verraten die ungefähre Region, aber nicht deine vollständige Route. Keine Anmeldung, keine Routenspeicherung im Browser.</p></details>
+        </fieldset>
+        <fieldset id="selectionControls" class="card">
+          <legend><span class="step">2</span> Deine Produktauswahl</legend>
+          <label for="product">Ausführung wählen</label>
+          <select id="product" aria-describedby="productDescription">
+            <option value="base" selected>Holzsockel mit Gravur</option>
+            <option value="compact">Holzsockel ohne Gravur</option>
+            <option value="frame">Rahmen mit graviertem Passepartout</option>
+          </select>
+          <p id="productDescription" class="hint">10 × 10 cm Relief auf 11 × 13,5 × 2 cm Eiche-Holzsockel. Gravur direkt auf Holz.</p>
+          <div id="wallMountControls">
+            <label for="wallMount">Wandaufhängung</label>
+            <select id="wallMount" aria-describedby="wallMountHint">
+              <option value="no" selected>Nein</option>
+              <option value="yes">Ja (+1 €)</option>
+            </select>
+            <small id="wallMountHint">Gezahnte Aufhängung auf der Rückseite.</small>
+          </div>
         </fieldset>
         <fieldset id="productControls" class="card">
-          <legend><span class="step">2</span> Deine Personalisierung</legend>
-          <p class="model-price"><strong id="modelPrice">50 €</strong> für dein Relief auf Eiche<br><small>Inkl. Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.</small></p>
-          <label for="engraving">Gravurwunsch <span class="hint">(optional)</span></label>
-          <textarea id="engraving" maxlength="120" rows="3" aria-describedby="engravingHint">Deine Route
+          <legend><span class="step">3</span> Deine Personalisierung</legend>
+          <div id="engravingControls">
+            <label for="engraving">Gravurwunsch</label>
+            <textarea id="engraving" maxlength="120" rows="3" aria-describedby="engravingHint">Deine Route
 100 km | 1000 hm | 10 h
 01.01.2026</textarea>
-          <small id="engravingHint">Max. 3 Zeilen und insgesamt 120 Zeichen. Beispielwerte – bitte an deine Tour anpassen oder für ein Relief ohne Gravur löschen.</small>
+            <small id="engravingHint">Max. 3 Zeilen und insgesamt 120 Zeichen. Beispielwerte – bitte an deine Tour anpassen.</small>
+          </div>
+          <p id="engravingUnavailable" class="hint" hidden>Der kompakte Holzsockel wird ohne Gravur gefertigt. Geländerand und Höhenüberhöhung kannst du weiterhin anpassen.</p>
           <label for="margin">Gelände rund um deine Route: <output id="marginValue" for="margin">15 %</output></label>
           <input id="margin" type="range" min="5" max="50" step="5" value="15">
           <div class="range-labels"><span>Wenig Rand</span><span>Mehr Landschaft</span></div>
@@ -61,11 +80,10 @@
         </div>
         <p id="previewStatus" role="status" aria-live="polite">Wähle eine Route, um die 3D-Vorschau zu starten.</p>
         <div class="actions view-actions" aria-label="3D-Ansicht steuern">
-          <button id="rotate" type="button" class="secondary" disabled>Drehen</button><button id="zoomIn" type="button" class="secondary" disabled>Vergrößern</button><button id="zoomOut" type="button" class="secondary" disabled>Verkleinern</button><button id="resetView" type="button" class="text-button" disabled>Ansicht zurücksetzen</button><button id="retry" type="button" class="secondary" hidden>Erneut laden</button>
+          <button id="resetView" type="button" class="text-button" disabled>Ansicht zurücksetzen</button><button id="retry" type="button" class="secondary" hidden>Erneut laden</button>
         </div>
-        <p class="hint">Ziehen zum Drehen · Mausrad oder zwei Finger zum Zoomen. Alternativ die Buttons verwenden.</p>
         <p id="configurationSummary" class="configuration-summary"></p>
-        <div class="preview-note"><strong>Illustrative Vorschau, kein exaktes Fertigungsbild.</strong><p>Beim Direktkauf gelten deine Route und Einstellungen als final. Die Fertigung beginnt nach bestätigter Zahlung, ohne zusätzliche Vorschau-Freigabe. Prüfe deshalb besonders deine Gravur.</p><details><summary>Maße &amp; Hinweise zur Vorschau</summary><p>Die Maße entsprechen einem 10 × 10 cm Relief auf 11 × 13,5 cm Holz mit 2 cm Stärke. Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Höhen sind <span id="elevationNote">2-fach</span> skaliert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, natürliche Holzmaserung, Gravur und Geländedetails können vom gefertigten Produkt abweichen. Deine unveränderte GPX-Datei wird mit der Bestellung oder Anfrage gesendet.</p></details></div>
+        <div class="preview-note"><strong>Illustrative Vorschau, kein exaktes Fertigungsbild.</strong><p>Beim Direktkauf gelten deine Route und Einstellungen als final. Die Fertigung beginnt nach bestätigter Zahlung, ohne zusätzliche Vorschau-Freigabe. Prüfe deshalb besonders deine Gravur.</p><details><summary>Maße &amp; Hinweise zur Vorschau</summary><p><span id="productDimensionsNote">10 × 10 cm Relief auf 11 × 13,5 × 2 cm Eiche-Holzsockel.</span> Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Höhen sind <span id="elevationNote">2-fach</span> skaliert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, natürliche Holzmaserung, Rahmenprofil, Passepartout, Gravur und Geländedetails können vom gefertigten Produkt abweichen. Deine unveränderte GPX-Datei wird mit der Bestellung oder Anfrage gesendet.</p></details></div>
         <details class="attribution"><summary>Geländedaten &amp; Quellen</summary>
           <p>Mapzen Terrain Tiles, bereitgestellt über das <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener noreferrer">AWS Open Data Programm</a>. <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener noreferrer">Datenquellen und Lizenzhinweise</a>:</p>
           <ul>
@@ -87,16 +105,17 @@
     <section class="card checkout" aria-labelledby="checkoutTitle">
       <div>
         <p class="eyebrow">DIREKTKAUF · <span id="checkoutModeLabel">TESTBETRIEB</span></p>
-        <h2 id="checkoutTitle">Dein PeakMemory bestellen.</h2>
-        <p>Ein Relief auf Eiche, genau mit deiner Route und deinen Einstellungen. Lieferadresse und Zahlung erfasst Stripe im nächsten Schritt.</p>
+        <h2 id="checkoutTitle">Dein Erinnerungsstück bestellen.</h2>
+        <p>Lieferadresse und Zahlung erfasst Stripe im nächsten Schritt.</p>
         <dl class="order-details">
           <dt>Relief</dt><dd>10 × 10 cm</dd>
-          <dt>Eiche-Holzsockel</dt><dd>11 × 13,5 × 2 cm</dd>
-          <dt>Gesamtpreis</dt><dd><strong>50 € inkl. Versand</strong></dd>
+          <dt>Produkt</dt><dd id="orderProduct">Eiche-Holzsockel mit Gravur</dd>
+          <dt id="orderSupport">Eiche-Holzsockel</dt><dd id="orderDimensions">11 × 13,5 × 2 cm</dd>
           <dt>Liefergebiet</dt><dd>Deutschland</dd>
           <dt>Lieferzeit</dt><dd>5–10 Werktage nach Zahlung</dd>
         </dl>
-        <p class="hint">Kein Umsatzsteuerausweis gemäß §19 UStG. Ein Stück pro Bestellung. Sonderformate und Rahmen bitte separat anfragen.</p>
+        <p class="model-price"><strong id="modelPrice">50 €</strong> Gesamtpreis für dein Erinnerungsstück<br><small>Inkl. Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.</small></p>
+        <p class="hint">Ein Stück pro Bestellung. Sonderformate bitte separat anfragen.</p>
         <p id="checkoutAvailability" role="status">Der Direktkauf ist noch nicht aktiviert. Du kannst dein Relief weiterhin unverbindlich anfragen.</p>
         <p id="paymentStatus" role="status" aria-live="polite"></p>
       </div>

@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GRID_SIZE, surfaceHeight, routePaths } from '../shared/geometry.js';
 import { drawEngraving, loadEngravingFont } from './engraving.js';
-import { PRODUCT_LAYOUT } from '../shared/product.js';
+import { getProduct, productLayout } from '../shared/product.js';
 import { loadLogoCanvas } from './logo.js';
 import { createWoodBase } from './wood.js';
+import { createWoodHardware } from './wood-hardware.js';
+import { createFrame } from './frame.js';
 import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
 
 function terrainMesh(grid) {
@@ -86,22 +88,57 @@ export async function createViewer(container, onUnavailable) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0xf0efe9);
-  renderer.domElement.setAttribute('aria-label', '3D-Relief mit Route. Nutze die Ansichtsbuttons zum Drehen und Zoomen.');
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.domElement.setAttribute('aria-label', '3D-Relief mit Route. Zum Drehen ziehen, zum Zoomen Mausrad oder zwei Finger verwenden.');
   renderer.domElement.setAttribute('role', 'img');
   container.append(renderer.domElement);
   const scene = new THREE.Scene();
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x706b58, 1.8));
+  const ambient = new THREE.HemisphereLight(0xffffff, 0x706b58, 1.8);
+  scene.add(ambient);
   const light = new THREE.DirectionalLight(0xffffff, 1.8);
   light.position.set(-2, 4, 2);
+  light.castShadow = true;
+  light.shadow.mapSize.set(2048, 2048);
+  light.shadow.camera.left = light.shadow.camera.bottom = -3;
+  light.shadow.camera.right = light.shadow.camera.top = 3;
+  light.shadow.normalBias = 0.005;
   scene.add(light);
+  const undersideLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  undersideLight.position.set(0, -4, 2);
+  scene.add(undersideLight);
   const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 100);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enablePan = false;
   controls.minDistance = 1.1;
   controls.maxDistance = 6;
-  controls.maxPolarAngle = Math.PI / 2 - 0.05;
+  controls.maxPolarAngle = Math.PI - 0.05;
+  controls.autoRotateSpeed = 0.5;
   let model = null, grid = null, visible = true, disposed = false;
+  let product = 'base', layout = productLayout(product);
+  let wallMount = false;
+  let interacting = false, resumeTimer = 0, frame = 0, lastTime = 0;
   const render = () => { if (visible && !disposed) renderer.render(scene, camera); };
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const canSpin = () => model && visible && !disposed && !interacting && !reducedMotion.matches && !document.hidden;
+  function spin(time) {
+    frame = 0;
+    if (!canSpin()) { lastTime = 0; return; }
+    controls.autoRotate = true;
+    controls.update(lastTime ? Math.min(time - lastTime, 100) / 1000 : 0);
+    controls.autoRotate = false;
+    lastTime = time;
+    frame = requestAnimationFrame(spin);
+  }
+  const startSpin = () => { if (!frame && canSpin()) frame = requestAnimationFrame(spin); };
+  const pauseSpin = () => {
+    interacting = true;
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { interacting = false; startSpin(); }, 1000);
+  };
+  controls.addEventListener('start', () => { interacting = true; clearTimeout(resumeTimer); });
+  controls.addEventListener('end', pauseSpin);
+  document.addEventListener('visibilitychange', startSpin);
+  reducedMotion.addEventListener('change', startSpin);
   function resize() {
     const { width, height } = container.getBoundingClientRect();
     if (!width || !height) return;
@@ -112,7 +149,7 @@ export async function createViewer(container, onUnavailable) {
   }
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(container);
-  const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; render(); });
+  const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; render(); startSpin(); });
   observer.observe(container);
   controls.addEventListener('change', render);
   function reset() {
@@ -120,8 +157,12 @@ export async function createViewer(container, onUnavailable) {
     if (grid) for (const height of grid.heights) {
       maxHeight = Math.max(maxHeight, 0.045 + (height - grid.minimum) / grid.plan.groundWidth * grid.elevationScale);
     }
-    controls.target.set(0, maxHeight / 3, PRODUCT_LAYOUT.woodCenterZ);
-    const offset = new THREE.Vector3(1.4, 1.4 + maxHeight, 1.8);
+    if (product === 'frame' && model) {
+      new THREE.Box3().setFromObject(model).getCenter(controls.target);
+    } else controls.target.set(0, maxHeight / 3, layout.woodCenterZ);
+    const offset = product === 'frame'
+      ? new THREE.Vector3(1.2, 1, 3.6 + maxHeight)
+      : new THREE.Vector3(1.4, 1.4 + maxHeight, 1.8);
     const distance = offset.length();
     controls.maxDistance = Math.max(6, distance * 2);
     camera.far = Math.max(100, distance * 4);
@@ -135,42 +176,66 @@ export async function createViewer(container, onUnavailable) {
     grid = null;
     render();
   }
-  function personalize(engraving) {
+  function personalize(engraving, nextProduct = product, nextWallMount = wallMount) {
+    getProduct(nextProduct);
+    const changedProduct = product !== nextProduct;
+    product = nextProduct;
+    wallMount = product !== 'frame' && nextWallMount;
+    layout = productLayout(product);
+    renderer.shadowMap.enabled = product === 'frame';
+    undersideLight.visible = product !== 'frame';
+    ambient.intensity = product === 'frame' ? 2.5 : 1.8;
+    light.position.set(-2, product === 'frame' ? 3 : 4, product === 'frame' ? 5 : 2);
     if (!model) return;
     const old = model.getObjectByName('product');
     if (old) { model.remove(old); dispose(old); }
     const group = new THREE.Group();
     group.name = 'product';
-    group.add(createWoodBase());
-    const logoTexture = new THREE.CanvasTexture(logoCanvas);
-    logoTexture.colorSpace = THREE.SRGBColorSpace;
-    const logo = new THREE.Mesh(new THREE.PlaneGeometry(PRODUCT_LAYOUT.logoWidth, PRODUCT_LAYOUT.logoHeight),
-      new THREE.MeshStandardMaterial({ map: logoTexture, transparent: true, depthWrite: false, roughness: 0.85 }));
-    logo.position.set(PRODUCT_LAYOUT.logoCenterX, PRODUCT_LAYOUT.logoCenterY, PRODUCT_LAYOUT.logoFrontZ);
-    group.add(logo);
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024; canvas.height = 256;
-    const context = canvas.getContext('2d');
-    if (!context) throw new Error('Der Gravurtext konnte nicht dargestellt werden.');
-    drawEngraving(context, engraving, canvas.width, canvas.height);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    const label = new THREE.Mesh(new THREE.PlaneGeometry(PRODUCT_LAYOUT.engravingWidth, PRODUCT_LAYOUT.engravingDepth),
-      new THREE.MeshStandardMaterial({ map: texture, transparent: true, depthWrite: false, roughness: 0.85 }));
-    label.rotation.x = -Math.PI / 2;
-    label.position.set(0, 0.021, PRODUCT_LAYOUT.engravingCenterZ);
-    group.add(label);
+    group.add(product === 'frame' ? createFrame() : createWoodBase(layout));
+    if (product !== 'frame') {
+      group.add(createWoodHardware(layout, wallMount));
+      const logoTexture = new THREE.CanvasTexture(logoCanvas);
+      logoTexture.colorSpace = THREE.SRGBColorSpace;
+      const logo = new THREE.Mesh(new THREE.PlaneGeometry(layout.logoWidth, layout.logoHeight),
+        new THREE.MeshStandardMaterial({ map: logoTexture, transparent: true, depthWrite: false, roughness: 0.85 }));
+      logo.position.set(layout.logoCenterX, layout.logoCenterY, layout.logoFrontZ);
+      group.add(logo);
+    }
+    if (getProduct(product).engraving) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024; canvas.height = Math.round(1024 * layout.engravingDepth / layout.engravingWidth);
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Der Gravurtext konnte nicht dargestellt werden.');
+      drawEngraving(context, engraving, canvas.width, canvas.height, layout.engravingWidth * 10);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(layout.engravingWidth, layout.engravingDepth),
+        new THREE.MeshStandardMaterial({ map: texture, transparent: true, depthWrite: false, roughness: 0.85 }));
+      label.rotation.x = -Math.PI / 2;
+      label.position.set(0, 0.021, layout.engravingCenterZ);
+      group.add(label);
+    }
     model.add(group);
+    for (const child of model.children) {
+      if (child !== group) {
+        child.position.y = product === 'frame' ? layout.reliefOffsetY : 0;
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    }
+    model.rotation.x = product === 'frame' ? Math.PI / 2 : 0;
+    if (changedProduct) reset();
     render();
   }
-  function show(nextGrid, elevationScale, engraving, resetView = true) {
+  function show(nextGrid, elevationScale, engraving, resetView = true, nextProduct = product, nextWallMount = wallMount) {
     clear();
     grid = { ...nextGrid, elevationScale };
     model = new THREE.Group();
     model.add(terrainMesh(grid));
     for (const path of routePaths(grid)) model.add(routeMesh(path));
     scene.add(model);
-    personalize(engraving);
+    personalize(engraving, nextProduct, nextWallMount);
+    startSpin();
     if (resetView) reset();
     else {
       const bounds = new THREE.Box3().setFromObject(model);
@@ -186,7 +251,20 @@ export async function createViewer(container, onUnavailable) {
   renderer.domElement.addEventListener('webglcontextlost', lost);
   resize(); reset();
   return {
-    show, personalize, clear, reset,
+    show, personalize, clear,
+    reset() { pauseSpin(); reset(); },
+    showUnderside() {
+      if (!model || product === 'frame') return;
+      pauseSpin();
+      controls.target.set(0, layout.woodCenterY, layout.woodCenterZ);
+      const radius = Math.hypot(layout.woodWidth, layout.woodDepth, layout.woodThickness) / 2;
+      const distance = radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2))
+        / Math.min(1, camera.aspect) * 1.15;
+      controls.maxDistance = Math.max(controls.maxDistance, distance);
+      camera.position.copy(controls.target).add(new THREE.Vector3(0, -1, 0.15).normalize().multiplyScalar(distance));
+      controls.update();
+      render();
+    },
     async screenshot() {
       renderer.render(scene, camera);
       const canvas = document.createElement('canvas');
@@ -205,17 +283,22 @@ export async function createViewer(container, onUnavailable) {
       if (grid) show(grid, elevationScale, engraving, false);
     },
     rotate() {
+      pauseSpin();
       const offset = camera.position.clone().sub(controls.target);
       offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 6);
       camera.position.copy(controls.target).add(offset); controls.update(); render();
     },
     zoom(factor) {
+      pauseSpin();
       const offset = camera.position.clone().sub(controls.target);
       offset.setLength(Math.max(controls.minDistance, Math.min(controls.maxDistance, offset.length() * factor)));
       camera.position.copy(controls.target).add(offset); controls.update(); render();
     },
     dispose() {
       clear(); disposed = true; resizeObserver.disconnect(); observer.disconnect(); controls.dispose();
+      cancelAnimationFrame(frame); clearTimeout(resumeTimer);
+      document.removeEventListener('visibilitychange', startSpin);
+      reducedMotion.removeEventListener('change', startSpin);
       renderer.domElement.removeEventListener('webglcontextlost', lost);
       renderer.dispose(); renderer.domElement.remove();
     },

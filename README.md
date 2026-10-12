@@ -19,21 +19,35 @@ Datei und kein exaktes Fertigungsbild.
   `/configurator.html`-Links leiten zu `/#konfigurator` weiter. Der Build übernimmt die gemeinsame
   Oberfläche aus dieser Datei in den Platzhalter von `index.html`; keine zweite
   Kopie pflegen. Konfigurator-CSS ist auf `.configurator` begrenzt.
-  Auf dem Smartphone folgen Route, Erinnerungsstück und Live-Vorschau
+  Auf dem Smartphone folgen Route, Produktauswahl, Personalisierung und Live-Vorschau
   untereinander; am Desktop bleiben die Einstellungen links neben der Vorschau.
-- Relief auf Eiche-Holzsockel (ohne Produktvariantenauswahl), Gravurwunsch und Geländerand.
+- Produktauswahl als Schritt 2: Eiche-Holzsockel mit Gravur (Standard, 11 × 13,5 × 2 cm, 50 EUR),
+  Eiche-Holzsockel ohne Gravur (11 × 11 × 2 cm, 45 EUR) oder weißer Rahmen
+  mit weißem, graviertem Passepartout (20 × 20 cm Außenmaß, 55 EUR).
+  Das Relief ist bei allen Varianten 10 × 10 cm groß. Vorschau, Preis,
+  Anfrage, Stripe-Checkout und Bestell-E-Mails verwenden die gewählte Variante.
+- Beide Holzsockel haben vier transparente Schutzfüße. Die Wandaufhängung
+  ist optional (Standard Nein, Aufpreis 1 EUR). Bei Ja zeigt die Rückseite
+  eine schwarze gezahnte Aufhängung mit zwei Schrauben wie auf der Fotoreferenz.
+  Freies Drehen per Maus oder Touch ermöglicht die Kontrolle der Unterseite.
+  Die Option bleibt beim Wechsel zum Rahmen im Formular erhalten, wird aber
+  weder gefertigt noch berechnet. Sie wird in Zusammenfassung und E-Mails genannt.
 - Höhenüberhöhung von 1× bis 8×, Standard 2×. Änderungen skalieren Gelände
   und Route gemeinsam ohne erneuten Geländeabruf.
 - Gravur mit maximal 3 Zeilen und insgesamt 120 Zeichen. Die Vorschau übernimmt
   die eingegebenen Zeilenumbrüche ohne automatischen Umbruch und zeigt die
-  Schrift direkt auf dem Holz, ohne separates Schild oder farbigen Hintergrund.
+  Schrift direkt auf dem Holz bzw. auf dem weißen Passepartout, ohne separates Schild.
+  Bei Auswahl des kompakten Sockels wird der Text nicht übertragen oder gefertigt;
+  die Eingabe wird ausgeblendet und bleibt für einen späteren Produktwechsel
+  im Formular erhalten. Geländerand und Höhenüberhöhung bleiben bei allen
+  Varianten in Schritt 3 einstellbar.
   Ohne Gravurwunsch bleibt das Holz unbeschriftet.
   Der editierbare Standardtext ist `Deine Route`, `100 km | 1000 hm | 10 h`
   und `01.01.2026` in drei Zeilen; diese Beispielwerte werden nicht aus der GPX ermittelt.
 - Gravurschrift: original Quicksand Book, lokal aus `fonts/Quicksand_Book.otf`
   geladen, mit SIL Open Font License unter `fonts/OFL.txt`.
   Die Standardschriftgröße beträgt 5 mm, unabhängig von der Zeilenzahl.
-  Überschreitet die längste Zeile 8 cm, werden alle Zeilen proportional
+  Überschreitet die längste Zeile die Gravurbreite (Holz: 8 cm, Passepartout: 11,2 cm), werden alle Zeilen proportional
   verkleinert. Kürzere Texte werden nicht künstlich auf volle Breite gestreckt.
 - Die Homepage-Schrift Inter wird lokal aus `fonts/InterVariable.woff2` geladen,
   ohne Google-Fonts-Anfragen. Quelle: Inter-Projekt (`rsms/inter`), SIL Open Font
@@ -42,7 +56,7 @@ Datei und kein exaktes Fertigungsbild.
   Bei verfügbarer Vorschau wird die aktuelle 3D-Ansicht als PNG angehängt
   (maximal 1 MB und 2048 Pixel je Seite). Screenshot-Fehler werden vor dem Versand
   angezeigt; ohne verfügbare Vorschau bleibt die Anfrage ohne Bild möglich.
-- Direktkauf: Upload → Personalisierung → Auswahl prüfen → Stripe-Zahlung
+- Direktkauf: Upload → Produktauswahl → Personalisierung → Auswahl prüfen → Stripe-Zahlung
   → Produktion ohne zusätzliche persönliche Freigabe. Test- und Live-Modus
   verwenden getrennte Endpunkte und getrennte private Speicher. Beide sind
   nur nach expliziter Freigabe nutzbar. Die aktuelle Konfiguration aktiviert
@@ -52,10 +66,10 @@ Datei und kein exaktes Fertigungsbild.
   Details und sichere Aktivierung: [CHECKOUT.md](./CHECKOUT.md).
   Unverbindliche Anfragen bleiben als Fallback und für Sonderwünsche möglich.
   Etsy ist eine alternative Bestellmöglichkeit; Event-Serien ab 5 Stück.
-  Das Modell im Konfigurator kostet insgesamt 50 EUR inklusive Versand
+  Die Produkte im Konfigurator kosten 45, 50 bzw. 55 EUR inklusive Versand
   innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.
   Lieferzeit: 5–10 Werktage nach bestätigter Zahlung bei echten Bestellungen.
-  Der feste Modellpreis steht in `src/shared/product.js` und wird
+  Die serverseitig festgelegten Produktpreise stehen in `src/shared/product.js` und werden
   in Oberfläche, Anfrage und Checkout serverseitig verwendet.
   Die Website verspricht keine feste Antwortzeit; Anfragen werden persönlich beantwortet.
 - Bildvarianten unter `images/optimized/` verkleinern die Übertragung; der Build
@@ -242,9 +256,19 @@ schützt diese alternativen Zugänge nicht.
   vertikal mittig und mit 0,6 cm Abstand zum linken Rand; das Originalseitenverhältnis bleibt erhalten.
 - Höhen sind von 1× bis 8× einstellbar (Standard 2×). Material und
   endgültige Gravurposition sind exemplarisch; Preise werden nicht erfunden.
-- Neue Konfigurator-Anfragen verwenden Konfiguration Version 2 mit Pflichtfeld
-  `elevationScale` und festem Produkt `base`. Bereits geöffnete alte Clients
-  mit Version 1 bleiben serverseitig kompatibel (damalige Höhenüberhöhung 1,5×).
+- Neue Konfigurator-Anfragen verwenden Konfiguration Version 4 mit Pflichtfeldern
+  `elevationScale`, `wallMount` (Boolean) und Produkt `base`, `compact` oder `frame`.
+  Der Rahmen erfordert `wallMount:false`. Version 3 bleibt für alle drei
+  Varianten ohne diese Zusatzoption kompatibel.
+  Version 2 bleibt für das bisherige Produkt `base` kompatibel, Version 1 für alte
+  Anfragen (damalige Höhenüberhöhung 1,5×).
+- Die Vorschau dreht langsam automatisch (eine Umdrehung in etwa 120 Sekunden).
+  Manuelle Bedienung pausiert die Drehung für eine Sekunde; bei reduziertem
+  Bewegungswunsch, verborgenem Tab oder unsichtbarer Vorschau wird nicht animiert.
+  Rahmenprofil und -tiefe sind illustrativ; das Außenmaß beträgt 20 × 20 cm.
+  Die Rahmenvorschau folgt den Produktfoto-Referenzen: weißer Rahmen, weißes
+  Passepartout mit größerem Ausschnitt als das Relief, zurückgesetzte helle
+  Rückwand und zentrierte Gravur unter dem Fenster. Nur der Rahmen nutzt Schatten.
 
 Bei fehlendem WebGL oder nicht verfügbarem Gelände kann eine gültige eigene
 Route weiterhin angefragt werden; der Vorschauzustand steht in der E-Mail.

@@ -1,8 +1,104 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PRODUCT_DIMENSIONS_CM, PRODUCT_LAYOUT } from '../src/shared/product.js';
+import { PRODUCTS, configurationPrice, getProduct, productLayout, PRODUCT_DIMENSIONS_CM, PRODUCT_LAYOUT } from '../src/shared/product.js';
 import { createWoodBase, woodTexturePixels } from '../src/client/wood.js';
 import { Box3, Vector3 } from 'three';
+import { createFrame } from '../src/client/frame.js';
+import { parseConfiguration } from '../src/shared/configuration.js';
+import { createWoodHardware } from '../src/client/wood-hardware.js';
+
+test('wall mount requires a v4 boolean, costs one euro only on wood and preserves legacy prices', () => {
+  for (const product of Object.keys(PRODUCTS)) {
+    const configuration = { version: 4, product, wallMount: false, engraving: '',
+      margin: 0.15, elevationScale: 2, preview: 'ready' };
+    assert.deepEqual(parseConfiguration(configuration), configuration);
+    assert.equal(configurationPrice(configuration), PRODUCTS[product].priceEur);
+    assert.equal(configurationPrice({ ...configuration, version: 3 }), PRODUCTS[product].priceEur);
+    if (product === 'frame') {
+      assert.throws(() => parseConfiguration({ ...configuration, wallMount: true }), /Wandaufhängung/);
+    } else {
+      assert.equal(configurationPrice(parseConfiguration({ ...configuration, wallMount: true })), PRODUCTS[product].priceEur + 1);
+    }
+    for (const wallMount of [undefined, null, 'true', 1]) {
+      assert.throws(() => parseConfiguration({ ...configuration, wallMount }), /Wandaufhängung/);
+    }
+  }
+});
+
+test('both wood variants always have four transparent corner feet and an optional sawtooth hanger beneath the base', () => {
+  for (const product of ['base', 'compact']) for (const wallMount of [false, true]) {
+    const layout = productLayout(product);
+    const hardware = createWoodHardware(layout, wallMount);
+    const feet = hardware.getObjectByName('protective-feet');
+    assert.equal(feet.children.length, 4);
+    assert.equal(new Set(feet.children.map(foot => `${foot.position.x},${foot.position.z}`)).size, 4);
+    const underside = layout.woodCenterY - layout.woodThickness / 2;
+    for (const foot of feet.children) {
+      assert.equal(foot.material.transparent, true);
+      assert.ok(foot.material.opacity > 0 && foot.material.opacity < 1);
+      assert.ok(foot.position.y < underside);
+      assert.ok(Math.abs(foot.position.x) + foot.scale.x < layout.woodWidth / 2);
+      assert.ok(Math.abs(foot.position.z - layout.woodCenterZ) + foot.scale.z < layout.woodDepth / 2);
+    }
+    const hanger = hardware.getObjectByName('wall-mount');
+    assert.equal(Boolean(hanger), wallMount);
+    if (hanger) {
+      assert.equal(hanger.children.filter(child => child.geometry.type === 'CylinderGeometry').length, 2);
+      assert.equal(hanger.children[0].geometry.type, 'ExtrudeGeometry');
+      assert.ok(hanger.position.y < underside);
+      assert.ok(hanger.position.z < layout.woodCenterZ);
+    }
+    const geometries = new Set(), materials = new Set();
+    hardware.traverse(child => { if (child.geometry) geometries.add(child.geometry); if (child.material) materials.add(child.material); });
+    for (const geometry of geometries) geometry.dispose();
+    for (const material of materials) material.dispose();
+  }
+});
+
+test('three variants have fixed prices and validated v3 engraving capabilities', () => {
+  assert.deepEqual(Object.values(PRODUCTS).map(product => product.priceEur), [50, 45, 55]);
+  assert.throws(() => getProduct('unknown'), /Unbekanntes/);
+  for (const product of Object.values(PRODUCTS)) {
+    const configuration = { version: 3, product: product.id, engraving: product.engraving ? 'Tour\n2026' : '',
+      margin: 0.15, elevationScale: 2, preview: 'ready' };
+    assert.deepEqual(parseConfiguration(configuration), configuration);
+    assert.throws(() => parseConfiguration({ ...configuration, elevationScale: 9 }), /Ungültige/);
+  }
+  assert.throws(() => parseConfiguration({ version: 3, product: 'compact', engraving: 'Tour',
+    margin: 0.15, elevationScale: 2, preview: 'ready' }), /ohne Gravur/);
+});
+
+test('compact base measures 11 by 11 by 2 cm and centers the relief', () => {
+  const layout = productLayout('compact');
+  const base = createWoodBase(layout);
+  const dimensions = new Box3().setFromObject(base).getSize(new Vector3()).multiplyScalar(10);
+  assert.ok(Math.abs(dimensions.x - 11) < 1e-6 && Math.abs(dimensions.z - 11) < 1e-6);
+  assert.ok(Math.abs(dimensions.y - 2) < 1e-6);
+  assert.equal(base.position.z, 0);
+  base.geometry.dispose();
+  for (const material of new Set(base.material)) { material.map.dispose(); material.dispose(); }
+});
+
+test('white frame has 20 by 20 cm exterior and engraving stays below the relief inside the mat', () => {
+  const frame = createFrame();
+  const dimensions = new Box3().setFromObject(frame).getSize(new Vector3()).multiplyScalar(10);
+  assert.ok(Math.abs(dimensions.x - 20) < 1e-6 && Math.abs(dimensions.z - 20) < 1e-6);
+  const layout = productLayout('frame');
+  assert.ok(layout.engravingCenterZ - layout.engravingDepth / 2 > 0.5);
+  assert.ok(layout.engravingCenterZ + layout.engravingDepth / 2 < layout.frameWidth / 2 - layout.frameBorder);
+  const materials = new Set();
+  frame.traverse(child => {
+    child.geometry?.dispose();
+    if (child.material) {
+      assert.ok([0xffffff, 0xf5f3ed].includes(child.material.color.getHex()));
+      materials.add(child.material);
+    }
+  });
+  for (const material of materials) material.dispose();
+  assert.ok(layout.matOpening > 1, 'Passepartout opening leaves a visible border around the relief');
+  assert.ok(layout.engravingCenterZ - layout.engravingDepth / 2 > layout.matOpening / 2);
+  assert.ok(layout.reliefOffsetY < 0, 'Relief is mounted on the recessed backing');
+});
 
 test('rendered wood mesh measures exactly 11 cm wide, 2 cm high and 13.5 cm long', () => {
   const base = createWoodBase();

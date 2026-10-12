@@ -1,11 +1,17 @@
+import { configurationPrice, formatPrice } from '../shared/product.js';
+
 const get = id => document.getElementById(id);
-const DEFAULT_LABEL = 'Zur Testzahlung bei Stripe · 50 €';
 
 export function initializeCheckout({ state, capture, setBusy }) {
   let enabled = false, mode = 'test', testMode = true, submitting = false, draft = null;
   const form = get('checkoutForm');
   const status = get('checkoutStatus');
   let previousSelection;
+  const priceLabel = () => formatPrice(configurationPrice({
+    version: 4, product: get('product').value,
+    wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
+  }));
+  const buttonLabel = () => `${testMode ? 'Zur Testzahlung bei Stripe' : 'Zahlungspflichtig bestellen'} · ${priceLabel()}`;
   function update() {
     const current = state();
     const selection = JSON.stringify([current.file?.name, current.summary, current.preview]);
@@ -15,8 +21,9 @@ export function initializeCheckout({ state, capture, setBusy }) {
     get('submitCheckout').disabled = !enabled || submitting || current.busy || !current.file
       || current.sample || current.preview !== 'ready' || !current.valid;
     get('checkoutSummary').textContent = current.file
-      ? `${current.file.name}\n${current.summary}\nGesamt: 50 € inkl. Versand innerhalb Deutschlands`
+      ? `${current.file.name}\n${current.summary}\nGesamt: ${priceLabel()} inkl. Versand innerhalb Deutschlands`
       : 'Lade zuerst deine eigene GPX-Datei hoch.';
+    if (!submitting) get('submitCheckout').textContent = buttonLabel();
   }
   function fail(message) {
     status.textContent = message;
@@ -72,7 +79,7 @@ export function initializeCheckout({ state, capture, setBusy }) {
       submitting = false;
       setBusy(false);
       get('checkoutFields').disabled = false;
-      get('submitCheckout').textContent = testMode ? DEFAULT_LABEL : 'Zahlungspflichtig bestellen · 50 €';
+      get('submitCheckout').textContent = buttonLabel();
       update();
     }
   });
@@ -98,11 +105,11 @@ export function initializeCheckout({ state, capture, setBusy }) {
       get('checkoutModeLabel').textContent = testMode ? 'TESTBETRIEB' : 'ECHTE BESTELLUNGEN';
       get('processPaymentInfo').textContent = testMode
         ? 'Der Direktkauf ist ausschließlich im Stripe-Testmodus geöffnet. Testzahlungen lösen keine echte Bestellung aus.'
-        : 'Du bezahlst 50 € inklusive Versand innerhalb Deutschlands über Stripe. Die Lieferzeit beträgt 5–10 Werktage nach bestätigter Zahlung.';
+        : 'Du bezahlst den angezeigten Gesamtpreis inklusive Versand innerhalb Deutschlands über Stripe. Für Holzsockel ist eine Wandaufhängung für 1 € zusätzlich wählbar. Die Lieferzeit beträgt 5–10 Werktage nach bestätigter Zahlung.';
       get('processProductionInfo').textContent = testMode
         ? 'Testzahlungen lösen keine Produktion oder Lieferung aus. Bei echten Bestellungen beginnt die Fertigung nach bestätigter Zahlung; die Lieferung erfolgt in 5–10 Werktagen.'
         : 'Nach bestätigter Zahlung fertigen wir dein Unikat und liefern innerhalb Deutschlands in 5–10 Werktagen.';
-      get('submitCheckout').textContent = testMode ? DEFAULT_LABEL : 'Zahlungspflichtig bestellen · 50 €';
+      get('submitCheckout').textContent = buttonLabel();
       update();
     } catch (error) {
       enabled = false;

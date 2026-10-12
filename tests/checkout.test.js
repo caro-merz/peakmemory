@@ -13,6 +13,7 @@ import { MAX_GPX_SIZE } from '../src/shared/gpx.js';
 import { MAX_PREVIEW_SIZE } from '../src/shared/preview.js';
 import { PURCHASE_INFORMATION_TEXT } from '../src/shared/purchase.js';
 import { orderEmail } from '../src/server/order-email.js';
+import { PRODUCTS, configurationPrice } from '../src/shared/product.js';
 import { onRequest as pagesCheckout } from '../functions/checkout.js';
 import { onRequest as pagesStatus } from '../functions/order-status.js';
 import { onRequest as pagesWebhook } from '../functions/stripe-webhook.js';
@@ -129,7 +130,7 @@ function mockServices({ stripe, mail } = {}) {
         url: `https://checkout.stripe.com/c/pay/cs_${params.has('metadata[live_order]') ? 'live' : 'test'}_${id.replaceAll('-', '')}`,
         client_reference_id: id, metadata: {
           order_id: id, ...(params.has('metadata[live_order]') ? { live_order: 'true' } : { test_only: 'true' }),
-        }, amount_total: 5000, currency: 'eur',
+        }, amount_total: Number(params.get('line_items[0][price_data][unit_amount]')), currency: 'eur',
       };
       sessions.set(id, response);
       return stripe ? stripe(response, options, calls.length) : Response.json(response);
@@ -158,7 +159,8 @@ function eventFor(order, overrides = {}, type = 'checkout.session.completed', li
     api_version: live ? '2026-08-26.dahlia' : STRIPE_WEBHOOK_API_VERSION,
     data: { object: { object: 'checkout.session', id: order.session_id, livemode: live, mode: 'payment',
       client_reference_id: order.id, metadata: { order_id: order.id, [live ? 'live_order' : 'test_only']: 'true' },
-      amount_total: 5000, currency: 'eur', payment_status: 'paid', total_details: { amount_shipping: 0, amount_tax: 0 },
+      amount_total: configurationPrice(JSON.parse(order.configuration)) * 100,
+      currency: 'eur', payment_status: 'paid', total_details: { amount_shipping: 0, amount_tax: 0 },
       collected_information: { shipping_details: shipping },
       customer_details: { email: 'ada@example.com', name: 'Ada Lovelace' }, ...normalizedOverrides } } };
 }
@@ -170,6 +172,71 @@ async function webhook(event, { timestamp = Math.floor(Date.now() / 1000), secre
   return req(`/stripe-webhook${mode === 'live' ? '/live' : ''}`, { method: 'POST', body, headers: { 'stripe-signature': signature ?? `t=${timestamp},v1=${hash}` } });
 }
 function state(context, id) { return context.db.prepare('SELECT * FROM checkout_orders WHERE id=?').get(id); }
+
+for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCTS)) {
+  test(`${mode} ${product.id}: server price, verified payment and product-specific emails`, async () => {
+    const context = environment();
+    if (mode === 'live') configureLive(context);
+    const storage = mode === 'live' ? context.live : context;
+    const services = mockServices();
+    const configuration = { ...config, version: 3, product: product.id, engraving: product.engraving ? 'Meine Tour' : '' };
+    const response = await handleCheckout(checkout(key(), {
+      configuration: JSON.stringify(configuration), price: '1', currency: 'usd',
+    }), context.env, mode);
+    assert.equal(response.status, 200, await response.clone().text());
+    const { orderId } = await response.json();
+    const order = state(storage, orderId);
+    const params = services.calls[0].params;
+    assert.equal(params.get('line_items[0][price_data][unit_amount]'), String(product.priceEur * 100));
+    assert.ok(params.get('line_items[0][price_data][product_data][name]').includes(product.name));
+    assert.deepEqual(JSON.parse(order.configuration), configuration);
+    const event = eventFor(order, {}, 'checkout.session.completed', mode === 'live');
+    const options = { mode, secret: mode === 'live' ? 'whsec_livemock' : 'whsec_mock' };
+    const wrongAmount = { ...event, id: `evt_${key().replaceAll('-', '')}`,
+      data: { object: { ...event.data.object, amount_total: product.priceEur * 100 + 100 } } };
+    assert.equal((await handleStripeWebhook(await webhook(wrongAmount, options), context.env, mode)).status, 400);
+    assert.equal(state(storage, orderId).status, 'pending');
+    assert.equal(services.emails.length, 0);
+    assert.equal((await handleStripeWebhook(await webhook(event, options), context.env, mode)).status, 200);
+    assert.equal(state(storage, orderId).status, 'paid');
+    assert.equal(services.emails.length, 2);
+    for (const { payload } of services.emails) {
+      assert.ok(payload.text.includes(product.name));
+      assert.ok(payload.text.includes(`${product.priceEur} EUR`));
+      assert.ok(payload.text.includes(product.dimensions));
+      assert.ok(payload.text.includes(product.engraving ? 'Meine Tour' : 'Ohne Gravur'));
+    }
+  });
+}
+
+for (const mode of ['test', 'live']) for (const product of ['base', 'compact']) {
+  for (const wallMount of [false, true]) test(`${mode} ${product}: wall mount ${wallMount} price and notifications`, async () => {
+    const context = environment();
+    if (mode === 'live') configureLive(context);
+    const storage = mode === 'live' ? context.live : context;
+    const services = mockServices();
+    const configuration = { ...config, version: 4, product, wallMount, engraving: product === 'compact' ? '' : 'Meine Tour' };
+    const expected = PRODUCTS[product].priceEur + (wallMount ? 1 : 0);
+    const response = await handleCheckout(checkout(key(), { configuration: JSON.stringify(configuration), price: '1' }), context.env, mode);
+    assert.equal(response.status, 200, await response.clone().text());
+    const order = state(storage, (await response.json()).orderId);
+    assert.deepEqual(JSON.parse(order.configuration), configuration);
+    assert.equal(services.calls[0].params.get('line_items[0][price_data][unit_amount]'), String(expected * 100));
+    const options = { mode, secret: mode === 'live' ? 'whsec_livemock' : 'whsec_mock' };
+    const wrong = eventFor(order, { amount_total: (expected + (wallMount ? -1 : 1)) * 100 },
+      'checkout.session.completed', mode === 'live');
+    assert.equal((await handleStripeWebhook(await webhook(wrong, options), context.env, mode)).status, 400);
+    assert.equal(state(storage, order.id).status, 'pending');
+    const event = eventFor(order, {}, 'checkout.session.completed', mode === 'live');
+    assert.equal((await handleStripeWebhook(await webhook(event, options), context.env, mode)).status, 200);
+    assert.equal(services.emails.length, 2);
+    for (const { payload } of services.emails) {
+      assert.ok(payload.text.includes(`${expected} EUR`));
+      assert.ok(payload.text.includes(`Wandaufhängung: ${wallMount ? 'Ja' : 'Nein'}`));
+      assert.ok(payload.text.includes('4 transparente Schutzfüße'));
+    }
+  });
+}
 
 test('default disabled status is public, secret-free; missing bindings do not break Worker preview or scheduled handler', async () => {
   const request = req('/shop-status');
@@ -239,6 +306,14 @@ test('strict fields, GPX, v2 base ready configuration, PNG, affirmative boolean 
     { submissionKey: 'predictable' }, { acceptance: 'false' }, { acceptance: '1' }, { acceptance: undefined },
     { configuration: '{}' }, { configuration: JSON.stringify({ ...config, version: 1 }) },
     { configuration: JSON.stringify({ ...config, product: 'frame' }) },
+    { configuration: JSON.stringify({ ...config, version: 3, product: 'compact' }) },
+    { configuration: JSON.stringify({ ...config, version: 3, product: 'unknown' }) },
+    { configuration: JSON.stringify({ ...config, version: 3, elevationScale: undefined }) },
+    { configuration: JSON.stringify({ ...config, version: 4 }) },
+    { configuration: JSON.stringify({ ...config, version: 4, wallMount: 'true' }) },
+    { configuration: JSON.stringify({ ...config, version: 4, wallMount: 1 }) },
+    { configuration: JSON.stringify({ ...config, version: 4, product: 'frame', wallMount: true }) },
+    { configuration: JSON.stringify({ ...config, wallMount: true }) },
     { configuration: JSON.stringify({ ...config, preview: 'unavailable' }) },
     { configuration: JSON.stringify({ ...config, elevationScale: 9 }) },
     { configuration: JSON.stringify({ ...config, margin: 0 }) },

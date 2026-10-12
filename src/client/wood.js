@@ -50,11 +50,11 @@ function woodMaterial(face) {
   return new MeshStandardMaterial({ map: texture, bumpMap: texture, bumpScale: 0.0006, roughness: 0.85 });
 }
 
-export function createWoodBase() {
-  const geometry = new RoundedBoxGeometry(PRODUCT_LAYOUT.woodWidth, PRODUCT_LAYOUT.woodThickness, PRODUCT_LAYOUT.woodDepth, 2, PRODUCT_LAYOUT.woodEdgeRadius);
+export function createWoodBase(layout = PRODUCT_LAYOUT) {
+  const geometry = new RoundedBoxGeometry(layout.woodWidth, layout.woodThickness, layout.woodDepth, 2, layout.woodEdgeRadius);
   const top = woodMaterial('top'), side = woodMaterial('side'), end = woodMaterial('end');
   // BoxGeometry material order: +x, -x (end grain), +y, -y, +z, -z.
   const base = new Mesh(geometry, [end, end, top, top, side, side]);
-  base.position.set(0, PRODUCT_LAYOUT.woodCenterY, PRODUCT_LAYOUT.woodCenterZ);
+  base.position.set(0, layout.woodCenterY, layout.woodCenterZ);
   return base;
 }

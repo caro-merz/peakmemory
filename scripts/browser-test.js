@@ -31,11 +31,23 @@ function terrainPng() {
 }
 
 const server = await startDevServer(0);
+async function dragPreview(page, dx = 80, dy = 0) {
+  const canvas = page.locator('#viewer canvas');
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  const x = box.x + box.width / 2, y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + dx, y + dy, { steps: 10 });
+  await page.mouse.up();
+}
 async function assertMobileOrder(page) {
   const route = await page.locator('#routeControls').boundingBox();
   const product = await page.locator('#productControls').boundingBox();
+  const selection = await page.locator('#selectionControls').boundingBox();
   const preview = await page.locator('.preview').boundingBox();
-  assert.ok(route.y + route.height <= product.y);
+  assert.ok(route.y + route.height <= selection.y);
+  assert.ok(selection.y + selection.height <= product.y);
   assert.ok(product.y + product.height <= preview.y);
 }
 
@@ -50,7 +62,7 @@ async function assertDesktopLayout(page) {
 let browser;
 try {
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const context = await browser.newContext({ viewport: { width: 1365, height: 950 } });
+  const context = await browser.newContext({ viewport: { width: 1365, height: 950 }, reducedMotion: 'reduce' });
   const page = await context.newPage();
   const errors = [];
   const externalFontRequests = [];
@@ -92,6 +104,11 @@ try {
   await page.goto(url + '/configurator.html');
   assert.equal(page.url(), url + '/#konfigurator');
   assert.equal(await page.locator('#modelPrice').innerText(), '50 €');
+  assert.deepEqual(await page.locator('.settings legend').allTextContents(),
+    ['1 Deine Route', '2 Deine Produktauswahl', '3 Deine Personalisierung']);
+  assert.equal(await page.locator('#routeControls details').count(), 0);
+  assert.equal(await page.locator('.checkout #modelPrice').count(), 1);
+  assert.equal(await page.locator('fieldset:has(.step) #modelPrice').count(), 0);
   assert.match(await page.locator('.model-price').innerText(), /Inkl. Versand innerhalb Deutschlands/);
   assert.equal(await page.locator('#checkoutForm').isHidden(), true);
   await assertDesktopLayout(page);
@@ -103,10 +120,67 @@ try {
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Beispielroute');
   assert.equal(await page.locator('#fileName').innerText(), 'Allgäu Panorama Marathon – Marathon (Beispielroute)');
   assert.equal(await page.locator('#viewer canvas').count(), 1);
+  const canvas = page.locator('#viewer canvas');
+  await canvas.scrollIntoViewIfNeeded();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.waitForTimeout(150);
+  const spinningImage = await canvas.screenshot();
+  await page.waitForTimeout(500);
+  assert.notDeepEqual(await canvas.screenshot(), spinningImage, 'Model rotates automatically');
+  await dragPreview(page);
+  const pausedImage = await canvas.screenshot();
+  await page.waitForTimeout(500);
+  assert.deepEqual(await canvas.screenshot(), pausedImage, 'Manual controls pause automatic rotation');
+  await page.waitForTimeout(700);
+  assert.notDeepEqual(await canvas.screenshot(), pausedImage, 'Automatic rotation resumes after manual controls');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.waitForTimeout(150);
+  const stillImage = await canvas.screenshot();
+  await page.waitForTimeout(350);
+  assert.deepEqual(await canvas.screenshot(), stillImage, 'Reduced-motion preference stops automatic rotation');
   assert.equal(await page.evaluate(() => document.fonts.check('400 44px "Quicksand Book"')), true);
   assert.equal(await page.locator('#submitInquiry').isDisabled(), true);
-  await page.locator('#rotate').click(); await page.locator('#zoomIn').click(); await page.locator('#resetView').click();
-  assert.equal(await page.locator('#product').count(), 0);
+  await dragPreview(page);
+  await page.mouse.wheel(0, -100);
+  await page.locator('#resetView').click();
+  assert.equal(await page.locator('#rotate, #zoomIn, #zoomOut, #underside').count(), 0);
+  assert.equal(await page.locator('#product').inputValue(), 'base');
+  assert.equal(await page.locator('#wallMount').inputValue(), 'no');
+  await dragPreview(page, 0, -180);
+  const bareBack = await canvas.screenshot();
+  await page.locator('#wallMount').selectOption('yes');
+  assert.equal(await page.locator('#modelPrice').innerText(), '51 €');
+  assert.match(await page.locator('#configurationSummary').innerText(), /Wandaufhängung: ja.*4 transparente Schutzfüße/);
+  assert.notDeepEqual(await canvas.screenshot(), bareBack, 'Hanger becomes visible on the underside');
+  await page.locator('#wallMount').selectOption('no');
+  assert.deepEqual(await canvas.screenshot(), bareBack, 'Feet remain when the hanger is removed');
+  await page.locator('#resetView').click();
+  const requestsBeforeProducts = terrainRequests;
+  await page.locator('#product').selectOption('compact');
+  assert.equal(await page.locator('#modelPrice').innerText(), '45 €');
+  assert.equal(await page.locator('#engraving').isDisabled(), true);
+  assert.equal(await page.locator('#engravingControls').isHidden(), true);
+  assert.equal(await page.locator('#margin').isEnabled(), true);
+  assert.equal(await page.locator('#elevationScale').isEnabled(), true);
+  assert.match(await page.locator('#configurationSummary').innerText(), /ohne Gravur.*11 × 11 × 2 cm.*Gravur: keine/);
+  assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
+  await page.locator('#wallMount').selectOption('yes');
+  assert.equal(await page.locator('#modelPrice').innerText(), '46 €');
+  const compactImage = await page.locator('#viewer canvas').screenshot();
+  await page.locator('#product').selectOption('frame');
+  assert.equal(await page.locator('#modelPrice').innerText(), '55 €');
+  assert.equal(await page.locator('#wallMountControls').isHidden(), true);
+  assert.doesNotMatch(await page.locator('#configurationSummary').innerText(), /Wandaufhängung/);
+  assert.equal(await page.locator('#engraving').isEnabled(), true);
+  assert.equal(await page.locator('#engravingControls').isVisible(), true);
+  assert.match(await page.locator('#configurationSummary').innerText(), /Passepartout.*20 × 20 cm/);
+  assert.notDeepEqual(await page.locator('#viewer canvas').screenshot(), compactImage);
+  await page.locator('#product').selectOption('base');
+  assert.equal(await page.locator('#modelPrice').innerText(), '51 €');
+  await page.locator('#wallMount').selectOption('no');
+  assert.equal(await page.locator('#modelPrice').innerText(), '50 €');
+  assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
+  assert.equal(terrainRequests, requestsBeforeProducts);
   assert.equal(await page.locator('#elevationScale').inputValue(), '2');
   const requestsBeforeScaling = terrainRequests;
   for (const scale of ['1', '8']) {
@@ -152,13 +226,13 @@ try {
   assert.equal(await page.locator('#submitInquiry').isEnabled(), true);
   assert.ok(submitted.includes(personal));
   assert.ok(submitted.includes('"product":"base"'));
-  assert.ok(submitted.includes('"version":2'));
+  assert.ok(submitted.includes('"version":4'));
   assert.ok(submitted.includes('"elevationScale":8'));
   assert.ok(submitted.includes('"preview":"ready"'));
   assert.ok(submitted.includes('"engraving":"Meine Tour\\nSommer 2026\\nFür dich"'));
   assert.ok(submittedImage);
   const firstImage = submittedImage;
-  await page.locator('#rotate').click();
+  await dragPreview(page);
   await page.locator('#submitInquiry').click();
   await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Versand fehlgeschlagen'));
   assert.notDeepEqual(submittedImage, firstImage);
@@ -262,7 +336,7 @@ try {
   assert.equal(await page.locator('#hero + #konfigurator + #produkt').count(), 1);
   assert.equal(await page.locator('.process-card').count(), 5);
   assert.deepEqual(await page.locator('.process-card h3').allTextContents(),
-    ['Route hochladen', 'Personalisieren', 'Auswahl prüfen', 'Sicher bezahlen', 'Produktion & Versand']);
+    ['Route hochladen', 'Produkt auswählen', 'Personalisieren', 'Sicher bezahlen', 'Produktion & Versand']);
   assert.equal(await page.locator('.nav-cta').getAttribute('href'), '#konfigurator');
   assert.match(await page.locator('#contactType option[value="event"]').innerText(), /5 Stück/);
   for (const id of ['contactName', 'contactEmail', 'contactType', 'contactMessage']) {
@@ -287,8 +361,8 @@ try {
   await upload(personal);
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
   await page.locator('#engraving').fill('Startseite\n2026');
-  await page.locator('#rotate').click();
-  await page.locator('#zoomIn').click();
+  await dragPreview(page);
+  await page.mouse.wheel(0, -100);
   await page.locator('#resetView').click();
   assert.equal(await page.locator('#contactGpxFile').evaluate(element => element.files.length), 0);
   await page.locator('#contactGpxFile').setInputFiles({name:'contact.gpx',mimeType:'application/gpx+xml',buffer:Buffer.from(personal)});
@@ -397,7 +471,7 @@ try {
     assert.equal(body.get('name'), 'Test Checkout');
     assert.equal(body.get('email'), 'checkout@example.invalid');
     assert.equal(await body.get('gpxFile').text(), personal);
-    assert.equal(JSON.parse(body.get('configuration')).version, 2);
+    assert.equal(JSON.parse(body.get('configuration')).version, 4);
     assert.equal(body.get('previewImage').type, 'image/png');
     assert.equal(body.has('price'), false);
     checkoutSubmissions.push(body);
@@ -426,6 +500,21 @@ try {
   await shop.locator('#checkoutEmail').fill('checkout@example.invalid');
   await shop.locator('#submitCheckout').click();
   assert.equal(checkoutAttempt, 0, 'Acceptance is required before creating checkout');
+  await shop.locator('#checkoutAcceptance').check();
+  for (const [product, price] of [['compact', '45'], ['frame', '55'], ['base', '50']]) {
+    await shop.locator('#product').selectOption(product);
+    assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false, 'Product changes require final selection approval');
+    assert.match(await shop.locator('#submitCheckout').innerText(), new RegExp(`${price}.*€`));
+    assert.match(await shop.locator('#checkoutSummary').innerText(), new RegExp(`Gesamt: ${price}`));
+    assert.equal(await shop.locator('#engraving').isDisabled(), product === 'compact');
+    assert.ok(await shop.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await shop.locator('#checkoutAcceptance').check();
+  }
+  await shop.locator('#wallMount').selectOption('yes');
+  assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false);
+  assert.match(await shop.locator('#submitCheckout').innerText(), /51.*€/);
+  assert.match(await shop.locator('#checkoutSummary').innerText(), /Gesamt: 51/);
+  await shop.locator('#wallMount').selectOption('no');
   await shop.locator('#checkoutAcceptance').check();
   await shop.locator('#engraving').fill('Finale Gravur');
   assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false, 'Changes require rechecking final selection');
@@ -463,6 +552,43 @@ try {
   await shop.goto(url + '/?checkout=cancelled');
   await shop.waitForFunction(() => document.getElementById('paymentStatus').textContent.includes('verlassen'));
   assert.ok(!(await shop.locator('#paymentStatus').innerText()).includes('Testzahlung bestätigt'));
+
+  const variants = await context.newPage();
+  variants.on('pageerror', error => errors.push(error.message));
+  await variants.route('**/shop-status', request => request.fulfill({
+    status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
+  }));
+  await variants.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/png', body: png }));
+  const variantSubmissions = [];
+  await variants.route('**/checkout', async request => {
+    const body = await new Response(request.request().postDataBuffer(), {
+      headers: { 'Content-Type': request.request().headers()['content-type'] },
+    }).formData();
+    variantSubmissions.push(JSON.parse(body.get('configuration')));
+    await request.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"Variant test captured"}' });
+  });
+  await variants.goto(url + '/');
+  await variants.locator('#checkoutForm').waitFor({ state: 'visible' });
+  await variants.locator('#gpxFile').setInputFiles({ name: 'variants.gpx', mimeType: 'application/gpx+xml', buffer: Buffer.from(personal) });
+  await variants.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
+  await variants.locator('#engraving').fill('Mein Text');
+  await variants.locator('#checkoutName').fill('Variantentest');
+  await variants.locator('#checkoutEmail').fill('variants@example.invalid');
+  for (const product of ['base', 'compact', 'frame']) {
+    await variants.locator(`#produkt [data-configurator-product="${product}"]`).click();
+    assert.equal(await variants.locator('#product').inputValue(), product);
+    if (product !== 'frame') await variants.locator('#wallMount').selectOption('yes');
+    await variants.locator('#checkoutAcceptance').check();
+    await variants.locator('#submitCheckout').click();
+    await variants.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Variant test captured'));
+    assert.equal(variantSubmissions.at(-1).product, product);
+    assert.equal(variantSubmissions.at(-1).engraving, product === 'compact' ? '' : 'Mein Text');
+    assert.equal(variantSubmissions.at(-1).version, 4);
+    assert.equal(variantSubmissions.at(-1).wallMount, product !== 'frame');
+    assert.equal(await variants.locator('#selectionControls').isEnabled(), true);
+  }
+  assert.equal(variantSubmissions.length, 3);
+  await variants.close();
 
   const liveShop = await context.newPage();
   liveShop.on('pageerror', error => errors.push(error.message));

@@ -191,6 +191,38 @@ test('current inquiries include validated oak-base and height scaling settings',
   }
 });
 
+test('v3 inquiries include the selected product, dimensions, engraving and price', async () => {
+  const payloads = captureMail();
+  for (const [product, engraving, price, dimensions] of [
+    ['base', 'Meine Tour', 50, '11 × 13,5 × 2 cm'],
+    ['compact', '', 45, '11 × 11 × 2 cm'],
+    ['frame', 'Meine Tour', 55, '20 × 20 cm Außenmaß'],
+  ]) {
+    const config = { ...configuration, version: 3, product, engraving, elevationScale: 2 };
+    const response = await handleContact(formContact({ configuration: JSON.stringify(config) },
+      new File([gpx], 'personal.gpx')), env);
+    assert.equal(response.status, 200);
+    const text = payloads.at(-1).text;
+    assert.ok(text.includes(`Modellpreis: ${price} EUR`));
+    assert.ok(text.includes(`Ausführung: ${dimensions}`));
+    assert.ok(text.includes(`Gravur: ${engraving || '(keine)'}`));
+    assert.ok(text.includes('Höhenüberhöhung: 2×'));
+  }
+});
+
+test('v4 wood inquiries include paid mounting choice and standard protective feet', async () => {
+  const payloads = captureMail();
+  for (const product of ['base', 'compact']) for (const wallMount of [false, true]) {
+    const config = { ...configuration, version: 4, product, engraving: '', elevationScale: 2, wallMount };
+    assert.equal((await handleContact(formContact({ configuration: JSON.stringify(config) },
+      new File([gpx], 'personal.gpx')), env)).status, 200);
+    const text = payloads.at(-1).text;
+    assert.ok(text.includes(`Wandaufhängung: ${wallMount ? 'ja (+1 EUR)' : 'nein'}`));
+    assert.ok(text.includes('4 transparente Schutzfüße'));
+    assert.ok(text.includes(`Modellpreis: ${(product === 'base' ? 50 : 45) + (wallMount ? 1 : 0)} EUR`));
+  }
+});
+
 test('legacy configurator addresses redirect to the embedded homepage configurator', async () => {
   for (const path of ['/configurator', '/configurator.html', '/configurator/']) {
     const response = await worker.fetch(new Request(`https://peak-memory.de${path}`), {

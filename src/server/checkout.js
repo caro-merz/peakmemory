@@ -1,10 +1,12 @@
 import {
   CheckoutError, UUID, json, guarded, configured, trustedOrigin, validateCheckout, remote, verifyEvent, base64, modeEnvironment,
 } from './checkout-helpers.js';
-import { CONFIGURATOR_PRICE_EUR } from '../shared/product.js';
+import { getProduct, configurationPrice } from '../shared/product.js';
+import { parseConfiguration } from '../shared/configuration.js';
 import { orderEmail } from './order-email.js';
 
-const AMOUNT_CENTS = Math.round(CONFIGURATOR_PRICE_EUR * 100);
+const orderProduct = order => getProduct(parseConfiguration(order.configuration).product);
+const orderAmount = order => configurationPrice(parseConfiguration(order.configuration)) * 100;
 export const STRIPE_API_VERSION = '2026-09-30.endive';
 export const STRIPE_WEBHOOK_API_VERSION = '2026-08-26.dahlia';
 export const STRIPE_LIVE_WEBHOOK_API_VERSION = '2026-08-26.dahlia';
@@ -14,7 +16,7 @@ const run = (env, sql, ...values) => guarded(() => statement(env, sql, ...values
 const first = (env, sql, ...values) => guarded(() => statement(env, sql, ...values).first());
 const changed = result => result.meta?.changes === 1;
 const ready = env => {
-  if (AMOUNT_CENTS !== 5000 || !configured(env)) throw new CheckoutError('Checkout ist nicht sicher konfiguriert.', 503);
+  if (!configured(env)) throw new CheckoutError('Checkout ist nicht sicher konfiguriert.', 503);
 };
 const result = (order, mode) => ({
   orderId: order.id, url: order.session_url,
@@ -52,6 +54,10 @@ export function handleShopStatus(request, env) {
 }
 function parameters(order) {
   const live = order.mode === 'live';
+  const product = orderProduct(order);
+  const configuration = parseConfiguration(order.configuration);
+  const hardware = product.id !== 'frame' && configuration.version >= 4
+    ? ` Wandaufhängung: ${configuration.wallMount ? 'ja (+1 EUR)' : 'nein'}. Vier transparente Schutzfüße inklusive.` : '';
   const suffix = Array.from(crypto.getRandomValues(new Uint8Array(8)), value => String.fromCharCode(97 + value % 26)).join('');
   return new URLSearchParams({
     mode: 'payment', submit_type: 'pay', ui_mode: 'hosted_page', customer_email: order.email,
@@ -63,9 +69,9 @@ function parameters(order) {
     cancel_url: `${order.origin}/?checkout=cancelled`,
     expires_at: String(order.created_at + 86400),
     'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'eur',
-    'line_items[0][price_data][unit_amount]': String(AMOUNT_CENTS),
-    'line_items[0][price_data][product_data][name]': `PeakMemory · Relief auf Eichenholzsockel${live ? '' : ' (TEST)'}`,
-    'line_items[0][price_data][product_data][description]': `50 EUR inkl. Versand Deutschland. Kein Umsatzsteuerausweis gemäß §19 UStG. Lieferung 5–10 Werktage nach Zahlung. Illustrative Vorschau, keine exakte Fertigungsvorlage; keine weitere Produktionsfreigabe nach Zahlung.${live ? '' : ' TEST: keine echte Fertigung.'}`,
+    'line_items[0][price_data][unit_amount]': String(orderAmount(order)),
+    'line_items[0][price_data][product_data][name]': `PeakMemory · ${product.name}${live ? '' : ' (TEST)'}`,
+    'line_items[0][price_data][product_data][description]': `${product.description} ${product.dimensions}.${hardware} ${orderAmount(order) / 100} EUR inkl. Versand Deutschland. Kein Umsatzsteuerausweis gemäß §19 UStG. Lieferung 5–10 Werktage nach Zahlung. Illustrative Vorschau; keine weitere Produktionsfreigabe.${live ? '' : ' TEST: keine echte Fertigung.'}`,
     'shipping_address_collection[allowed_countries][0]': 'DE',
     'shipping_options[0][shipping_rate_data][type]': 'fixed_amount',
     'shipping_options[0][shipping_rate_data][fixed_amount][amount]': '0',
@@ -92,7 +98,7 @@ async function createSession(env, order) {
   if (session.livemode !== live || !new RegExp(`^cs_${live ? 'live' : 'test'}_[A-Za-z0-9_]+$`).test(session.id || '')
     || url.protocol !== 'https:' || url.hostname !== 'checkout.stripe.com' || url.username || url.password || url.port
     || session.client_reference_id !== order.id || session.metadata?.order_id !== order.id
-    || session.amount_total !== AMOUNT_CENTS || session.currency !== 'eur') {
+    || session.amount_total !== orderAmount(order) || session.currency !== 'eur') {
     throw new CheckoutError('Ungültige Stripe-Checkout-Antwort.', 502);
   }
   const updated = await run(env, `UPDATE checkout_orders SET session_id=?, session_url=?, stage='session', updated_at=?
@@ -119,7 +125,7 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
     catch (error) { throw error instanceof CheckoutError ? error : new CheckoutError(error.message); }
     const id = crypto.randomUUID(), secret = token(), timestamp = now();
     const sessionParams = parameters({ id, status_token: secret, created_at: timestamp, mode,
-      origin: trustedOrigin(env), email: data.email }).toString();
+      origin: trustedOrigin(env), email: data.email, configuration: data.configuration }).toString();
     await run(env, `INSERT INTO checkout_orders
       (id,submission_key,payload_digest,status_token,created_at,updated_at,origin,name,email,configuration,filename,acceptance,gpx_key,preview_key,session_params)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?,?) ON CONFLICT(submission_key) DO NOTHING`,
@@ -189,7 +195,7 @@ export function handleStripeWebhook(request, sourceEnv, mode = 'test') {
     if (session?.object !== 'checkout.session' || session.livemode !== live
       || !new RegExp(`^cs_${live ? 'live' : 'test'}_[A-Za-z0-9_]+$`).test(session.id || '') || !UUID.test(id || '')
       || session.client_reference_id !== id || session.metadata[live ? 'live_order' : 'test_only'] !== 'true'
-      || session.mode !== 'payment' || session.amount_total !== AMOUNT_CENTS || AMOUNT_CENTS !== 5000 || session.currency !== 'eur') {
+      || session.mode !== 'payment' || session.currency !== 'eur') {
       throw new CheckoutError('Ungültige Stripe-Zahlung.');
     }
     const paid = session.payment_status === 'paid'
@@ -202,6 +208,7 @@ export function handleStripeWebhook(request, sourceEnv, mode = 'test') {
     const order = await first(env, 'SELECT * FROM checkout_orders WHERE id=?', id);
     if (!order || !['ready', 'session'].includes(order.stage)
       || (order.session_id && order.session_id !== session.id)) throw new CheckoutError('Unbekannte Checkout-Zuordnung.');
+    if (session.amount_total !== orderAmount(order)) throw new CheckoutError('Ungültiger Betrag für das bestellte Produkt.');
     const prior = await first(env, 'SELECT digest FROM checkout_events WHERE id=?', event.id);
     if (prior && prior.digest !== digest) throw new CheckoutError('Ereignis widerspricht gespeichertem Ereignis.', 409);
     const status = paid ? 'paid' : event.type === 'checkout.session.expired' ? 'expired'

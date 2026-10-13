@@ -73,7 +73,7 @@ try {
   });
   page.on('pageerror', error => errors.push(error.message));
   const png = terrainPng();
-  let terrainFailure = false, terrainOffline = false, emailFailure = false, submitted = null, submittedImage = null, terrainDelay = 0, terrainRequests = 0;
+  let terrainFailure = false, terrainOffline = false, terrainDelay = 0, terrainRequests = 0;
   await page.route('**/shop-status', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":false,"testMode":true,"mode":"test"}',
   }));
@@ -86,19 +86,7 @@ try {
       : {status:200,contentType:'image/png',body:png});
   });
   await page.route('**/contact', async request => {
-    const bytes = request.request().postDataBuffer();
-    submitted = bytes.toString();
-    const multipart = await new Response(bytes, { headers: { 'Content-Type': request.request().headers()['content-type'] } }).formData();
-    const image = multipart.get('previewImage');
-    submittedImage = image ? Buffer.from(await image.arrayBuffer()) : null;
-    if (image) {
-      assert.equal(image.name, 'peakmemory-vorschau.png');
-      assert.equal(image.type, 'image/png');
-      assert.ok(image.size > 1000 && image.size <= 1024 * 1024);
-      assert.deepEqual([...submittedImage.subarray(0, 8)], [137,80,78,71,13,10,26,10]);
-    }
-    await request.fulfill({status:emailFailure?502:200,contentType:'application/json',
-      body:emailFailure?'{"error":"Test: E-Mail nicht gesendet"}':'{"ok":true}'});
+    await request.fulfill({status:200,contentType:'application/json',body:'{"ok":true}'});
   });
   const url = `http://127.0.0.1:${server.address().port}`;
   await page.goto(url + '/configurator.html');
@@ -115,7 +103,7 @@ try {
   const defaultEngraving = 'Deine Route\n100 km | 1000 hm | 10 h';
   assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
   assert.equal(await page.locator('#routeControls a[href="gpx-hilfe.html"]').getAttribute('target'), '_blank');
-  assert.equal(await page.locator('#submitInquiry').isDisabled(), true);
+  assert.equal(await page.locator('.inquiry a[href="#kontakt"]').count(), 1);
   await page.locator('#sample').click();
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Beispielroute');
   assert.equal(await page.locator('#fileName').innerText(), 'Allgäu Panorama Marathon – Marathon (Beispielroute)');
@@ -139,7 +127,7 @@ try {
   await page.waitForTimeout(350);
   assert.deepEqual(await canvas.screenshot(), stillImage, 'Reduced-motion preference stops automatic rotation');
   assert.equal(await page.evaluate(() => document.fonts.check('400 44px "Quicksand Book"')), true);
-  assert.equal(await page.locator('#submitInquiry').isDisabled(), true);
+  assert.equal(await page.locator('#inquiryForm').count(), 0);
   await dragPreview(page);
   await page.mouse.wheel(0, -100);
   await page.locator('#resetView').click();
@@ -199,68 +187,26 @@ try {
   await upload(personal);
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
   assert.equal(await page.locator('#gpxFile').evaluate(element => element.files[0]?.name), 'personal.gpx');
-  assert.equal(await page.locator('#submitInquiry').isEnabled(), true);
   await page.locator('#engraving').fill('Erste Zeile\nZweite Zeile\nDritte Zeile\nVierte Zeile');
-  assert.equal(await page.locator('#submitInquiry').isDisabled(), true);
+  assert.equal(await page.locator('#engraving').evaluate(element => element.validity.valid), false);
   assert.match(await page.locator('#configurationSummary').innerText(), /maximal 3 Zeilen/);
   await page.locator('#engraving').fill('Meine Tour\nSommer 2026\nFür dich');
-  assert.equal(await page.locator('#submitInquiry').isEnabled(), true);
-  await page.locator('#name').fill('Test Person'); await page.locator('#email').fill('test@example.invalid');
-  await page.locator('#message').fill('Automatisierte Testanfrage ohne echten Versand.');
-  await page.evaluate(() => {
-    globalThis.originalToBlob = HTMLCanvasElement.prototype.toBlob;
-    HTMLCanvasElement.prototype.toBlob = function(callback) { callback(null); };
-  });
-  await page.locator('#submitInquiry').click();
-  await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Vorschaubild'));
-  assert.equal(submitted, null);
-  assert.equal(await page.locator('#name').inputValue(), 'Test Person');
-  await page.evaluate(() => {
-    HTMLCanvasElement.prototype.toBlob = globalThis.originalToBlob;
-    delete globalThis.originalToBlob;
-  });
-  emailFailure = true;
-  await page.locator('#submitInquiry').click();
-  await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Versand fehlgeschlagen'));
-  assert.equal(await page.locator('#name').inputValue(), 'Test Person');
-  assert.equal(await page.locator('#submitInquiry').isEnabled(), true);
-  assert.ok(submitted.includes(personal));
-  assert.ok(submitted.includes('"product":"base"'));
-  assert.ok(submitted.includes('"version":5'));
-  assert.ok(submitted.includes('"elevationScale":8'));
-  assert.ok(submitted.includes('"preview":"ready"'));
-  assert.ok(submitted.includes('"engraving":"Meine Tour\\nSommer 2026\\nFür dich"'));
-  assert.ok(submittedImage);
-  const firstImage = submittedImage;
+  assert.equal(await page.locator('#engraving').evaluate(element => element.validity.valid), true);
   await dragPreview(page);
-  await page.locator('#submitInquiry').click();
-  await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Versand fehlgeschlagen'));
-  assert.notDeepEqual(submittedImage, firstImage);
-  const rotatedImage = submittedImage;
   await page.locator('#elevationScale').fill('1');
   await page.locator('#elevationScale').fill('8');
-  await page.locator('#submitInquiry').click();
-  await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Versand fehlgeschlagen'));
-  assert.deepEqual(submittedImage, rotatedImage, 'Elevation changes must preserve camera angle and zoom');
   if (process.env.SCREENSHOT_PATH) await page.screenshot({path:process.env.SCREENSHOT_PATH,fullPage:true});
-  emailFailure = false;
-  await page.locator('#submitInquiry').click();
-  await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('wurde gesendet'));
-  assert.equal(await page.locator('#submitInquiry').isDisabled(), true);
   assert.equal(await page.locator('#viewer canvas').count(), 1);
   await upload('<not-gpx/>');
   await page.waitForFunction(() => document.getElementById('previewStatus').textContent.includes('gültige GPX'));
-  assert.equal(await page.locator('#submitInquiry').isDisabled(), true);
   terrainFailure = true;
   await upload(personal);
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Nicht verfügbar');
-  assert.equal(await page.locator('#submitInquiry').isEnabled(), true);
   assert.equal(await page.locator('#viewer canvas').count(), 0);
   terrainFailure = false;
   terrainOffline = true;
   await page.locator('#retry').click();
   await page.waitForFunction(() => document.getElementById('previewStatus').textContent.includes('Keine Verbindung zum Vorschau-Server'));
-  assert.equal(await page.locator('#submitInquiry').isEnabled(), true);
   assert.equal(await page.locator('#fileName').innerText(), 'personal.gpx');
   assert.equal(await page.locator('#viewer canvas').count(), 0);
   terrainOffline = false;
@@ -288,7 +234,6 @@ try {
   await page.waitForFunction(() => document.getElementById('previewStatus').textContent.includes('gültige GPX'));
   await page.waitForTimeout(600);
   assert.equal(await page.locator('#previewBadge').innerText(), 'Noch keine Route');
-  assert.equal(await page.locator('#submitInquiry').isDisabled(), true);
   terrainDelay = 0;
   await page.goto(url + '/');
   await page.reload();
@@ -337,6 +282,40 @@ try {
   assert.equal(await page.locator('.process-card').count(), 5);
   assert.deepEqual(await page.locator('.process-card h3').allTextContents(),
     ['Route hochladen', 'Produkt auswählen', 'Personalisieren', 'Sicher bezahlen', 'Produktion & Versand']);
+  const activeProcessStep = () => page.locator('.process-dot[aria-current="step"]').textContent();
+  assert.equal(await page.locator('.process-dot').count(), 5);
+  assert.equal(await activeProcessStep(), '1');
+  assert.equal(await page.locator('#processPrev').isDisabled(), true);
+  await page.locator('#processNext').click();
+  await page.waitForFunction(() => document.querySelector('.process-dot[aria-current="step"]').textContent === '2');
+  await page.locator('.process-dot').nth(4).click();
+  await page.waitForFunction(() => document.querySelector('.process-dot[aria-current="step"]').textContent === '5');
+  assert.equal(await page.locator('#processNext').isDisabled(), true);
+  await page.locator('#processTrack').press('ArrowLeft');
+  await page.waitForFunction(() => document.querySelector('.process-dot[aria-current="step"]').textContent === '4');
+  const insights = page.locator('#carouselViewport');
+  assert.ok(await page.locator('.carousel-slide.is-clone[aria-hidden="true"]').count() >= 7);
+  assert.equal(await page.locator('.carousel-slide.is-clone img:not([alt=""])').count(), 0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await insights.scrollIntoViewIfNeeded();
+  await page.mouse.move(0, 0);
+  const reducedStart = await insights.evaluate(element => element.scrollLeft);
+  await page.waitForTimeout(400);
+  assert.equal(await insights.evaluate(element => element.scrollLeft), reducedStart, 'Insights must not auto-scroll with reduced motion');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.waitForTimeout(100);
+  const autoStart = await insights.evaluate(element => element.scrollLeft);
+  await page.waitForFunction(start => Math.abs(document.getElementById('carouselViewport').scrollLeft - start) > 5, autoStart);
+  const insightsPeriod = await page.locator('.carousel-slide.is-clone').first()
+    .evaluate(element => element.offsetLeft - element.parentElement.firstElementChild.offsetLeft);
+  await insights.hover();
+  await insights.evaluate((element, period) => { element.scrollLeft = period + 10; }, insightsPeriod);
+  await page.waitForFunction(period => document.getElementById('carouselViewport').scrollLeft < period, insightsPeriod);
+  const pausedAt = await insights.evaluate(element => element.scrollLeft);
+  await page.waitForTimeout(300);
+  assert.equal(await insights.evaluate(element => element.scrollLeft), pausedAt, 'Insights must pause on hover');
+  await page.mouse.move(0, 0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   assert.equal(await page.locator('.nav-cta').getAttribute('href'), '#konfigurator');
   assert.match(await page.locator('#contactType option[value="event"]').innerText(), /5 Stück/);
   for (const id of ['contactName', 'contactEmail', 'contactType', 'contactMessage']) {
@@ -368,13 +347,17 @@ try {
   await page.locator('#contactGpxFile').setInputFiles({name:'contact.gpx',mimeType:'application/gpx+xml',buffer:Buffer.from(personal)});
   assert.match(await page.locator('#gpxFileName').innerText(), /contact.gpx/);
   assert.equal(await page.locator('#gpxFile').evaluate(element => element.files[0].name), 'personal.gpx');
-  await page.locator('#name').fill('Homepage Test');
-  await page.locator('#email').fill('homepage@example.invalid');
-  await page.locator('#message').fill('Homepage inquiry test without sending email.');
-  await page.locator('#submitInquiry').click();
-  await page.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('Deine Anfrage wurde gesendet'));
-  assert.match(submitted, /Startseite/);
-  assert.ok(submittedImage);
+  await page.locator('.inquiry a[href="#kontakt"]').click();
+  assert.equal(new URL(page.url()).hash, '#kontakt');
+  assert.equal(await page.locator('#kontakt a[href*="etsy.com"]').count(), 0);
+  assert.ok(await page.locator('#kontakt .contact-wrapper').evaluate(element => {
+    const parent = element.parentElement, style = getComputedStyle(parent);
+    const contentWidth = parent.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    return Math.abs(element.getBoundingClientRect().width - contentWidth) < 2;
+  }));
+  const deliveryAnswer = await page.locator('.faq-item').filter({ hasText: 'Wie lange dauert die Lieferung?' }).locator('.faq-answer').textContent();
+  assert.match(deliveryAnswer, /5–10 Werktage/);
+  assert.doesNotMatch(deliveryAnswer, /€|EUR|kostet|Umsatzsteuer/);
   await page.setViewportSize({width:390,height:844});
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await assertMobileOrder(page);
@@ -413,23 +396,9 @@ try {
   await noWebgl.goto(url + '/configurator.html');
   await noWebgl.locator('#gpxFile').setInputFiles({name:'valid.gpx',mimeType:'application/gpx+xml',buffer:Buffer.from(personal)});
   await noWebgl.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Nicht verfügbar');
-  assert.equal(await noWebgl.locator('#submitInquiry').isEnabled(), true);
+  assert.equal(await noWebgl.locator('.inquiry a[href="#kontakt"]').count(), 1);
   assert.equal(await noWebgl.locator('#submitCheckout').isDisabled(), true, 'Checkout requires a ready preview');
   assert.equal(await noWebgl.locator('#viewer canvas').count(), 0);
-  let unavailableImage = 'not submitted';
-  await noWebgl.route('**/contact', async request => {
-    const form = await new Response(request.request().postDataBuffer(), {
-      headers: { 'Content-Type': request.request().headers()['content-type'] },
-    }).formData();
-    unavailableImage = form.get('previewImage');
-    await request.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
-  });
-  await noWebgl.locator('#name').fill('No WebGL');
-  await noWebgl.locator('#email').fill('no-webgl@example.invalid');
-  await noWebgl.locator('#message').fill('Request without an available preview.');
-  await noWebgl.locator('#submitInquiry').click();
-  await noWebgl.waitForFunction(() => document.getElementById('inquiryStatus').textContent.includes('wurde gesendet'));
-  assert.equal(unavailableImage, null);
   const guideContext = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1365, height: 950 } });
   const guide = await guideContext.newPage();
   await guide.goto(url + '/');
@@ -609,7 +578,8 @@ try {
   }));
   await liveShop.goto(url + '/');
   await liveShop.locator('#checkoutForm').waitFor({ state: 'visible' });
-  assert.equal(await liveShop.locator('#checkoutModeLabel').innerText(), 'ECHTE BESTELLUNGEN');
+  assert.equal(await liveShop.locator('#checkoutModeLabel').count(), 0);
+  assert.equal(await liveShop.locator('#checkoutAvailability').isHidden(), true);
   assert.match(await liveShop.locator('#submitCheckout').innerText(), /Zahlungspflichtig bestellen/);
   await liveShop.locator('#gpxFile').setInputFiles({ name: 'live-checkout.gpx', mimeType: 'application/gpx+xml', buffer: Buffer.from(personal) });
   await liveShop.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');

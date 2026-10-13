@@ -21,6 +21,7 @@ await build({
   outdir: 'assets', entryNames: 'configurator', chunkNames: '[name]-[hash]',
   minify: true, target: ['es2022'], legalComments: 'linked', metafile: false,
   loader: { '.gpx': 'text' },
+  external: ['/fonts/*'],
 });
 const packages = ['three', 'fast-xml-parser'];
 let licenses = '';

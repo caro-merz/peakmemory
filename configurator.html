@@ -6,6 +6,7 @@
   <meta name="description" content="Deine GPX-Route als interaktive 3D-Geländevorschau. Gestalte dein Erinnerungsstück mit Peak Memory und frage dein persönliches Relief unverbindlich an.">
   <link rel="canonical" href="https://peak-memory.de/configurator.html">
   <link rel="icon" href="images/logo_grey.png" type="image/png">
+  <link rel="preload" as="font" href="fonts/InterVariable.woff2" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/configurator.css">
   <title>Deine Route gestalten | Peak Memory</title>
 </head>
@@ -17,7 +18,6 @@
   </header>
   <main id="main" class="page">
     <div class="intro">
-      <p class="eyebrow">DEINE ROUTE. DEINE ERINNERUNG.</p>
       <h1>Ein Abenteuer.<br>Ein Stück für Zuhause.</h1>
       <p>Lade deine GPX-Datei hoch, entdecke die Landschaft in 3D und gestalte dein persönliches Erinnerungsstück. Kostenlos, ohne Anmeldung und ohne Bestellung.</p>
     </div>
@@ -73,7 +73,7 @@
         </fieldset>
       </div>
       <section class="preview card" aria-labelledby="previewTitle">
-        <div class="preview-heading"><div><p class="eyebrow">LIVE-VORSCHAU</p><h2 id="previewTitle">So könnte deine Erinnerung aussehen.</h2></div><span id="previewBadge" class="badge">Noch keine Route</span></div>
+        <div class="preview-heading"><div><h2 id="previewTitle">So könnte deine Erinnerung aussehen.</h2></div><span id="previewBadge" class="badge">Noch keine Route</span></div>
         <div id="viewer" class="viewer">
           <div id="placeholder" class="placeholder"><span aria-hidden="true">△</span><p>Deine Landschaft wartet auf dich.</p><small>Lade eine Route hoch oder probiere die Beispielroute.</small></div>
         </div>
@@ -103,7 +103,6 @@
     </div>
     <section class="card checkout" aria-labelledby="checkoutTitle">
       <div>
-        <p class="eyebrow">DIREKTKAUF · <span id="checkoutModeLabel">TESTBETRIEB</span></p>
         <h2 id="checkoutTitle">Dein Erinnerungsstück bestellen.</h2>
         <p>Lieferadresse und Zahlung erfasst Stripe im nächsten Schritt.</p>
         <dl class="order-details">
@@ -129,23 +128,12 @@
           <p class="hint"><strong>Kein gesetzliches Widerrufsrecht:</strong> Dein Relief wird individuell nach deiner GPX-Route und Konfiguration angefertigt (§ 312g Abs. 2 Nr. 1 BGB). Gesetzliche Mängelrechte bleiben unberührt. <a href="/#kaufbedingungen">Kaufhinweise, Vertragsschluss &amp; Widerruf</a></p>
           <p class="hint">Beim Start des Checkouts werden deine Kontaktdaten, GPX-Datei, Konfiguration und das Vorschaubild privat bei Cloudflare gespeichert. Stripe erhält E-Mail-Adresse und Bestellreferenz sowie anschließend deine Liefer- und Zahlungsdaten. <a href="/#datenschutz">Datenschutzhinweise</a></p>
           <button id="submitCheckout" type="submit" class="primary" disabled>Zur Testzahlung bei Stripe · 50 €</button>
-          <p class="hint">Die Zahlung wird erst auf der Stripe-Seite bestätigt. Im Testmodus wird kein Geld abgebucht.</p>
         </fieldset>
         <p id="checkoutStatus" role="status" aria-live="polite"></p>
       </form>
     </section>
     <section class="card inquiry" aria-labelledby="inquiryTitle">
-      <div><p class="eyebrow">FRAGEN ODER BESONDERE WÜNSCHE?</p><h2 id="inquiryTitle">Lieber persönlich abstimmen?</h2><p>Schicke uns deine Route und Gestaltungswünsche. Du kannst dein Relief hier unverbindlich anfragen. Sonderformate, Rahmen und offene Fragen besprechen wir persönlich. Eine Anfrage ist keine Bestellung.</p><p id="inquiryHint" class="hint">Bitte lade deine eigene GPX-Datei hoch. Die Beispielroute kann nicht angefragt werden.</p></div>
-      <form id="inquiryForm">
-        <fieldset id="inquiryFields">
-          <label for="name">Dein Name</label><input id="name" name="name" autocomplete="name" maxlength="200" required>
-          <label for="email">E-Mail-Adresse</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" required>
-          <label for="message">Deine Nachricht</label><textarea id="message" name="message" minlength="5" maxlength="4000" rows="4" required placeholder="Zum Beispiel gewünschtes Format, Datum oder besondere Wünsche"></textarea>
-          <p class="hint">Mit dem Absenden werden deine Kontaktdaten, Nachricht, GPX-Datei, Konfiguration und bei verfügbarer Vorschau ein Bild der aktuellen 3D-Ansicht über Cloudflare und Resend an uns übermittelt. <a href="/#datenschutz">Datenschutzhinweise</a></p>
-          <button id="submitInquiry" type="submit" class="primary" disabled>Unverbindlich anfragen</button>
-        </fieldset>
-        <p id="inquiryStatus" role="status" aria-live="polite"></p>
-      </form>
+      <div><h2 id="inquiryTitle">Lieber persönlich abstimmen?</h2><p>Sonderformate und offene Fragen besprechen wir persönlich. Schreib uns über das Kontaktformular – unverbindlich und ohne Bestellung.</p><a href="#kontakt" class="guide-cta">Zum Kontakt</a></div>
     </section>
   </main>
   <footer><span>Peak Memory · Handgefertigt in Baden-Württemberg</span><div><a href="/#kontakt">Kontakt &amp; Rechtliches</a><a href="/#datenschutz">Datenschutz</a><a href="assets/licenses.txt">Software-Lizenzen</a></div></footer>

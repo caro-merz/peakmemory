@@ -97,12 +97,12 @@ export function initializeCheckout({ state, capture, setBusy }) {
       get('checkoutAvailability').textContent = enabled
         ? testMode
           ? 'Der Direktkauf ist ausschließlich zum Testen geöffnet. Es werden keine echten Bestellungen angenommen.'
-          : 'Der Direktkauf ist geöffnet. Prüfe vor der zahlungspflichtigen Bestellung deine Route und Gravur sorgfältig.'
+          : ''
         : mode === 'live'
           ? 'Der Live-Shop ist noch nicht vollständig freigegeben. Du kannst dein Relief weiterhin unverbindlich anfragen.'
           : 'Der Direktkauf ist noch nicht aktiviert. Du kannst dein Relief weiterhin unverbindlich anfragen.';
       get('testNotice').hidden = !testMode;
-      get('checkoutModeLabel').textContent = testMode ? 'TESTBETRIEB' : 'ECHTE BESTELLUNGEN';
+      get('checkoutAvailability').hidden = enabled && !testMode;
       get('processPaymentInfo').textContent = testMode
         ? 'Der Direktkauf ist ausschließlich im Stripe-Testmodus geöffnet. Testzahlungen lösen keine echte Bestellung aus.'
         : 'Du bezahlst den angezeigten Gesamtpreis inklusive Versand innerhalb Deutschlands über Stripe. Für Holzsockel ist eine Wandaufhängung für 1 € zusätzlich wählbar. Die Lieferzeit beträgt 5–10 Werktage nach bestätigter Zahlung.';
@@ -113,6 +113,7 @@ export function initializeCheckout({ state, capture, setBusy }) {
       update();
     } catch (error) {
       enabled = false;
+      get('checkoutAvailability').hidden = false;
       get('checkoutAvailability').textContent = `${error.message || 'Shop nicht erreichbar'} Bitte nutze die unverbindliche Anfrage.`;
       get('checkoutAvailability').className = 'error';
       update();

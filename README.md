@@ -49,20 +49,19 @@ Datei und kein exaktes Fertigungsbild.
   Die Standardschriftgröße beträgt 5 mm, unabhängig von der Zeilenzahl.
   Überschreitet die längste Zeile die Gravurbreite (Holz: 8 cm, Passepartout: 11,2 cm), werden alle Zeilen proportional
   verkleinert. Kürzere Texte werden nicht künstlich auf volle Breite gestreckt.
-- Die Homepage-Schrift Inter wird lokal aus `fonts/InterVariable.woff2` geladen,
+- Die Website-Schrift Inter wird auf Startseite, Konfigurator und GPX-Hilfe
+  lokal aus `fonts/InterVariable.woff2` geladen und vorab angefordert,
   ohne Google-Fonts-Anfragen. Quelle: Inter-Projekt (`rsms/inter`), SIL Open Font
   License unter `fonts/Inter-OFL.txt`; beide Schriftlizenzen sind im Build enthalten.
-- Unverbindliche Anfrage mit Original-GPX und Konfiguration per E-Mail.
-  Bei verfügbarer Vorschau wird die aktuelle 3D-Ansicht als PNG angehängt
-  (maximal 1 MB und 2048 Pixel je Seite). Screenshot-Fehler werden vor dem Versand
-  angezeigt; ohne verfügbare Vorschau bleibt die Anfrage ohne Bild möglich.
+- „Lieber persönlich abstimmen?“ verlinkt zum breiten Kontaktbereich der Homepage.
+  Dort sind unverbindliche Anfragen mit optionaler Original-GPX möglich.
+  Konfiguration und Vorschaubild werden nur beim Checkout automatisch übertragen.
 - Direktkauf: Upload → Produktauswahl → Personalisierung → Auswahl prüfen → Stripe-Zahlung
   → Produktion ohne zusätzliche persönliche Freigabe. Test- und Live-Modus
   verwenden getrennte Endpunkte und getrennte private Speicher. Beide sind
   nur nach expliziter Freigabe nutzbar. Die aktuelle Konfiguration aktiviert
-  vorübergehend den Sandbox-Checkout für einen vom Betreiber angeforderten Test;
-  neue Live-Checkouts sind pausiert. Bestehende Live-Zahlungen und deren
-  Benachrichtigungen werden weiterhin verarbeitet.
+  Live-Zahlungen; neue Sandbox-Checkouts sind deaktiviert. Bestehende Zahlungen
+  und deren Benachrichtigungen werden weiterhin verarbeitet.
   Details und sichere Aktivierung: [CHECKOUT.md](./CHECKOUT.md).
   Unverbindliche Anfragen bleiben als Fallback und für Sonderwünsche möglich.
   Etsy ist eine alternative Bestellmöglichkeit; Event-Serien ab 5 Stück.
@@ -83,6 +82,12 @@ Datei und kein exaktes Fertigungsbild.
   und stellen den Fokus beim Schließen wieder her. Die Homepage und die
   Rechtsinformationen bleiben ohne JavaScript lesbar; reduzierte Bewegung
   deaktiviert Animationen und weiches Scrollen.
+- „So funktioniert's“ ist ein Swipe-Slider: eine Karte im Fokus, Nachbarkarten
+  angeschnitten, Pfeile, Schritt-Punkte 1–5, Touch-Swipe, Maus-Drag und Pfeiltasten.
+  Die Werkstatt-Bildreihe über dem Instagram-Link läuft endlos langsam durch
+  (Slides werden per JS als `aria-hidden`-Klone verdoppelt) und pausiert bei Hover,
+  Touch, Ziehen, Fokus, verborgenem Tab oder außerhalb des Viewports; bei reduzierter
+  Bewegung läuft sie nicht automatisch.
 - Beim Direktkauf sind Route, Gravur und Einstellungen final. Die illustrative
   Online-Vorschau ist keine druckfertige Datei; Holz und Fertigungsdetails können
   abweichen. Testzahlungen lösen keine Produktion aus.

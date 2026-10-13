@@ -15,8 +15,15 @@ Payment-return confirmations use a prominent green panel with a bold heading,
 separate reference and test/live explanation. A redirect alone never shows success:
 the panel appears only after authenticated order-status polling reports paid.
 
-**Temporary sandbox checkout deployed and verified with owner authorization on
-2026-10-12. New live checkouts are paused.**
+**Live checkout reactivation authorized by the owner on 2026-10-13.**
+The deployment configuration enables new live orders and disables new sandbox
+checkouts (`CHECKOUT_LIVE_ENABLED="true"`, `CHECKOUT_ENABLED="false"`).
+The owner also authorized deployment of the current website changes.
+Deployment `aaea90ee-8d0b-4e39-a5b2-7e167e04b285` was verified on the custom
+domain and workers.dev: shop status reports enabled live mode, new sandbox
+checkouts return 503, and unsigned live webhooks return 400. The browser shows
+the genuine-order button. No real payment was initiated for verification.
+The sandbox notes below describe the earlier temporary testing period.
 Live checkout was previously enabled with owner authorization. This temporary
 switch does not disable live webhook processing or paid-order notification
 retries. Existing Stripe live sessions remain live and must not be used for tests.

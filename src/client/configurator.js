@@ -8,7 +8,7 @@ import { getProduct, formatPrice, configurationPrice } from '../shared/product.j
 import { initializeCheckout } from './checkout.js';
 
 const get = id => document.getElementById(id);
-const fileInput = get('gpxFile'), dropzone = get('dropzone'), form = get('inquiryForm');
+const fileInput = get('gpxFile'), dropzone = get('dropzone');
 const viewButtons = ['resetView'].map(get);
 let file = null, route = null, sample = false, preview = 'unavailable', viewer = null;
 let generation = 0, controller = null, marginTimer = null, sending = false;
@@ -62,15 +62,9 @@ function summary() {
   return true;
 }
 function updateActions() {
-  get('submitInquiry').disabled = sending || !file || !route || sample || preview === 'loading' || !get('engraving').validity.valid;
   get('remove').disabled = sending || !route && !file;
   get('retry').hidden = !route || preview !== 'unavailable';
   for (const button of viewButtons) button.disabled = sending || preview !== 'ready';
-  get('inquiryHint').textContent = !route || sample
-    ? 'Bitte lade deine eigene GPX-Datei hoch. Die Beispielroute kann nicht angefragt werden.'
-    : preview === 'loading' ? 'Deine Vorschau wird geladen.'
-      : preview === 'ready' ? 'Deine Originaldatei und Gestaltungswünsche werden mit der Anfrage gesendet.'
-        : 'Die Vorschau ist nicht verfügbar. Du kannst deine gültige GPX-Datei trotzdem unverbindlich anfragen.';
   checkout?.update();
 }
 function status(message, error = false) {
@@ -147,7 +141,6 @@ async function renderPreview() {
 async function selectFile(selected, keepPicker = false) {
   clearRoute(!keepPicker);
   const current = generation;
-  get('inquiryStatus').textContent = '';
   if (!selected) return;
   try {
     validateFile(selected);
@@ -186,7 +179,6 @@ dropzone.addEventListener('drop', e => {
 get('sample').addEventListener('click', async () => {
   clearRoute(); sample = true; route = parseGpx(sampleXml);
   get('fileName').textContent = 'Allgäu Panorama Marathon – Marathon (Beispielroute)';
-  get('inquiryStatus').textContent = '';
   await renderPreview();
 });
 get('remove').addEventListener('click', clearRoute);
@@ -228,46 +220,6 @@ get('margin').addEventListener('input', () => {
   marginTimer = setTimeout(renderPreview, 350);
 });
 get('resetView').addEventListener('click', () => viewer?.reset());
-form.addEventListener('submit', async event => {
-  event.preventDefault();
-  if (sending) return;
-  if (!file || !route || sample || preview === 'loading' || !summary()) {
-    get('inquiryStatus').textContent = 'Bitte lade zuerst deine eigene GPX-Datei hoch und warte auf die Prüfung.';
-    get('inquiryStatus').className = 'error';
-    return;
-  }
-  const body = new FormData(form);
-  body.set('type', 'individual'); body.set('gpxFile', file);
-  body.set('configuration', JSON.stringify(configuration()));
-  sending = true;
-  for (const id of ['routeControls', 'productControls', 'selectionControls', 'inquiryFields']) get(id).disabled = true;
-  get('submitInquiry').textContent = 'Wird gesendet …';
-  get('inquiryStatus').textContent = '';
-  updateActions();
-  try {
-    if (preview === 'ready') {
-      if (!viewer) throw new Error('Die Vorschau ist nicht mehr verfügbar. Bitte lade sie erneut.');
-      body.set('previewImage', await viewer.screenshot(), 'peakmemory-vorschau.png');
-    }
-    const response = await fetch('/contact', { method: 'POST', body, signal: AbortSignal.timeout(30000) });
-    const result = await response.json();
-    if (!response.ok || result.ok !== true) throw new Error(result.error || 'Die Anfrage konnte nicht gesendet werden.');
-    get('inquiryStatus').textContent = 'Deine Anfrage wurde gesendet. Wir melden uns persönlich mit den nächsten Schritten!';
-    get('inquiryStatus').className = 'success';
-    form.reset(); clearRoute();
-  } catch (error) {
-    get('inquiryStatus').textContent = error.name === 'TimeoutError'
-      ? 'Keine Versandbestätigung erhalten. Bitte prüfe vor erneutem Senden bei uns, ob deine Anfrage angekommen ist.'
-      : `Versand fehlgeschlagen: ${error.message || 'Verbindungsfehler'}. Deine Eingaben bleiben erhalten. Alternativ: peak.memory@web.de`;
-    get('inquiryStatus').className = 'error';
-  } finally {
-    sending = false;
-    for (const id of ['routeControls', 'productControls', 'selectionControls', 'inquiryFields']) get(id).disabled = false;
-    summary();
-    get('submitInquiry').textContent = 'Unverbindlich anfragen';
-    updateActions();
-  }
-});
 window.addEventListener('pagehide', () => { controller?.abort(); viewer?.dispose(); viewer = null; });
 window.addEventListener('pageshow', event => { if (event.persisted && route) renderPreview(); });
 checkout = initializeCheckout({
@@ -282,7 +234,7 @@ checkout = initializeCheckout({
   },
   setBusy: busy => {
     sending = busy;
-    for (const id of ['routeControls', 'productControls', 'selectionControls', 'inquiryFields']) get(id).disabled = busy;
+    for (const id of ['routeControls', 'productControls', 'selectionControls']) get(id).disabled = busy;
     get('engraving').disabled = busy || !getProduct(get('product').value).engraving;
     for (const button of viewButtons) button.disabled = busy || preview !== 'ready';
     updateActions();

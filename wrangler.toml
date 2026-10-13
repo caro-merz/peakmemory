@@ -3,8 +3,8 @@ main               = "worker.js"
 compatibility_date = "2026-07-19"
 
 [vars]
-CHECKOUT_ENABLED = "true"
-CHECKOUT_LIVE_ENABLED = "false"
+CHECKOUT_ENABLED = "false"
+CHECKOUT_LIVE_ENABLED = "true"
 CHECKOUT_LIVE_LEGAL_REVIEWED = "true"
 CHECKOUT_LIVE_WAF_REVIEWED = "true"
 CHECKOUT_ORIGIN = "https://peak-memory.de"

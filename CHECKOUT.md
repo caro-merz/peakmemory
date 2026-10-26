@@ -5,11 +5,104 @@
 The branded HTML and plain-text email templates are in
 `src/server/order-email.js`. Buyer emails show readable personalization and
 shipping information; owner emails additionally show the GPX filename and Stripe
-reference and retain the original three attachments. User-entered content is
+reference. Single-file orders retain the original three attachments; multi-file
+orders additionally retain every source GPX alongside the combined GPX.
+User-entered content is
 HTML-escaped. Live confirmations include the shared purchase information from
 `src/shared/purchase.js`; sandbox emails explicitly exclude manufacturing.
 Update both formats together and run the checkout tests before deploying.
 Already accepted emails are not resent by a template edit.
+
+## Strava: Freigabe vor einer Integration
+
+A personal OAuth/GPX-download prototype is retained as dormant source only.
+It is disconnected from the browser and the Node development server; no Strava
+controls, background requests or routes are enabled, even with credentials
+present. Worker/Pages do not expose the prototype either. Downloaded API-derived
+files are for personal prototype use, not a way to bypass the production gate.
+Keep ordinary local GPX export and upload available. Do not enable public
+OAuth, accept API-derived production files, or reuse ordinary order retention
+rules for them until Strava has clarified the following in writing:
+
+- May a connected athlete use their activity coordinates for a paid physical
+  terrain relief, including generated GPX and terrain artifacts?
+- May workshop staff access these files and receive production email attachments?
+- What retention is permitted for order fulfilment, defect claims, backups and
+  mailboxes, given API Policy section 6.2's seven-day cache restriction?
+- How must deauthorisation, activity/account deletion and deletion requests affect
+  pending manufacture and existing production copies?
+- Which app review, athlete capacity, attribution and subscription requirements
+  apply to this commercial workflow?
+
+Proposed minimal flow for that review: explicit OAuth, one own activity per
+relief, private activities opt-in, server-side tokens, expiring sessions,
+paginated activity selection and only the chosen activity's coordinate streams.
+No public-link scraping or request to unhide home locations. A generated GPX is
+not an original export and does not remove Strava-derived-data obligations.
+Any future release must carry trusted provenance into checkout and implement
+the approved deletion lifecycle before accepting production orders.
+See [API Policy](https://www.strava.com/legal/api_policy),
+[API Agreement](https://www.strava.com/legal/api) and
+[developer access limits](https://developers.strava.com/docs/rate-limits/).
+
+## Multiple local GPX files
+
+Apply `migrations/0003_gpx_collection.sql` to **both** test and live D1
+databases before deploying the updated server. Apply earlier migrations first;
+do not alter the configured live/test separation or enable payments for testing.
+This task does not apply remote migrations or deploy.
+
+Release preparation (from the repository root):
+
+```powershell
+npm test
+npm run build:pages
+npm run test:browser
+npm run test:browser:strava
+npx wrangler deploy --dry-run
+```
+
+After reviewing the release diff and explicitly authorizing deployment, apply
+pending migrations in order to both databases, then deploy the primary Worker:
+
+```powershell
+npx wrangler d1 migrations list peakmemory-checkout-test --remote
+npx wrangler d1 migrations list peakmemory-checkout-live --remote
+npx wrangler d1 migrations apply peakmemory-checkout-test --remote
+npx wrangler d1 migrations apply peakmemory-checkout-live --remote
+npx wrangler deploy
+```
+
+Review pending `0002_whatsapp_alert.sql` as well as `0003_gpx_collection.sql`;
+do not skip earlier migrations. Keep live/test bindings and payment flags
+unchanged. Do not use a real payment as a deployment smoke test. After release,
+verify the homepage, GPX multi-selection, absent Strava controls and live
+`/shop-status` without creating an order. Git publishing is a separate step;
+review already-staged unrelated changes before committing or pushing.
+
+The existing singular `gpxFile` multipart field remains supported. The new
+`gpxFiles` field may repeat up to ten times; mixing singular and plural fields
+is rejected. Originals share a 5 MiB, 100,000-point and 100-segment budget.
+Identical contents are rejected even under different filenames. The server
+regenerates a bounded combined GPX from the validated originals, never trusting
+a separately supplied combined file. Its size must also fit 5 MiB.
+
+Single-file orders keep their original bytes and attachments. Multi-file orders
+store the ordered original-file records in nullable `gpx_manifest`, and the
+combined GPX at the existing `gpx_key`. Source R2 keys derive from the order ID
+and source index, not a submitted path. The workshop receives all originals,
+the combined GPX, preview PNG and configuration JSON (13 attachments for ten
+originals). Original attachment names have stable numbered prefixes to avoid
+collisions; the manifest retains source names/types/order. Submission hashes
+cover every original, including names, types and ordering. Partial-write retries
+and retention cleanup cover every source object as well as the combined GPX
+and preview. Legacy orders with no manifest keep their previous behavior.
+
+The contact endpoint accepts the same local-file collection and sends originals
+plus combined GPX by email without creating an order. The configurator and
+contact form deliberately have separate selections; files must be selected
+again for an inquiry. Mailbox and workshop copies remain subject to the
+operational retention duties below, not just automatic R2 cleanup.
 
 Payment-return confirmations use a prominent green panel with a bold heading,
 separate reference and test/live explanation. A redirect alone never shows success:
@@ -102,8 +195,48 @@ No VAT is charged/displayed under **§19 UStG (Kleinunternehmer)**. Delivery wor
 is **5–10 working days after payment**. The captured preview is illustrative, not an exact
 manufacturing template. Acceptance covers these terms and no additional manual
 production approval after payment. Only a verified live payment may trigger
-production-labelled notification email. Test-labelled notifications never
-instruct actual production.
+production-labelled email or internal WhatsApp alert. Sandbox payments never
+send WhatsApp alerts or instruct actual production. Live checkout stays disabled
+until the WhatsApp sender, approved template, API version, and internal recipient
+are configured.
+
+## Internal WhatsApp production alert
+
+After a verified live payment, the system sends an approved Meta WhatsApp Cloud
+API template to the configured business recipient. The alert contains only the
+order reference, product name, and customer name, with a payment-confirmed /
+start-production notice. It is not sent to the customer and contains no customer
+phone number, shipping address, GPX file, or configuration. Email delivery and
+WhatsApp acceptance are tracked independently; either channel can retry without
+resending a channel already accepted by its provider. Meta API acceptance is not
+a delivery receipt, and an ambiguous network timeout can result in a duplicate
+message on retry.
+
+Before enabling live checkout:
+
+1. Provision a WhatsApp Business Platform sender in Meta and create/approve a
+   German utility template named `peak_memory_production_alert` with three body
+   parameters. Suggested text:
+   `Neue bezahlte Bestellung: {{1}}. Produkt: {{2}}. Kunde: {{3}}. Zahlung bestätigt – bitte Produktion starten.`
+   If another template name or language is used, configure it explicitly.
+2. Set the following production Worker secrets through Cloudflare/Wrangler,
+   never in Git: `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`,
+   `WHATSAPP_RECIPIENT` (E.164, e.g. `+49…`). Set
+   `WHATSAPP_GRAPH_API_VERSION` to a currently supported version for the Meta app.
+   Optional non-secret vars are `WHATSAPP_TEMPLATE_NAME` and
+   `WHATSAPP_TEMPLATE_LANGUAGE` (defaults are `peak_memory_production_alert`
+   and `de`).
+3. Apply `migrations/0002_whatsapp_alert.sql` to both test and live D1 databases
+   before deploying this code. The new migration defaults legacy rows to
+   already-notified, preventing historical paid orders from generating alerts;
+   new orders are marked pending for live notification.
+4. Review and publish the updated privacy notice and confirm Meta's actual
+   contracting entity, processing terms, and any required transfer safeguards.
+   Live shop status will remain disabled until the notification settings validate.
+
+Meta may retry an accepted-but-unrecorded message if the network or database
+fails ambiguously. Check the WhatsApp conversation before manually starting
+production when a notification retry or webhook error is reported.
 
 ## API contract
 
@@ -118,7 +251,8 @@ no-referrer`. No CORS access is enabled.
   * `name`: nonempty, ≤200 characters, no control characters;
   * `email`: valid address, ≤200 characters;
   * `gpxFile`: original `.gpx` bytes, nonempty, ≤5 MiB, valid bounded GPX
-    (existing shared GPX validation);
+    (existing shared GPX validation), **or** repeated `gpxFiles` for 1–10
+    originals under the aggregate limits described above; never both fields;
   * `configuration`: JSON, ≤4096 characters, `version:5`, `product:"base"|"compact"|"frame"`,
     `preview:"ready"`, validated `engraving`, `margin`, `elevationScale`;
     `wallMount` is a required boolean, false for frame.
@@ -134,13 +268,14 @@ no-referrer`. No CORS access is enabled.
   * `acceptance`: the literal string `"true"` (multipart representation of an
     explicit boolean; `"false"`, `"1"` and missing values are rejected).
   * Optional `price`/`currency` are ignored for pricing, but included in payload
-    identity. No other fields or duplicate fields are accepted.
+    identity. No other fields or duplicate fields (except `gpxFiles`) are accepted.
   → `{ "orderId":"<uuid>", "url":"https://checkout.stripe.com/…",
   "statusUrl":"https://<configured-origin>/order-status?order=<uuid>&token=<secret>" }`.
   Stripe receives a server-defined 5000/4500/6000-cent EUR line item (plus 100 cents
   for the explicitly chosen wood wall mount) based on the
   validated variant (never the supplied price), zero shipping, DE-only shipping
-  collection, hosted UI and `submit_type=pay`. Original GPX, PNG and validated
+  collection, hosted UI and `submit_type=pay`. Original GPX files, combined GPX
+  for collections, PNG and validated
   configuration are durably persisted **before** the Stripe call.
 * `GET /order-status?mode=test|live&order=<uuid>&token=<64-hex-secret>` →
   `{ "orderId":"<uuid>", "status":"pending|paid|failed|expired" }`.
@@ -205,7 +340,9 @@ new payment.
    bucket_name = "<actual-live-private-bucket-name>"
    ```
 
-   Apply `migrations/0001_checkout.sql` to the live database. Never point the
+   Apply `migrations/0001_checkout.sql` and then
+   `migrations/0002_whatsapp_alert.sql` and `migrations/0003_gpx_collection.sql`
+   to the live database. Never point the
    live binding at the test database.
 4. The current configuration temporarily selects sandbox mode:
    `CHECKOUT_ENABLED="true"` and `CHECKOUT_LIVE_ENABLED="false"`, retaining the
@@ -213,7 +350,9 @@ new payment.
    For a new environment, keep both modes disabled until setup and access-control
    checks pass. Set `CHECKOUT_ORIGIN="https://peak-memory.de"`.
    Install **secrets** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (`whsec_…`)
-   and `RESEND_API_KEY` with Wrangler/Cloudflare secret management, never in Git.
+   `RESEND_API_KEY`, `WHATSAPP_ACCESS_TOKEN`, and `WHATSAPP_RECIPIENT` with
+   Wrangler/Cloudflare secret management, never in Git. Configure the WhatsApp
+   sender ID and Graph API version as deployment vars.
    Existing email addresses are reused:
    `kontakt@peak-memory.de` → owner `peak.memory@web.de`. Buyer confirmation is
    sent to the submitted email. Verify the Resend sending domain and use

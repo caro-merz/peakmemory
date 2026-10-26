@@ -8,6 +8,15 @@ Datei und kein exaktes Fertigungsbild.
 ## Funktionen
 
 - Eigene GPX-Datei oder unverbindliche Beispielroute in interaktivem 3D-Gelände.
+  Bis zu 10 lokale GPX-Dateien können auf einem gemeinsamen Relief erscheinen,
+  etwa Triathlon-Teilstrecken oder Tagesetappen. Zusammen gelten maximal 5 MiB,
+  100.000 Punkte und 100 Abschnitte; auch die kombinierte GPX muss in 5 MiB passen.
+  Getrennte Abschnitte bleiben getrennt, alle Routen bleiben rot. Neue Dateien
+  werden atomar hinzugefügt; ungültige Dateien und identische Inhalte werden
+  abgewiesen, ohne die bisherige Auswahl zu verwerfen. Einzelne Dateien lassen
+  sich entfernen. Alle Originale bleiben unverändert; bei mehreren Dateien
+  entsteht zusätzlich eine deterministische kombinierte GPX. Preise, Produkte
+  und Personalisierung ändern sich dadurch nicht.
   `gpx-hilfe.html` erklärt den GPX-Export aus Komoot, Strava und Garmin Connect
   sowie Alternativen ohne Aufzeichnung. Die Hilfe ist neben den Uploads verlinkt,
   öffnet sich ohne Verlust der Konfiguration in einem neuen Tab und funktioniert
@@ -92,6 +101,28 @@ Datei und kein exaktes Fertigungsbild.
   Online-Vorschau ist keine druckfertige Datei; Holz und Fertigungsdetails können
   abweichen. Testzahlungen lösen keine Produktion aus.
 
+### Strava: vorerst deaktiviert
+
+Die Strava-Verbindung ist auf der Website und im lokalen Entwicklungsserver
+deaktiviert. Es gibt keine Verbindungsoberfläche, keine Hintergrundanfragen
+und keine OAuth-/Aktivitäts-/GPX-Endpunkte. Der Entwicklungsserver lädt keine
+`.env.local` mehr; dort hinterlegte Strava-Zugangsdaten aktivieren nichts.
+Der Prototyp bleibt in `scripts/strava-local.js`, `src/client/strava.js` und
+`src/shared/strava-gpx.js` für spätere Arbeit erhalten, ist aber nicht eingebunden
+und wird nicht in das Browser-Bundle aufgenommen.
+
+Der normale GPX-Upload bleibt aktiv: bis zu zehn lokale Dateien im
+Konfigurator und Kontaktformular. Die Exporthilfe für Strava, Komoot und
+Garmin bleibt verfügbar; sie stellt keine API-Verbindung her.
+Vor einer Produktionsintegration
+braucht es schriftliche Klärung mit Strava zu bezahlter physischer Fertigung,
+Werkstattzugriff, abgeleiteten GPX-/Geländedateien, Produktionsaufbewahrung und
+Löschung. Die [API Policy](https://www.strava.com/legal/api_policy) begrenzt
+insbesondere das Caching; eine allgemeine App-/Athletenfreigabe allein deckt
+unseren Fertigungsprozess nicht nachweislich ab. Details und Prüffragen stehen
+in [CHECKOUT.md](./CHECKOUT.md#strava-freigabe-vor-einer-integration).
+Aktivitäts-Streams liefern Koordinaten, keine Original-GPX-Datei.
+
 ## Projektstruktur
 
 ```text
@@ -138,11 +169,16 @@ wählen. Ein offener Browser-Tab allein kann keine Geländekacheln bereitstellen
 npm test
 npx playwright install chromium
 npm run test:browser
+npm run test:browser:strava
 ```
 
 Die Browserprüfung verwendet synthetische Geländekacheln und simulierten
 E-Mail-Versand. Sie sendet keine echten Anfragen. `SCREENSHOT_PATH` kann einen
 Dateipfad für einen Screenshot außerhalb des Repositorys vorgeben.
+Die separate Strava-Browserprüfung prüft die Deaktivierung auf Desktop und
+Mobilgeräten: keine Oberfläche, keine Hintergrundanfragen, keine Endpunkte;
+die GPX-Mehrfachauswahl bleibt erhalten. Die isolierten Unit-Tests des
+stillgelegten Prototyps verwenden weiterhin ausschließlich simulierte Daten.
 `npm audit` prüft die Abhängigkeiten. Der `sharp`-Override hält Wranglers
 transitive Miniflare-Abhängigkeit auf der korrigierten Patchversion 0.35.5;
 entfernen, sobald Wrangler diese Version selbst mitliefert.
@@ -292,7 +328,10 @@ nach einem Timeout vor erneutem Senden nachfragen, um Duplikate zu vermeiden.
 
 Der Browser liest GPX lokal. Erst das Absenden einer Anfrage oder der Checkout-Start überträgt
 Original-GPX, Kontaktdaten, Konfiguration und bei verfügbarer Vorschau das PNG-Bild an Cloudflare und über Resend an
-Peak Memory. Es gibt keine Route-Konten, öffentlich teilbaren Routen oder
+Peak Memory. Wenn die interne WhatsApp-Benachrichtigung aktiviert ist, gehen
+nach bestätigter Live-Zahlung nur Bestellreferenz, Produktname und Bestellname
+über Meta an die eigene Empfangsnummer; Testzahlungen lösen sie nicht aus.
+Es gibt keine Route-Konten, öffentlich teilbaren Routen oder
 persistente Speicherung der GPX-Datei im Browser. Für Checkout-Tests werden
 Original-GPX, Vorschau und Bestelldaten privat in Cloudflare R2/D1 gespeichert.
 Stripe erhält keine GPX-Datei, sondern E-Mail-Adresse und Bestellreferenz.

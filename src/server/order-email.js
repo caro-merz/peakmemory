@@ -39,7 +39,9 @@ export function orderEmail(order, details, kind) {
     ? 'Nach bestätigter Zahlung beginnt die Fertigung ohne weitere persönliche Produktionsfreigabe. Lieferung innerhalb Deutschlands in 5–10 Werktagen.'
     : 'Keine Produktion und keine Lieferung. Diese E-Mail dient nur zur Prüfung des Bestellablaufs; keine manuelle Produktionsfreigabe ist erforderlich (im späteren echten Verkauf).';
   const note = 'Kein Umsatzsteuerausweis gemäß §19 UStG. Die Online-Vorschau ist illustrativ, keine exakte Fertigungsvorlage.';
-  const attachments = owner ? 'Original-GPX, Vorschaubild und Konfiguration findest du in den drei Anhängen.' : '';
+  const attachments = owner ? order.gpx_manifest
+    ? 'Alle Original-GPX-Dateien, die kombinierte GPX, Vorschaubild und Konfiguration findest du in den Anhängen.'
+    : 'Original-GPX, Vorschaubild und Konfiguration findest du in den drei Anhängen.' : '';
   const subject = `Peak Memory${live ? '' : ' TEST'} · ${title} · ${order.id}`;
   const text = [
     title, introduction, '', ...rows.map(([label, value]) => `${label}: ${value}`),

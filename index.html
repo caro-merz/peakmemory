@@ -1196,7 +1196,15 @@
       font-size: 0.9rem;
       color: var(--text);
       font-weight: 500;
+      overflow-wrap: anywhere;
     }
+
+    #contactRouteFiles { list-style: none; padding: 0; text-align: left; }
+    #contactRouteFiles li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    #contactRouteFiles span { min-width: 0; overflow-wrap: anywhere; }
+    #contactRouteFiles button { flex-shrink: 0; font: inherit; background: transparent; color: var(--accent); border: 0; padding: 10px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+    #contactRouteFiles button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    #contactGpxFile:focus-visible + .file-dropzone-text { outline: 2px solid var(--accent); outline-offset: 4px; }
 
     .form-group input::placeholder,
     .form-group textarea::placeholder {
@@ -1920,11 +1928,12 @@
           </div>
           <div class="form-group">
             <div class="file-dropzone" id="gpxDropzone">
-              <label class="file-dropzone-label" for="contactGpxFile">GPX-Datei auswählen</label>
-              <input type="file" name="gpxFile" id="contactGpxFile" accept=".gpx,application/gpx+xml,application/xml,text/xml">
-              <p class="file-dropzone-text">Datei hier hineinziehen oder klicken, um eine `.gpx` hochzuladen.</p>
+              <label class="file-dropzone-label" for="contactGpxFile">GPX-Dateien auswählen oder hinzufügen</label>
+              <input type="file" name="gpxFiles" id="contactGpxFile" accept=".gpx,application/gpx+xml,application/xml,text/xml" multiple aria-describedby="contactRouteLimits">
+              <p class="file-dropzone-text" id="contactRouteLimits">Bis zu 10 GPX-Dateien · zusammen max. 5 MB, 100.000 Punkte und 100 Abschnitte. Bei mehreren Dateien senden wir auch eine kombinierte GPX an die Werkstatt (max. 5 MB).</p>
               <div class="file-dropzone-hint">Optionaler Anhang, max. 5 MB.</div>
               <div class="file-dropzone-file" id="gpxFileName" aria-live="polite"></div>
+              <ul id="contactRouteFiles" aria-label="GPX-Dateien für deine Anfrage" hidden></ul>
             </div>
           </div>
           <button type="submit" class="btn btn-primary">Nachricht senden</button>
@@ -2093,6 +2102,7 @@
       <h3 id="mOverview">Übersicht der Verarbeitungen</h3>
       <p>Die nachfolgende Übersicht fasst die Arten der verarbeiteten Daten und die Zwecke ihrer Verarbeitung zusammen.</p>
       <p><strong>Arten der verarbeiteten Daten:</strong> Name, E-Mail-Adresse, Nachrichten, GPX-Dateien mit Orts- und gegebenenfalls Zeitangaben, Gravur und Konfiguration, Vorschaubilder, Lieferadresse, Bestell- und Zahlungsreferenzen, Zahlungsstatus sowie IP-Adresse, technische Verbindungsdaten und Sicherheitsprotokolle.</p>
+      <p>Für ein Relief können bis zu zehn lokale GPX-Dateien gemeinsam ausgewählt werden. Die Vorschau verarbeitet sie im Browser. Erst beim Absenden einer Anfrage oder Bestellung erhalten wir die Originaldateien; bei mehreren Dateien erzeugen wir zusätzlich eine kombinierte GPX für die Fertigung. Originale und kombinierte Datei unterliegen denselben unten beschriebenen Speicher- und Löschregeln. Bestellbenachrichtigungen an unsere Werkstatt enthalten diese Dateien als Anhänge. Eine direkte Verbindung zu Sportplattform-Konten wird nicht angeboten.</p>
       <p><strong>Kategorien betroffener Personen:</strong> Besucher, Anfragende und Käufer.</p>
       <p><strong>Zwecke der Verarbeitung:</strong> Website und Vorschau bereitstellen, Anfragen beantworten, Bestellungen und Zahlungen zuordnen, personalisierte Produkte fertigen und liefern, Bestätigungen versenden, Missbrauch verhindern und gesetzliche Pflichten erfüllen.</p>
 
@@ -2143,6 +2153,7 @@
       <p>Ob der Direktkauf freigegeben ist und ob ein Test- oder Live-Modus vorliegt, wird im Konfigurator angezeigt. Bei einem freigegebenen Checkout speichern wir vor der Weiterleitung Name, E-Mail-Adresse, Original-GPX, Gravur und Konfiguration, Vorschaubild, Bestellreferenz, Bestätigung der finalen Auswahl sowie technische Zuordnungsdaten privat bei Cloudflare. Diese Angaben werden benötigt, um die personalisierte Bestellung zuzuordnen und abzuwickeln. Ohne die erforderlichen Kontakt- und Konfigurationsdaten kann der Checkout nicht gestartet werden; eine unverbindliche Anfrage bleibt möglich.</p>
       <p>Für die Zahlung leiten wir auf die gehostete Stripe-Zahlungsseite weiter. Stripe erhält von uns E-Mail-Adresse, Bestellreferenz und Angaben zum Angebot, nicht die GPX-Datei oder das Vorschaubild. Stripe erfasst dort Liefer- und Zahlungsdaten sowie technische Verbindungsdaten. Kartennummern und Kartenprüfziffern werden nicht in unserem Website-Formular erfasst. Über authentifizierte Stripe-Mitteilungen erhalten und speichern wir Zahlungsstatus, Zahlungsreferenz sowie Käufer- und Versandinformationen. Diese dienen der Zahlungszuordnung und bei echten Bestellungen der Fertigung und Lieferung. Für die Lieferung werden die erforderlichen Empfänger- und Adressdaten an den beauftragten Versanddienstleister übermittelt, nicht die GPX-Datei.</p>
       <p>Nach verifizierter Zahlung versendet Resend Bestelldaten einschließlich GPX, Konfiguration und Vorschaubild an unser WEB.DE-Postfach und eine Bestätigung mit Bestell- und Versandinformationen an die angegebene Käufer-E-Mail-Adresse. Die Verarbeitung zur Vertragsanbahnung, Zahlung, Fertigung und Lieferung beruht auf Art. 6 Abs. 1 lit. b DSGVO, gesetzlich erforderliche Dokumentation auf Art. 6 Abs. 1 lit. c DSGVO und Sicherheits- sowie Doppelzahlungsschutz auf Art. 6 Abs. 1 lit. f DSGVO. Stripe verarbeitet Daten für bestimmte eigene Zwecke, etwa Betrugsprävention und gesetzliche Pflichten, auch in eigener Verantwortung; Einzelheiten erläutert Stripe in seinen Datenschutzhinweisen.</p>
+      <p>Wenn die interne WhatsApp-Benachrichtigung für echte Bestellungen aktiviert ist, übermitteln wir nach bestätigter Zahlung die Bestellreferenz, Produktbezeichnung und den Bestellnamen über die WhatsApp Business Platform an unsere eigene Empfangsnummer, damit wir die Fertigung beginnen können. Wir senden darüber keine Nachricht an Käufer und übermitteln dafür weder deren Telefonnummer noch Lieferadresse, GPX-Datei oder Konfiguration. Sandbox-Bestellungen lösen keine WhatsApp-Nachricht aus. Meta verarbeitet die Angaben zur Übermittlung der Nachricht; Einzelheiten und die für unseren Zugang geltende Meta-Gesellschaft prüfen wir bei der Einrichtung.</p>
       <p>Im ausdrücklich gekennzeichneten Sandbox-Testmodus werden keine echten Zahlungen oder Fertigungsaufträge ausgelöst. Verwenden Sie dort nur Testdaten und Stripe-Testkarten. E-Mails werden auch im Testmodus tatsächlich versendet. Test- und Live-Bestellspeicher sind getrennt; die beschriebenen technischen Bereinigungsfristen gelten für beide.</p>
 
       <h3>Empfänger und eingesetzte Dienste</h3>
@@ -2150,10 +2161,11 @@
         <li style="margin-bottom: 8px;"><strong>Cloudflare:</strong> Cloudflare, Inc., USA, für Hosting, Anfrageverarbeitung, Sicherheitsfunktionen und privaten Bestellspeicher. <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a>.</li>
         <li style="margin-bottom: 8px;"><strong>Stripe:</strong> Stripe-Gesellschaften entsprechend Dienst und Region, für Zahlungsabwicklung und eigene Sicherheits- und gesetzliche Zwecke. Welche Gesellschaft in welcher Rolle handelt, erläutert das <a href="https://stripe.com/legal/privacy-center" target="_blank" rel="noopener noreferrer">Stripe-Datenschutzcenter</a>; siehe auch <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a>.</li>
         <li style="margin-bottom: 8px;"><strong>Resend:</strong> Plus Five Five, Inc., USA, für Versand von Anfrage- und Bestell-E-Mails einschließlich der beschriebenen Anhänge. <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a> und <a href="https://resend.com/legal/dpa" target="_blank" rel="noopener noreferrer">Informationen zur Auftragsverarbeitung</a>.</li>
+        <li style="margin-bottom: 8px;"><strong>Meta / WhatsApp Business Platform:</strong> Übermittlung der bei einer aktivierten internen Live-Bestellbenachrichtigung genannten Bestellangaben an unsere eigene WhatsApp-Empfangsnummer. Die konkret zuständige Meta-Gesellschaft und die anwendbaren Bedingungen werden vor Aktivierung geprüft. <a href="https://www.whatsapp.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">WhatsApp-Datenschutzhinweise</a>.</li>
         <li style="margin-bottom: 8px;"><strong>WEB.DE:</strong> 1&amp;1 Mail &amp; Media GmbH, Deutschland, für Empfang und Speicherung unserer Anfrage- und Bestellkorrespondenz. <a href="https://web.de/datenschutz/" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a>.</li>
         <li><strong>Amazon Web Services:</strong> Bereitstellung öffentlicher Geländekacheln, abgerufen durch unseren Server wie oben beschrieben. <a href="https://aws.amazon.com/privacy/" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a>.</li>
       </ul>
-      <p>Cloudflare und Resend werden für die Verarbeitung unserer Website- und Kommunikationsdaten als technische Dienstleister eingesetzt. Anbieter können zusätzlich Daten für eigene gesetzliche oder Sicherheitszwecke verarbeiten. Bestellinformationen können außerdem an Versanddienstleister und, soweit erforderlich, Steuerberatung oder Behörden gelangen. Wir veröffentlichen Ihre GPX-Datei und Bestelldaten nicht.</p>
+      <p>Cloudflare, Resend und – bei aktivierter interner Live-Bestellbenachrichtigung – Meta werden für die Verarbeitung unserer Website- und Kommunikationsdaten als technische Dienstleister eingesetzt. Anbieter können zusätzlich Daten für eigene gesetzliche oder Sicherheitszwecke verarbeiten. Bestellinformationen können außerdem an Versanddienstleister und, soweit erforderlich, Steuerberatung oder Behörden gelangen. Wir veröffentlichen Ihre GPX-Datei und Bestelldaten nicht.</p>
 
       <h3>Schriftarten und externe Links</h3>
       <p>Die Schriftarten Inter und Quicksand werden von unserer Website geladen. Für die Schriftarten werden keine Anfragen an Google Fonts gesendet. Dabei fallen dieselben technischen Verbindungsdaten an wie beim Abruf anderer Website-Dateien über unser Hosting.</p>
@@ -2288,9 +2300,31 @@
       var fileName = document.getElementById('gpxFileName');
       var dropzone = document.getElementById('gpxDropzone');
       var MAX_GPX_SIZE = 5 * 1024 * 1024;
+      var selectedFiles = [];
+      var submitting = false;
+      var fileList = document.getElementById('contactRouteFiles');
 
-      function setSelectedFile(file) {
-        fileName.textContent = file ? 'Ausgewählt: ' + file.name : '';
+      function showSelectedFiles() {
+        fileName.textContent = selectedFiles.length ? 'Ausgewählt: ' + selectedFiles.map(function(file) { return file.name; }).join(', ') : '';
+        fileList.replaceChildren();
+        fileList.hidden = !selectedFiles.length;
+        selectedFiles.forEach(function(file, index) {
+          var item = document.createElement('li');
+          var name = document.createElement('span');
+          name.textContent = file.name + ' ';
+          var remove = document.createElement('button');
+          remove.type = 'button';
+          remove.textContent = 'Entfernen';
+          remove.setAttribute('aria-label', file.name + ' aus Anfrage entfernen');
+          remove.addEventListener('click', function() {
+            if (submitting) return;
+            selectedFiles.splice(index, 1);
+            showSelectedFiles();
+            fileInput.focus();
+          });
+          item.append(name, remove);
+          fileList.append(item);
+        });
       }
 
       function isValidGpxFile(file) {
@@ -2298,32 +2332,24 @@
       }
 
       function updateFileSelection(files) {
-        var file = files && files[0];
+        if (submitting) return false;
+        var next = selectedFiles.concat(Array.from(files || []));
 
-        if (!file) {
-          setSelectedFile(null);
-          status.textContent = '';
-          status.className = 'contact-status';
-          return true;
-        }
-
-        if (!isValidGpxFile(file)) {
+        var message = next.length > 10 ? 'Bitte höchstens 10 GPX-Dateien auswählen.'
+          : next.some(function(file) { return !isValidGpxFile(file) || !file.size; })
+            ? 'Bitte nur nicht leere GPX-Dateien mit der Endung .gpx hochladen.'
+            : next.reduce(function(sum, file) { return sum + file.size; }, 0) > MAX_GPX_SIZE
+              ? 'Alle GPX-Dateien zusammen dürfen maximal 5 MB groß sein.' : '';
+        if (message) {
           fileInput.value = '';
-          setSelectedFile(null);
-          status.textContent = 'Bitte nur GPX-Dateien mit der Endung .gpx hochladen.';
+          status.textContent = message + ' Deine bisherige Auswahl bleibt erhalten.';
           status.className = 'contact-status contact-status--error';
           return false;
         }
 
-        if (file.size > MAX_GPX_SIZE) {
-          fileInput.value = '';
-          setSelectedFile(null);
-          status.textContent = 'Die GPX-Datei darf maximal 5 MB groß sein.';
-          status.className = 'contact-status contact-status--error';
-          return false;
-        }
-
-        setSelectedFile(file);
+        selectedFiles = next;
+        fileInput.value = '';
+        showSelectedFiles();
         status.textContent = '';
         status.className = 'contact-status';
         return true;
@@ -2353,16 +2379,12 @@
           return;
         }
 
-        fileInput.files = files;
         updateFileSelection(files);
       });
 
       form.addEventListener('submit', function(e) {
         e.preventDefault();
-
-        if (!updateFileSelection(fileInput.files)) {
-          return;
-        }
+        if (submitting) return;
 
         var body = new FormData();
         body.append('name', form.elements['name'].value);
@@ -2370,11 +2392,14 @@
         body.append('type', form.elements['type'].value);
         body.append('message', form.elements['message'].value);
 
-        if (fileInput.files && fileInput.files[0]) {
-          body.append('gpxFile', fileInput.files[0]);
-        }
+        selectedFiles.forEach(function(file) {
+          body.append(selectedFiles.length === 1 ? 'gpxFile' : 'gpxFiles', file);
+        });
 
         submitBtn.disabled = true;
+        submitting = true;
+        fileInput.disabled = true;
+        fileList.querySelectorAll('button').forEach(function(button) { button.disabled = true; });
         submitBtn.textContent = 'Wird gesendet…';
         status.textContent = '';
         status.className = 'contact-status';
@@ -2389,6 +2414,8 @@
               status.textContent = '✓ Deine Nachricht wurde gesendet. Wir melden uns persönlich bei dir!';
               status.className = 'contact-status contact-status--ok';
               form.reset();
+              selectedFiles = [];
+              showSelectedFiles();
             } else {
               status.textContent = result.data.error || 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.';
               status.className = 'contact-status contact-status--error';
@@ -2399,6 +2426,9 @@
             status.className = 'contact-status contact-status--error';
           })
           .finally(function() {
+            submitting = false;
+            fileInput.disabled = false;
+            fileList.querySelectorAll('button').forEach(function(button) { button.disabled = false; });
             submitBtn.disabled = false;
             submitBtn.textContent = 'Nachricht senden';
           });

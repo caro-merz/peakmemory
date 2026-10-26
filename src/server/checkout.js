@@ -7,6 +7,8 @@ import { orderEmail } from './order-email.js';
 
 const orderProduct = order => getProduct(parseConfiguration(order.configuration).product);
 const orderAmount = order => configurationPrice(parseConfiguration(order.configuration)) * 100;
+const attachmentName = name => name.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 200);
+const originalArtifacts = order => order.gpx_manifest ? JSON.parse(order.gpx_manifest) : [];
 export const STRIPE_API_VERSION = '2026-09-30.endive';
 export const STRIPE_WEBHOOK_API_VERSION = '2026-08-26.dahlia';
 export const STRIPE_LIVE_WEBHOOK_API_VERSION = '2026-08-26.dahlia';
@@ -45,7 +47,7 @@ export function handleShopStatus(request, env) {
   if (request.method !== 'GET') return Promise.resolve(json({ error: 'Methode nicht erlaubt.' }, 405, { Allow: 'GET' }));
   const testing = modeEnvironment(env, 'test'), live = modeEnvironment(env, 'live');
   const testEnabled = testing.CHECKOUT_ENABLED === 'true' && configured(testing);
-  const liveEnabled = live.CHECKOUT_ENABLED === 'true' && configured(live);
+  const liveEnabled = live.CHECKOUT_ENABLED === 'true' && configured(live) && whatsappReady(live);
   if (testEnabled && liveEnabled) return Promise.resolve(json({ enabled: false, testMode: true, mode: 'test' }));
   if (live.CHECKOUT_ENABLED === 'true') {
     return Promise.resolve(json({ enabled: liveEnabled, testMode: false, mode: 'live' }));
@@ -116,6 +118,9 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
       throw new CheckoutError('Checkout ist deaktiviert oder der Zahlungsmodus ist nicht eindeutig ausgewählt.', 503);
     }
     ready(env);
+    if (mode === 'live' && !whatsappReady(env)) {
+      throw new CheckoutError('WhatsApp-Benachrichtigung ist nicht konfiguriert.', 503);
+    }
     if (request.headers.has('Origin') && request.headers.get('Origin') !== trustedOrigin(env)) {
       throw new CheckoutError('Ungültiger Ursprung.', 403);
     }
@@ -127,10 +132,13 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
     const sessionParams = parameters({ id, status_token: secret, created_at: timestamp, mode,
       origin: trustedOrigin(env), email: data.email, configuration: data.configuration }).toString();
     await run(env, `INSERT INTO checkout_orders
-      (id,submission_key,payload_digest,status_token,created_at,updated_at,origin,name,email,configuration,filename,acceptance,gpx_key,preview_key,session_params)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?,?) ON CONFLICT(submission_key) DO NOTHING`,
+      (id,submission_key,payload_digest,status_token,created_at,updated_at,origin,name,email,configuration,filename,acceptance,gpx_key,preview_key,session_params,whatsapp_sent,gpx_manifest)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,0,?) ON CONFLICT(submission_key) DO NOTHING`,
     id, data.key, data.digest, secret, timestamp, timestamp, trustedOrigin(env), data.name, data.email,
-    data.configuration, data.filename, `orders/${id}/original.gpx`, `orders/${id}/preview.png`, sessionParams);
+    data.configuration, data.filename, `orders/${id}/${data.sources.length > 1 ? 'combined' : 'original'}.gpx`,
+    `orders/${id}/preview.png`, sessionParams, data.sources.length > 1 ? JSON.stringify(data.sources.map((source, index) => ({
+      name: source.name, type: source.type, key: `orders/${id}/original-${index + 1}.gpx`,
+    }))) : null);
     let order = await first(env, 'SELECT * FROM checkout_orders WHERE submission_key=?', data.key);
     if (!order || order.payload_digest !== data.digest) throw new CheckoutError('Schlüssel gehört zu einer anderen Auswahl.', 409);
     order.mode = mode;
@@ -143,6 +151,10 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
     }
     try {
       if (order.stage === 'staging') {
+        for (const [index, artifact] of originalArtifacts(order).entries()) {
+          await guarded(() => env.CHECKOUT_FILES.put(artifact.key, data.sources[index].bytes,
+            { httpMetadata: { contentType: 'application/gpx+xml' } }));
+        }
         await guarded(() => env.CHECKOUT_FILES.put(order.gpx_key, data.gpx, { httpMetadata: { contentType: 'application/gpx+xml' } }));
         await guarded(() => env.CHECKOUT_FILES.put(order.preview_key, data.preview, { httpMetadata: { contentType: 'image/png' } }));
         if (!changed(await run(env, `UPDATE checkout_orders SET stage='ready',updated_at=? WHERE id=? AND lease=? AND stage='staging'`,
@@ -235,8 +247,7 @@ export function handleStripeWebhook(request, sourceEnv, mode = 'test') {
   });
 }
 async function notify(env, order) {
-  if (order.owner_sent && order.buyer_sent) return;
-  if (!env.RESEND_API_KEY) throw new CheckoutError('Benachrichtigung nicht konfiguriert; Zahlung gespeichert.', 503);
+  if (order.owner_sent && order.buyer_sent && (order.mode !== 'live' || order.whatsapp_sent)) return;
   const lease = crypto.randomUUID();
   if (!changed(await run(env, `UPDATE checkout_orders SET notify_lease=?,notify_until=? WHERE id=? AND status='paid'
     AND stage IN ('ready','session') AND notify_until<?`, lease, now() + 120, order.id, now()))) {
@@ -245,18 +256,37 @@ async function notify(env, order) {
   try {
     order = { ...await first(env, 'SELECT * FROM checkout_orders WHERE id=?', order.id), mode: order.mode };
     const details = JSON.parse(order.shipping);
+    let whatsappFailure;
+    if (order.mode === 'live' && !order.whatsapp_sent) {
+      try {
+        await sendProductionAlert(env, order);
+        if (!changed(await run(env, `UPDATE checkout_orders SET whatsapp_sent=1
+          WHERE id=? AND notify_lease=? AND stage!='deleting'`, order.id, lease))) {
+          throw new CheckoutError('WhatsApp-Zustellung nicht gespeichert.', 503);
+        }
+      } catch (error) { whatsappFailure = error; }
+    }
     for (const kind of ['owner', 'buyer']) {
       if (order[`${kind}_sent`]) continue;
+      if (!env.RESEND_API_KEY) throw new CheckoutError('E-Mail-Benachrichtigung nicht konfiguriert; Zahlung gespeichert.', 503);
       let attachments;
       if (kind === 'owner') {
         const gpx = await guarded(() => env.CHECKOUT_FILES.get(order.gpx_key));
         const preview = await guarded(() => env.CHECKOUT_FILES.get(order.preview_key));
         if (!gpx || !preview) throw new CheckoutError('Bestellanhänge fehlen; Benachrichtigung wird wiederholt.', 503);
         attachments = [
-          { filename: order.filename, content: base64(new Uint8Array(await guarded(() => gpx.arrayBuffer()))) },
+          { filename: attachmentName(order.filename), content: base64(new Uint8Array(await guarded(() => gpx.arrayBuffer()))) },
           { filename: 'peakmemory-vorschau.png', content_type: 'image/png', content: base64(new Uint8Array(await guarded(() => preview.arrayBuffer()))) },
           { filename: 'konfiguration.json', content: base64(new TextEncoder().encode(order.configuration)), content_type: 'application/json' },
         ];
+        const originals = [];
+        for (const [index, artifact] of originalArtifacts(order).entries()) {
+          const original = await guarded(() => env.CHECKOUT_FILES.get(artifact.key));
+          if (!original) throw new CheckoutError('Bestellanhänge fehlen; Benachrichtigung wird wiederholt.', 503);
+          originals.push({ filename: `original-${String(index + 1).padStart(2, '0')}-${attachmentName(artifact.name)}`.slice(0, 200),
+            content: base64(new Uint8Array(await guarded(() => original.arrayBuffer()))) });
+        }
+        attachments.unshift(...originals);
       }
       const delivery = await remote('https://api.resend.com/emails', {
         method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json',
@@ -270,19 +300,66 @@ async function notify(env, order) {
       if (!changed(await run(env, `UPDATE checkout_orders SET ${kind}_sent=1 WHERE id=? AND notify_lease=? AND stage!='deleting'`,
         order.id, lease))) throw new CheckoutError('E-Mail-Zustellung nicht gespeichert.', 503);
     }
+    if (whatsappFailure) throw whatsappFailure;
   } finally {
     await run(env, 'UPDATE checkout_orders SET notify_lease=NULL,notify_until=0,notify_after=? WHERE id=? AND notify_lease=?',
       now() + 900, order.id, lease);
   }
+}
+async function sendProductionAlert(env, order) {
+  const accessToken = env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = env.WHATSAPP_PHONE_NUMBER_ID;
+  const recipient = env.WHATSAPP_RECIPIENT;
+  const graphVersion = env.WHATSAPP_GRAPH_API_VERSION;
+  const templateName = env.WHATSAPP_TEMPLATE_NAME || 'peak_memory_production_alert';
+  const templateLanguage = env.WHATSAPP_TEMPLATE_LANGUAGE || 'de';
+  if (!whatsappReady(env)) {
+    throw new CheckoutError('WhatsApp-Benachrichtigung nicht konfiguriert; Zahlung gespeichert.', 503);
+  }
+  const product = orderProduct(order);
+  const delivery = await remote(`https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: recipient.replace(/^\+/, ''),
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code: templateLanguage },
+        components: [{
+          type: 'body',
+          parameters: [
+            { type: 'text', text: order.id },
+            { type: 'text', text: product.name },
+            { type: 'text', text: order.name },
+          ],
+        }],
+      },
+    }),
+  });
+  if (!Array.isArray(delivery.messages) || typeof delivery.messages[0]?.id !== 'string' || !delivery.messages[0].id) {
+    throw new CheckoutError('WhatsApp-Zustellung nicht bestätigt.', 502);
+  }
+}
+function whatsappReady(env) {
+  return !!env.WHATSAPP_ACCESS_TOKEN
+    && /^\d+$/.test(env.WHATSAPP_PHONE_NUMBER_ID || '')
+    && /^\+?[1-9]\d{7,14}$/.test(env.WHATSAPP_RECIPIENT || '')
+    && /^v\d+\.\d+$/.test(env.WHATSAPP_GRAPH_API_VERSION || '')
+    && /^[a-z0-9_]{1,512}$/.test(env.WHATSAPP_TEMPLATE_NAME || 'peak_memory_production_alert')
+    && /^[a-z]{2}(?:_[A-Z]{2})?$/.test(env.WHATSAPP_TEMPLATE_LANGUAGE || 'de');
 }
 export async function checkoutMaintenance(sourceEnv, mode = 'test') {
   const env = modeEnvironment(sourceEnv, mode);
   if (!env.CHECKOUT_DB || !env.CHECKOUT_FILES) return;
   const timestamp = now();
   const orders = await guarded(() => statement(env, `SELECT * FROM checkout_orders WHERE stage!='deleting'
-    AND ((status='paid' AND (owner_sent=0 OR buyer_sent=0) AND notify_after<=? AND notify_until<?)
+    AND ((status='paid' AND (owner_sent=0 OR buyer_sent=0 OR (?='live' AND whatsapp_sent=0))
+      AND notify_after<=? AND notify_until<?)
     OR (stage='ready' AND session_url IS NULL AND created_at>? AND lease_until<?))
-    ORDER BY created_at LIMIT 25`, timestamp, timestamp, timestamp - 23 * 3600, timestamp).all());
+    ORDER BY created_at LIMIT 25`, mode, timestamp, timestamp, timestamp - 23 * 3600, timestamp).all());
   for (const order of orders.results) {
     try {
       if (!configured(env)) continue;
@@ -299,24 +376,28 @@ export async function checkoutMaintenance(sourceEnv, mode = 'test') {
     } catch { console.error('Checkout retry failed; durable state retained'); }
   }
   const abandoned = await guarded(() => statement(env, `SELECT * FROM checkout_orders WHERE stage!='purged' AND
-    (stage='deleting' OR (status!='paid' AND created_at<?) OR (status='paid' AND paid_at<? AND owner_sent=1 AND buyer_sent=1))
+    (stage='deleting' OR (status!='paid' AND created_at<?) OR (status='paid' AND paid_at<? AND owner_sent=1 AND buyer_sent=1
+      AND (? != 'live' OR whatsapp_sent=1)))
     AND lease_until<? AND notify_until<? LIMIT 25`, timestamp - 7 * 86400, timestamp - 90 * 86400,
-  timestamp, timestamp).all());
+  mode, timestamp, timestamp).all());
   for (const order of abandoned.results) {
     const lease = crypto.randomUUID();
     // Claim before touching R2. Webhooks and creators cannot transition a deleting order.
     if (!changed(await run(env, `UPDATE checkout_orders SET stage='deleting',lease=?,lease_until=?
       WHERE id=? AND stage!='purged' AND lease_until<? AND notify_until<? AND
-      (stage='deleting' OR (status!='paid' AND created_at<?) OR (status='paid' AND paid_at<? AND owner_sent=1 AND buyer_sent=1))`,
-    lease, now() + 120, order.id, now(), now(), timestamp - 7 * 86400, timestamp - 90 * 86400))) continue;
+      (stage='deleting' OR (status!='paid' AND created_at<?) OR (status='paid' AND paid_at<? AND owner_sent=1 AND buyer_sent=1
+        AND (? != 'live' OR whatsapp_sent=1)))`,
+    lease, now() + 120, order.id, now(), now(), timestamp - 7 * 86400, timestamp - 90 * 86400, mode))) continue;
     try {
-      await guarded(() => env.CHECKOUT_FILES.delete([order.gpx_key, order.preview_key]));
+      await guarded(() => env.CHECKOUT_FILES.delete([
+        ...originalArtifacts(order).map(artifact => artifact.key), order.gpx_key, order.preview_key,
+      ]));
       await guarded(() => env.CHECKOUT_DB.batch([
         statement(env, 'DELETE FROM checkout_events WHERE order_id=? AND EXISTS(SELECT 1 FROM checkout_orders WHERE id=? AND lease=?)',
           order.id, order.id, lease),
         // Keep a PII-free idempotency tombstone: an old submission key must never create a second payment.
         statement(env, `UPDATE checkout_orders SET stage='purged',status_token='',name='',email='',configuration='',
-          filename='',gpx_key='',preview_key='',session_url=NULL,session_params='',shipping=NULL,lease=NULL,lease_until=0,
+          filename='',gpx_key='',preview_key='',gpx_manifest=NULL,session_url=NULL,session_params='',shipping=NULL,lease=NULL,lease_until=0,
           notify_lease=NULL,notify_until=0 WHERE id=? AND stage='deleting' AND lease=?`, order.id, lease),
       ]));
     } catch { console.error('Checkout cleanup failed; will retry'); }

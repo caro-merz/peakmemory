@@ -1,4 +1,5 @@
-import { MAX_GPX_SIZE, parseGpx, validateFile } from '../shared/gpx.js';
+import { MAX_GPX_SIZE } from '../shared/gpx.js';
+import { readGpxCollection } from '../shared/gpx-collection.js';
 import { parseConfiguration } from '../shared/configuration.js';
 import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
 
@@ -137,8 +138,8 @@ export async function validateCheckout(request) {
     form = await new Response(raw, { headers: { 'Content-Type': request.headers.get('content-type') } }).formData();
   } catch { throw new CheckoutError('Ungültiges Formular.'); }
   for (const key of new Set(form.keys())) {
-    if (form.getAll(key).length !== 1) throw new CheckoutError('Doppelte Formularfelder.');
-    if (!['name', 'email', 'configuration', 'gpxFile', 'previewImage', 'submissionKey', 'acceptance', 'price', 'currency'].includes(key)) {
+    if (key !== 'gpxFiles' && form.getAll(key).length !== 1) throw new CheckoutError('Doppelte Formularfelder.');
+    if (!['name', 'email', 'configuration', 'gpxFile', 'gpxFiles', 'previewImage', 'submissionKey', 'acceptance', 'price', 'currency'].includes(key)) {
       throw new CheckoutError('Unbekanntes Formularfeld.');
     }
   }
@@ -157,23 +158,26 @@ export async function validateCheckout(request) {
   if (![2, 3, 4, 5].includes(configuration?.version) || configuration.preview !== 'ready') {
     throw new CheckoutError('Konfiguration Version 2, 3, 4 oder 5 mit fertiger Vorschau erforderlich.');
   }
-  const file = form.get('gpxFile'), image = form.get('previewImage');
-  validateFile(file);
-  if (typeof file.arrayBuffer !== 'function') throw new CheckoutError('GPX-Datei erforderlich.');
-  const gpx = new Uint8Array(await file.arrayBuffer());
-  parseGpx(new TextDecoder('utf-8', { fatal: true }).decode(gpx));
+  if (form.has('gpxFile') && form.has('gpxFiles')) throw new CheckoutError('GPX-Formularfelder dürfen nicht gemischt werden.');
+  const files = form.has('gpxFiles') ? form.getAll('gpxFiles') : [form.get('gpxFile')];
+  const { sources, gpx, filename: collectionFilename } = await readGpxCollection(files);
+  const image = form.get('previewImage');
   if (!image || typeof image.arrayBuffer !== 'function' || image.type !== 'image/png'
     || !image.size || image.size > MAX_PREVIEW_SIZE) throw new CheckoutError('PNG-Vorschau erforderlich (maximal 1 MB).');
   const preview = new Uint8Array(await image.arrayBuffer());
   validatePng(preview);
-  const filename = file.name.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 200);
+  const filename = collectionFilename.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 200);
   // Hash the exact submitted fields and original bytes, not just normalized manufacturing settings.
   const ignoredPrice = form.has('price') ? text('price') : null;
   const ignoredCurrency = form.has('currency') ? text('currency') : null;
-  const digest = await sha256(JSON.stringify([name, email, rawConfiguration, file.name, file.type,
+  const sourceDigests = await Promise.all(sources.map(async source =>
+    [source.name, source.type, await sha256(source.bytes)]));
+  // Keep the legacy single-file digest stable so in-flight requests remain retryable.
+  const sourceIdentity = sources.length === 1 ? [sources[0].name, sources[0].type] : ['gpx-collection-v1', sourceDigests];
+  const digest = await sha256(JSON.stringify([name, email, rawConfiguration, ...sourceIdentity,
     image.name, image.type, 'true', ignoredPrice, ignoredCurrency, await sha256(gpx), await sha256(preview)]));
   return { name: name.trim(), email, key: key.toLowerCase(), configuration: JSON.stringify(configuration),
-    filename, digest, gpx, preview };
+    filename, digest, sources, gpx, preview };
 }
 export async function remote(url, options) {
   const controller = new AbortController();

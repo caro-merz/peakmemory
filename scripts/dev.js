@@ -41,6 +41,12 @@ export async function startDevServer(port = 8000) {
   };
   const server = http.createServer(async (incoming, outgoing) => {
     try {
+      const actualPort = server.address().port;
+      const host = incoming.headers.host;
+      if (typeof host !== 'string' || ![`localhost:${actualPort}`, `127.0.0.1:${actualPort}`].includes(host)
+        || !incoming.url.startsWith('/') || incoming.url.startsWith('//') || incoming.url.includes('\\')) {
+        outgoing.writeHead(400); outgoing.end('Use localhost or 127.0.0.1 with the local server port.'); return;
+      }
       const chunks = [];
       let size = 0;
       for await (const chunk of incoming) {
@@ -48,15 +54,17 @@ export async function startDevServer(port = 8000) {
         if (size > MAX_CONTACT_SIZE) { outgoing.writeHead(413); outgoing.end('Request too large'); return; }
         chunks.push(chunk);
       }
-      const request = new Request(`http://127.0.0.1:${server.address().port}${incoming.url}`, {
+      const request = new Request(`http://${host}${incoming.url}`, {
         method: incoming.method, headers: incoming.headers,
         body: ['GET', 'HEAD'].includes(incoming.method) ? undefined : Buffer.concat(chunks),
       });
       const response = await worker.fetch(request, env, { waitUntil: promise => promise.catch(console.error) });
-      outgoing.writeHead(response.status, Object.fromEntries(response.headers));
+      const headers = Object.fromEntries(response.headers);
+      if (response.headers.getSetCookie().length) headers['set-cookie'] = response.headers.getSetCookie();
+      outgoing.writeHead(response.status, headers);
       outgoing.end(Buffer.from(await response.arrayBuffer()));
     } catch (error) {
-      console.error('Local server request failed', error);
+      console.error('Local server request failed');
       outgoing.writeHead(500); outgoing.end('Local server error');
     }
   });

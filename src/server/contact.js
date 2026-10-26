@@ -1,4 +1,5 @@
-import { MAX_GPX_SIZE, parseGpx, validateFile } from '../shared/gpx.js';
+import { MAX_GPX_SIZE } from '../shared/gpx.js';
+import { readGpxCollection } from '../shared/gpx-collection.js';
 import { parseConfiguration } from '../shared/configuration.js';
 import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
 import { getProduct, configurationPrice } from '../shared/product.js';
@@ -56,18 +57,23 @@ function base64(bytes) {
   return btoa(chunks.join(''));
 }
 
-async function createAttachment(file) {
-  if (file == null || file === '' || (typeof file === 'object' && file.name === '' && file.size === 0)) return null;
-  if (typeof file !== 'object' || typeof file.arrayBuffer !== 'function' || typeof file.name !== 'string') {
-    throw new Error('Ungültiger Dateiupload.');
+async function createAttachments(data) {
+  if (Object.hasOwn(data, 'gpxFile') && Object.hasOwn(data, 'gpxFiles')) {
+    throw new Error('GPX-Formularfelder dürfen nicht gemischt werden.');
   }
-  validateFile(file);
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  if (bytes.byteLength !== file.size || bytes.byteLength > MAX_GPX_SIZE) {
-    throw new Error('Ungültiger Dateiupload.');
-  }
-  parseGpx(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
-  return { filename: file.name.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 200), content: base64(bytes) };
+  const file = data.gpxFile;
+  if (!Object.hasOwn(data, 'gpxFiles') && (file == null || file === ''
+    || (typeof file === 'object' && file.name === '' && file.size === 0))) return [];
+  const files = Object.hasOwn(data, 'gpxFiles') ? data.gpxFiles : [file];
+  if (!Array.isArray(files)) throw new Error('Ungültiger Dateiupload.');
+  const collection = await readGpxCollection(files);
+  const artifacts = [...collection.sources];
+  if (artifacts.length > 1) artifacts.push({ name: collection.filename, bytes: collection.gpx });
+  return artifacts.map((source, index) => ({
+    filename: `${collection.sources.length > 1 && index < collection.sources.length
+      ? `original-${String(index + 1).padStart(2, '0')}-` : ''}${source.name.replace(/[\u0000-\u001f\u007f/\\]/g, '_')}`.slice(0, 200),
+    content: base64(source.bytes),
+  }));
 }
 
 export async function handleContact(request, env) {
@@ -86,13 +92,14 @@ export async function handleContact(request, env) {
         if (form.getAll(key).length > 1) throw new Error('Doppelte Formularfelder.');
       }
       data = Object.fromEntries(form);
+      if (form.has('gpxFiles')) data.gpxFiles = form.getAll('gpxFiles');
     }
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Ungültige Anfrage.');
   } catch (error) {
     return json({ error: error instanceof RangeError ? 'Die Anfrage ist zu groß.' : 'Ungültige Anfrage.' },
       error instanceof RangeError ? 413 : 400);
   }
-  const { name, email, type, message, gpxFile } = data;
+  const { name, email, type, message } = data;
   if (typeof name !== 'string' || !name.trim()) return json({ error: 'Name ist ein Pflichtfeld.' }, 400);
   if (typeof email !== 'string' || email.trim().length > 200 || !EMAIL_RE.test(email.trim())) {
     return json({ error: 'Ungültige E-Mail-Adresse.' }, 400);
@@ -101,12 +108,12 @@ export async function handleContact(request, env) {
   if (name.length > 10000 || message.length > 20000) return json({ error: 'Die Formularfelder sind zu lang.' }, 400);
 
   let configuration;
-  let attachment;
+  let attachments;
   let previewAttachment;
   try {
     configuration = parseConfiguration(data.configuration);
-    attachment = await createAttachment(gpxFile);
-    if (configuration && !attachment) {
+    attachments = await createAttachments(data);
+    if (configuration && !attachments.length) {
       throw new Error('Bitte deine persönliche GPX-Datei für die Konfigurator-Anfrage hochladen.');
     }
     if (data.previewImage != null) {
@@ -159,7 +166,7 @@ export async function handleContact(request, env) {
   const payload = {
     from: SENDER, to: RECIPIENT, reply_to: safeEmail,
     subject: `Anfrage von ${safeName} – ${safeType}`, text: lines.join('\n'),
-    ...(attachment ? { attachments: [attachment, ...(previewAttachment ? [previewAttachment] : [])] } : {}),
+    ...(attachments.length ? { attachments: [...attachments, ...(previewAttachment ? [previewAttachment] : [])] } : {}),
   };
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CONTACT_TIMEOUT_MS);

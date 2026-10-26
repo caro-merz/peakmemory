@@ -7,6 +7,7 @@ import { onRequest as pagesTerrain } from '../functions/terrain/[[path]].js';
 import { handleContact, MAX_CONTACT_SIZE } from '../src/server/contact.js';
 import { handleTerrain, MAX_TILE_SIZE, TERRAIN_CACHE_TTL } from '../src/server/terrain.js';
 import { MAX_GPX_SIZE } from '../src/shared/gpx.js';
+import { readGpxCollection } from '../src/shared/gpx-collection.js';
 import { MAX_PREVIEW_SIZE } from '../src/shared/preview.js';
 
 const originalFetch = globalThis.fetch;
@@ -31,6 +32,13 @@ function formContact(overrides = {}, file) {
   const form = new FormData();
   for (const [key, value] of Object.entries({ ...fields, ...overrides })) form.append(key, value);
   if (file !== undefined) form.append('gpxFile', file);
+  return new Request('https://peak-memory.de/contact', { method: 'POST', body: form });
+}
+function collectionContact(files, overrides = {}, configure) {
+  const form = new FormData();
+  for (const [key, value] of Object.entries({ ...fields, ...overrides })) form.append(key, value);
+  for (const file of files) form.append('gpxFiles', file);
+  configure?.(form);
   return new Request('https://peak-memory.de/contact', { method: 'POST', body: form });
 }
 function tile(path = '/terrain/5/16/10.png', options) {
@@ -101,6 +109,75 @@ test('ordinary uploaded GPX is parsed and original bytes attached once', async (
   assert.equal(payloads[0].attachments.length, 1);
   assert.equal(payloads[0].attachments[0].filename, 'Original.GPX');
   assert.equal(Buffer.from(payloads[0].attachments[0].content, 'base64').toString(), gpx);
+});
+
+test('multiple contact GPX uploads attach every original in order and the regenerated combined GPX', async () => {
+  const payloads = captureMail();
+  const files = [
+    new File([gpx], 'one.gpx', { type: 'application/gpx+xml' }),
+    new File([gpx.replaceAll('47', '48')], 'two.gpx', { type: 'text/xml' }),
+  ];
+  const expected = await readGpxCollection(files);
+  for (const overrides of [{}, { configuration: JSON.stringify(configuration), previewImage: new File([png()], 'preview.png', { type: 'image/png' }) }]) {
+    const response = await handleContact(collectionContact(files, overrides), env);
+    assert.equal(response.status, 200, await response.clone().text());
+    const attachments = payloads.at(-1).attachments;
+    assert.equal(attachments.length, overrides.configuration ? 4 : 3);
+    for (const [index, source] of expected.sources.entries()) {
+      assert.equal(attachments[index].filename, `original-${String(index + 1).padStart(2, '0')}-${source.name}`);
+      assert.deepEqual(Buffer.from(attachments[index].content, 'base64'), Buffer.from(source.bytes));
+    }
+    assert.equal(attachments[2].filename, expected.filename);
+    assert.deepEqual(Buffer.from(attachments[2].content, 'base64'), Buffer.from(expected.gpx));
+  }
+});
+
+test('a single repeated GPX contact upload stays byte-exact and does not add a combined attachment', async () => {
+  const payloads = captureMail();
+  assert.equal((await handleContact(collectionContact([new File([gpx], 'one.gpx')]), env)).status, 200);
+  assert.equal(payloads[0].attachments.length, 1);
+  assert.equal(Buffer.from(payloads[0].attachments[0].content, 'base64').toString(), gpx);
+});
+
+test('contact original labels stay unique despite filename sanitization, truncation and combined-name collisions', async () => {
+  const payloads = captureMail();
+  const names = ['same.gpx', 'same.gpx', 'a/b.gpx', 'a\\b.gpx',
+    `${'x'.repeat(205)}a.gpx`, `${'x'.repeat(205)}b.gpx`, 'peakmemory-routen.gpx'];
+  const files = names.map((name, index) => new File([gpx.replaceAll('47', String(40 + index))], name));
+  const response = await handleContact(collectionContact(files), env);
+  assert.equal(response.status, 200, await response.clone().text());
+  const attachments = payloads[0].attachments;
+  assert.equal(new Set(attachments.map(attachment => attachment.filename)).size, names.length + 1);
+  for (const [index, attachment] of attachments.slice(0, names.length).entries()) {
+    assert.ok(attachment.filename.startsWith(`original-${String(index + 1).padStart(2, '0')}-`));
+    assert.ok(attachment.filename.length <= 200);
+    assert.doesNotMatch(attachment.filename, /[/\\]/);
+    assert.deepEqual(Buffer.from(attachment.content, 'base64'), Buffer.from(await files[index].arrayBuffer()));
+  }
+});
+
+test('contact collection validation rejects mixed fields, duplicates, malformed encoding and aggregate limits', async () => {
+  globalThis.fetch = () => assert.fail('Invalid collections must not send mail');
+  const first = new File([gpx], 'one.gpx');
+  const large = gpx + ' '.repeat(Math.floor(MAX_GPX_SIZE / 2) + 1 - Buffer.byteLength(gpx));
+  const segments = count => `<gpx version="1.1"><trk>${'<trkseg><trkpt lat="47" lon="11"/><trkpt lat="48" lon="11"/></trkseg>'.repeat(count)}</trk></gpx>`;
+  const points = (offset) => `<gpx version="1.1"><trk><trkseg>${Array.from({ length: 50001 },
+    (_, index) => `<trkpt lat="${offset + index % 2}" lon="11"/>`).join('')}</trkseg></trk></gpx>`;
+  for (const files of [
+    [first, new File([gpx], 'duplicate.gpx')],
+    Array.from({ length: 11 }, (_, index) => new File([gpx + ' '.repeat(index)], `${index}.gpx`)),
+    [new File([large], 'large-a.gpx'), new File([large + '\n'], 'large-b.gpx')],
+    [new File([new Uint8Array([0xff]), gpx], 'encoding.gpx')],
+    [new File([segments(51)], 'segments-a.gpx'), new File([segments(50)], 'segments-b.gpx')],
+    [new File([points(47)], 'points-a.gpx'), new File([points(49)], 'points-b.gpx')],
+    ['not-a-file'],
+  ]) {
+    const response = await handleContact(collectionContact(files), env);
+    assert.equal(response.status, 400, await response.clone().text());
+  }
+  const mixed = collectionContact([first], {}, form => form.append('gpxFile', first));
+  assert.equal((await handleContact(mixed, env)).status, 400);
+  assert.equal((await handleContact(contact({ ...fields, gpxFiles: [] }), env)).status, 400);
 });
 
 test('a valid GPX at the exact 5 MB file boundary is accepted unchanged', async () => {

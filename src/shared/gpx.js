@@ -17,7 +17,7 @@ export function validateFile(file) {
 const array = value => value == null ? [] : Array.isArray(value) ? value : [value];
 const numberPattern = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
-export function parseGpx(xml) {
+export function parseGpx(xml, { metadata = false } = {}) {
   if (typeof xml !== 'string' || !xml.trim() || new TextEncoder().encode(xml).length > MAX_GPX_SIZE) {
     throw new Error('Die GPX-Datei ist leer oder größer als 5 MB.');
   }
@@ -61,11 +61,22 @@ export function parseGpx(xml) {
     if (Math.abs(lat) >= MAX_LATITUDE) {
       throw new Error('Polare Routen außerhalb von ±85,05° werden in der Gelände-Vorschau nicht unterstützt.');
     }
-    return { lat, lon };
+    const result = { lat, lon };
+    if (metadata) {
+      if (typeof point.ele === 'string' && numberPattern.test(point.ele) && Number.isFinite(Number(point.ele))) {
+        result.ele = Number(point.ele);
+      }
+      if (typeof point.time === 'string'
+        && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(point.time)
+        && Number.isFinite(Date.parse(point.time))) {
+        result.time = point.time;
+      }
+    }
+    return result;
   }).filter((point, index, points) => !index || point.lat !== points[index - 1].lat || point.lon !== points[index - 1].lon))
     .filter(segment => segment.length >= 2);
   if (!segments.length) {
     throw new Error('Die GPX-Datei braucht mindestens zwei unterschiedliche Punkte in einem Track oder einer Route.');
   }
-  return { segments, pointCount: count };
+  return { segments, pointCount: count, ...(metadata ? { segmentCount: rawSegments.length } : {}) };
 }

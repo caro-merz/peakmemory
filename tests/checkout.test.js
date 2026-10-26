@@ -10,6 +10,7 @@ import {
 } from '../src/server/checkout.js';
 import { MAX_CHECKOUT_SIZE, MAX_WEBHOOK_SIZE } from '../src/server/checkout-helpers.js';
 import { MAX_GPX_SIZE } from '../src/shared/gpx.js';
+import { readGpxCollection } from '../src/shared/gpx-collection.js';
 import { MAX_PREVIEW_SIZE } from '../src/shared/preview.js';
 import { PURCHASE_INFORMATION_TEXT } from '../src/shared/purchase.js';
 import { orderEmail } from '../src/server/order-email.js';
@@ -52,6 +53,8 @@ function environment() {
   const db = new DatabaseSync(':memory:');
   databases.push(db);
   db.exec(readFileSync(new URL('../migrations/0001_checkout.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0002_whatsapp_alert.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0003_gpx_collection.sql', import.meta.url), 'utf8'));
   const d1 = {
     prepare(sql) {
       let args = [];
@@ -99,6 +102,10 @@ function configureLive(context) {
     CHECKOUT_LIVE_ENABLED: 'true',
     CHECKOUT_LIVE_LEGAL_REVIEWED: 'true',
     CHECKOUT_LIVE_WAF_REVIEWED: 'true',
+    WHATSAPP_ACCESS_TOKEN: 'wa_mock',
+    WHATSAPP_PHONE_NUMBER_ID: '1234567890',
+    WHATSAPP_RECIPIENT: '+49123456789',
+    WHATSAPP_GRAPH_API_VERSION: 'v23.0',
   });
   context.live = live;
   return context;
@@ -114,8 +121,17 @@ function checkout(submissionKey = key(), fields = {}, configureForm) {
   configureForm?.(form);
   return req('/checkout', { method: 'POST', body: form });
 }
+const collectionFiles = () => [
+  new File([gpx], 'Original.GPX', { type: 'application/gpx+xml' }),
+  new File([gpx.replaceAll('47', '48')], 'zweite.gpx', { type: 'text/xml' }),
+];
+function collectionCheckout(submissionKey = key(), files = collectionFiles()) {
+  return checkout(submissionKey, { gpxFile: undefined }, form => {
+    for (const file of files) form.append('gpxFiles', file);
+  });
+}
 function mockServices({ stripe, mail } = {}) {
-  const sessions = new Map(), calls = [], emails = [];
+  const sessions = new Map(), calls = [], emails = [], whatsapp = [];
   globalThis.fetch = async (url, options) => {
     assert.equal(options.redirect, 'manual');
     assert.ok(options.signal instanceof AbortSignal);
@@ -135,11 +151,16 @@ function mockServices({ stripe, mail } = {}) {
       sessions.set(id, response);
       return stripe ? stripe(response, options, calls.length) : Response.json(response);
     }
+    if (url.startsWith('https://graph.facebook.com/')) {
+      const payload = JSON.parse(options.body);
+      whatsapp.push({ payload, options, url });
+      return Response.json({ messages: [{ id: `wamid.${whatsapp.length}` }] });
+    }
     assert.equal(url, 'https://api.resend.com/emails', 'No real network calls are permitted');
     const payload = JSON.parse(options.body); emails.push({ payload, options });
     return mail ? mail(payload, options, emails.length) : Response.json({ id: `email-${emails.length}` });
   };
-  return { sessions, calls, emails };
+  return { sessions, calls, emails, whatsapp };
 }
 async function started(context, submissionKey = key()) {
   const response = await handleCheckout(checkout(submissionKey), context.env);
@@ -173,6 +194,205 @@ async function webhook(event, { timestamp = Math.floor(Date.now() / 1000), secre
 }
 function state(context, id) { return context.db.prepare('SELECT * FROM checkout_orders WHERE id=?').get(id); }
 
+test('multiple originals and regenerated combined GPX are durable before Stripe and all reach the workshop', async () => {
+  const context = environment(), files = collectionFiles();
+  const expected = await readGpxCollection(files);
+  const services = mockServices({ stripe: response => {
+    const order = state(context, response.client_reference_id);
+    const manifest = JSON.parse(order.gpx_manifest);
+    assert.equal(manifest.length, 2);
+    assert.deepEqual(manifest.map(({ name, type }) => ({ name, type })),
+      files.map(({ name, type }) => ({ name, type })));
+    assert.equal(context.objects.size, 4);
+    for (const [index, artifact] of manifest.entries()) {
+      assert.deepEqual(context.objects.get(artifact.key), expected.sources[index].bytes);
+    }
+    assert.deepEqual(context.objects.get(order.gpx_key), expected.gpx);
+    assert.deepEqual(Buffer.from(context.objects.get(order.preview_key)), image);
+    return Response.json(response);
+  } });
+  const response = await handleCheckout(collectionCheckout(key(), files), context.env);
+  assert.equal(response.status, 200, await response.clone().text());
+  const order = state(context, (await response.json()).orderId);
+  const event = eventFor(order);
+  assert.equal((await handleStripeWebhook(await webhook(event), context.env)).status, 200);
+  const owner = services.emails[0].payload;
+  assert.equal(owner.attachments.length, 5);
+  assert.match(owner.text, /kombinierte GPX/);
+  for (const [index, source] of expected.sources.entries()) {
+    assert.equal(owner.attachments[index].filename, `original-${String(index + 1).padStart(2, '0')}-${source.name}`);
+    assert.deepEqual(Buffer.from(owner.attachments[index].content, 'base64'), Buffer.from(source.bytes));
+  }
+  assert.equal(owner.attachments[2].filename, expected.filename);
+  assert.deepEqual(Buffer.from(owner.attachments[2].content, 'base64'), Buffer.from(expected.gpx));
+  assert.equal(services.emails[1].payload.attachments, undefined);
+  assert.equal((await handleStripeWebhook(await webhook(event), context.env)).status, 200);
+  assert.equal(services.emails.length, 2);
+});
+
+test('collection idempotency binds original names, MIME types, bytes and upload order', async () => {
+  const context = environment(), services = mockServices(), submissionKey = key();
+  const response = await handleCheckout(collectionCheckout(submissionKey), context.env);
+  assert.equal(response.status, 200);
+  const initial = await response.json();
+  assert.deepEqual(await (await handleCheckout(collectionCheckout(submissionKey), context.env)).json(), initial);
+  const [first, second] = collectionFiles();
+  for (const files of [
+    [second, first],
+    [new File([gpx], 'renamed.gpx', { type: first.type }), second],
+    [new File([gpx], first.name, { type: 'text/xml' }), second],
+    [new File([gpx + '\n'], first.name, { type: first.type }), second],
+    [first],
+  ]) assert.equal((await handleCheckout(collectionCheckout(submissionKey, files), context.env)).status, 409);
+  assert.equal(services.calls.length, 1);
+  assert.equal(context.objects.size, 4);
+});
+
+test('collection attachment labels distinguish same, sanitized, truncated and combined source names', async () => {
+  const context = environment(), services = mockServices();
+  const names = ['same.gpx', 'same.gpx', 'a/b.gpx', 'a\\b.gpx',
+    `${'x'.repeat(205)}a.gpx`, `${'x'.repeat(205)}b.gpx`, 'peakmemory-routen.gpx'];
+  const files = names.map((name, index) =>
+    new File([gpx.replaceAll('47', String(40 + index))], name));
+  const response = await handleCheckout(collectionCheckout(key(), files), context.env);
+  assert.equal(response.status, 200, await response.clone().text());
+  const order = state(context, (await response.json()).orderId);
+  assert.deepEqual(JSON.parse(order.gpx_manifest).map(source => source.name), names);
+  assert.equal((await handleStripeWebhook(await webhook(eventFor(order)), context.env)).status, 200);
+  const attachments = services.emails[0].payload.attachments;
+  assert.equal(new Set(attachments.map(attachment => attachment.filename)).size, names.length + 3);
+  for (const [index, attachment] of attachments.slice(0, names.length).entries()) {
+    assert.ok(attachment.filename.startsWith(`original-${String(index + 1).padStart(2, '0')}-`));
+    assert.ok(attachment.filename.length <= 200);
+    assert.doesNotMatch(attachment.filename, /[/\\]/);
+    assert.deepEqual(Buffer.from(attachment.content, 'base64'), Buffer.from(await files[index].arrayBuffer()));
+  }
+});
+
+test('single repeated upload stays legacy-compatible, including an existing order with no manifest', async () => {
+  const context = environment(), services = mockServices(), submissionKey = key();
+  const response = await handleCheckout(checkout(submissionKey), context.env);
+  assert.equal(response.status, 200);
+  const result = await response.json(), order = state(context, result.orderId);
+  assert.equal(order.gpx_manifest, null);
+  assert.deepEqual(await (await handleCheckout(collectionCheckout(submissionKey, [collectionFiles()[0]]), context.env)).json(), result);
+  assert.equal((await handleStripeWebhook(await webhook(eventFor(order)), context.env)).status, 200);
+  assert.equal(services.emails[0].payload.attachments.length, 3);
+  assert.equal(Buffer.from(services.emails[0].payload.attachments[0].content, 'base64').toString(), gpx);
+});
+
+test('collections reject mixed fields, duplicates, invalid UTF8 and aggregate file, point and segment limits before storage', async () => {
+  const context = environment();
+  globalThis.fetch = () => assert.fail('Invalid collections must not reach a provider');
+  const route = (count, offset) => `<gpx version="1.1"><trk><trkseg>${Array.from({ length: count },
+    (_, index) => `<trkpt lat="${offset + index % 2}" lon="11"/>`).join('')}</trkseg></trk></gpx>`;
+  const segments = count => `<gpx version="1.1"><trk>${'<trkseg><trkpt lat="47" lon="11"/><trkpt lat="48" lon="11"/></trkseg>'.repeat(count)}</trk></gpx>`;
+  const large = gpx + ' '.repeat(Math.floor(MAX_GPX_SIZE / 2) + 1 - Buffer.byteLength(gpx));
+  const invalid = [
+    [],
+    [collectionFiles()[0], new File([gpx], 'same-content.gpx')],
+    [new File([new Uint8Array([0xff]), gpx], 'utf8.gpx')],
+    Array.from({ length: 11 }, (_, index) => new File([gpx + ' '.repeat(index)], `${index}.gpx`)),
+    [new File([large], 'large-a.gpx'), new File([large + '\n'], 'large-b.gpx')],
+    [new File([route(50001, 47)], 'points-a.gpx'), new File([route(50001, 49)], 'points-b.gpx')],
+    [new File([segments(51)], 'segments-a.gpx'), new File([segments(50)], 'segments-b.gpx')],
+    ['not-a-file'],
+  ];
+  for (const files of invalid) {
+    const response = await handleCheckout(collectionCheckout(key(), files), context.env);
+    assert.equal(response.status, 400, await response.clone().text());
+  }
+  const mixed = checkout(key(), {}, form => form.append('gpxFiles', collectionFiles()[1]));
+  assert.equal((await handleCheckout(mixed, context.env)).status, 400);
+  assert.equal(context.objects.size, 0);
+  assert.equal(context.db.prepare('SELECT count(*) AS n FROM checkout_orders').get().n, 0);
+});
+
+test('partial collection storage is retried in full before creating a session', async () => {
+  const context = environment(), services = mockServices(), submissionKey = key();
+  const put = context.env.CHECKOUT_FILES.put;
+  let fail = true;
+  context.env.CHECKOUT_FILES.put = async (path, bytes) => {
+    if (path.endsWith('/original-2.gpx') && fail) { fail = false; throw new Error('R2 failed'); }
+    return put(path, bytes);
+  };
+  assert.equal((await handleCheckout(collectionCheckout(submissionKey), context.env)).status, 503);
+  assert.equal(services.calls.length, 0);
+  assert.equal(context.objects.size, 1);
+  assert.equal((await handleCheckout(collectionCheckout(submissionKey), context.env)).status, 200);
+  assert.equal(context.objects.size, 4);
+  assert.equal(services.calls.length, 1);
+});
+
+test('ten distinct originals are accepted and combined output has an independent 5 MiB limit', async () => {
+  const context = environment(), services = mockServices();
+  const files = Array.from({ length: 10 }, (_, index) =>
+    new File([gpx.replaceAll('47', String(40 + index))], `route-${index}.gpx`));
+  const accepted = await handleCheckout(collectionCheckout(key(), files), context.env);
+  assert.equal(accepted.status, 200, await accepted.clone().text());
+  assert.equal(context.objects.size, 12);
+  const order = state(context, (await accepted.json()).orderId);
+  assert.equal((await handleStripeWebhook(await webhook(eventFor(order)), context.env)).status, 200);
+  assert.equal(services.emails[0].payload.attachments.length, 13);
+  assert.equal(new Set(services.emails[0].payload.attachments.map(attachment => attachment.filename)).size, 13);
+  const expanding = offset => `<gpx version="1.1"><trk><trkseg>${Array.from({ length: 50000 },
+    (_, index) => `<trkpt lat="${offset + index % 2}e-6" lon="3e-6"><ele>1e-6</ele></trkpt>`).join('')}</trkseg></trk></gpx>`;
+  const tooLarge = [new File([expanding(1)], 'a.gpx'), new File([expanding(3)], 'b.gpx')];
+  assert.ok(tooLarge[0].size + tooLarge[1].size < MAX_GPX_SIZE);
+  const rejected = await handleCheckout(collectionCheckout(key(), tooLarge), context.env);
+  assert.equal(rejected.status, 400, await rejected.clone().text());
+  assert.match((await rejected.json()).error, /kombinierte GPX/);
+  assert.equal(services.calls.length, 1);
+  assert.equal(context.objects.size, 12);
+});
+
+test('missing collection original keeps paid notification retryable without losing any other artifact', async () => {
+  const context = environment(), services = mockServices();
+  const response = await handleCheckout(collectionCheckout(), context.env);
+  assert.equal(response.status, 200);
+  const order = state(context, (await response.json()).orderId), event = eventFor(order);
+  const artifact = JSON.parse(order.gpx_manifest)[1], original = context.objects.get(artifact.key);
+  context.objects.delete(artifact.key);
+  assert.equal((await handleStripeWebhook(await webhook(event), context.env)).status, 503);
+  assert.equal(state(context, order.id).status, 'paid');
+  assert.equal(state(context, order.id).owner_sent, 0);
+  assert.equal(services.emails.length, 0);
+  context.objects.set(artifact.key, original);
+  assert.equal((await handleStripeWebhook(await webhook(event), context.env)).status, 200);
+  assert.equal(services.emails[0].payload.attachments.length, 5);
+});
+
+for (const paid of [false, true]) test(`collection ${paid ? 'paid' : 'expired'} retention deletes all originals and combined, retrying partial deletion`, async () => {
+  const context = environment();
+  mockServices();
+  const response = await handleCheckout(collectionCheckout(), context.env);
+  assert.equal(response.status, 200);
+  const order = state(context, (await response.json()).orderId);
+  const event = paid ? eventFor(order) : eventFor(order, { payment_status: 'unpaid' }, 'checkout.session.expired');
+  assert.equal((await handleStripeWebhook(await webhook(event), context.env)).status, 200);
+  const remove = context.env.CHECKOUT_FILES.delete;
+  let failed = false;
+  context.env.CHECKOUT_FILES.delete = async paths => {
+    if (!failed) {
+      failed = true;
+      context.objects.delete(paths[0]);
+      throw new Error('Partial deletion failed');
+    }
+    return remove(paths);
+  };
+  const timestamp = Date.now();
+  Date.now = () => timestamp + (paid ? 91 : 8) * 86400000;
+  await checkoutMaintenance(context.env);
+  assert.equal(state(context, order.id).stage, 'deleting');
+  assert.equal(context.objects.size, 3);
+  Date.now = () => timestamp + (paid ? 92 : 9) * 86400000;
+  await checkoutMaintenance(context.env);
+  const purged = state(context, order.id);
+  assert.equal(purged.stage, 'purged');
+  assert.equal(purged.gpx_manifest, null);
+  assert.equal(context.objects.size, 0);
+});
+
 for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCTS)) for (const version of [3, 5]) {
   test(`${mode} ${product.id} v${version}: server price, verified payment and product-specific emails`, async () => {
     const context = environment();
@@ -202,6 +422,16 @@ for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCT
     assert.equal((await handleStripeWebhook(await webhook(event, options), context.env, mode)).status, 200);
     assert.equal(state(storage, orderId).status, 'paid');
     assert.equal(services.emails.length, 2);
+    assert.equal(services.whatsapp.length, mode === 'live' ? 1 : 0);
+    if (mode === 'live') {
+      const alert = services.whatsapp[0];
+      assert.equal(alert.url, `https://graph.facebook.com/v23.0/1234567890/messages`);
+      assert.equal(alert.options.headers.Authorization, 'Bearer wa_mock');
+      assert.equal(alert.payload.to, '49123456789');
+      assert.equal(alert.payload.template.name, 'peak_memory_production_alert');
+      assert.deepEqual(alert.payload.template.components[0].parameters.map(parameter => parameter.text),
+        [orderId, product.name, 'Ada']);
+    }
     for (const { payload } of services.emails) {
       assert.ok(payload.text.includes(product.name));
       assert.ok(payload.text.includes(`${expectedPrice} EUR`));
@@ -232,6 +462,7 @@ for (const mode of ['test', 'live']) for (const product of ['base', 'compact']) 
     const event = eventFor(order, {}, 'checkout.session.completed', mode === 'live');
     assert.equal((await handleStripeWebhook(await webhook(event, options), context.env, mode)).status, 200);
     assert.equal(services.emails.length, 2);
+    assert.equal(services.whatsapp.length, mode === 'live' ? 1 : 0);
     for (const { payload } of services.emails) {
       assert.ok(payload.text.includes(`${expected} EUR`));
       assert.ok(payload.text.includes(`Wandaufhängung: ${wallMount ? 'Ja' : 'Nein'}`));
@@ -769,6 +1000,11 @@ test('live checkout isolates storage and verifies live-mode webhook before sendi
   assert.equal((await handleStripeWebhook(valid, context.env, 'live')).status, 200);
   assert.equal(context.live.db.prepare('SELECT status,owner_sent,buyer_sent FROM checkout_orders WHERE id=?').get(order.id).status, 'paid');
   assert.equal(services.emails.length, 2);
+  assert.equal(services.whatsapp.length, 1);
+  assert.equal((await handleStripeWebhook(await webhook(liveEvent, { mode: 'live', secret: 'whsec_livemock' }),
+    context.env, 'live')).status, 200);
+  assert.equal(services.emails.length, 2);
+  assert.equal(services.whatsapp.length, 1);
   assert.ok(services.emails.every(({ payload }) => !payload.subject.includes('TEST') && !payload.text.includes('keine echte Bestellung')));
   assert.equal(services.emails[0].payload.attachments.length, 3);
   assert.equal(services.emails[1].payload.to, 'ada@example.com');
@@ -776,6 +1012,47 @@ test('live checkout isolates storage and verifies live-mode webhook before sendi
     'Both live order confirmations contain the full purchase information');
   assert.equal((await handleOrderStatus(req(`/order-status?mode=live&order=${order.id}&token=${order.status_token}`), context.env)).status, 200);
   assert.equal((await handleOrderStatus(req(`/order-status?mode=test&order=${order.id}&token=${order.status_token}`), context.env)).status, 404);
+});
+
+test('live checkout stays disabled until the internal WhatsApp destination is configured', async () => {
+  const context = configureLive(environment());
+  context.env.WHATSAPP_RECIPIENT = undefined;
+  mockServices();
+  assert.deepEqual(await (await handleShopStatus(req('/shop-status'), context.env)).json(),
+    { enabled: false, testMode: false, mode: 'live' });
+  assert.equal((await handleCheckout(checkout(), context.env, 'live')).status, 503);
+  assert.equal(context.live.db.prepare('SELECT count(*) AS count FROM checkout_orders').get().count, 0);
+});
+
+test('WhatsApp failure retries independently without resending accepted emails', async () => {
+  const context = configureLive(environment());
+  let failAlert = true;
+  const services = mockServices();
+  const fetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    if (url.startsWith('https://graph.facebook.com/') && failAlert) {
+      failAlert = false;
+      services.whatsapp.push({ payload: JSON.parse(options.body), options, url });
+      return new Response('{}', { status: 503 });
+    }
+    return fetch(url, options);
+  };
+  const response = await handleCheckout(checkout(), context.env, 'live');
+  assert.equal(response.status, 200);
+  const order = context.live.db.prepare('SELECT * FROM checkout_orders WHERE id=?').get((await response.json()).orderId);
+  const event = eventFor(order, {}, 'checkout.session.completed', true);
+  const options = { mode: 'live', secret: 'whsec_livemock' };
+  assert.equal((await handleStripeWebhook(await webhook(event, options), context.env, 'live')).status, 502);
+  assert.equal(state(context.live, order.id).status, 'paid');
+  assert.equal(state(context.live, order.id).owner_sent, 1);
+  assert.equal(state(context.live, order.id).buyer_sent, 1);
+  assert.equal(state(context.live, order.id).whatsapp_sent, 0);
+  assert.equal(services.emails.length, 2);
+  Date.now = () => originalNow() + 901_000;
+  await checkoutMaintenance(context.env, 'live');
+  assert.equal(state(context.live, order.id).whatsapp_sent, 1);
+  assert.equal(services.emails.length, 2);
+  assert.equal(services.whatsapp.length, 2);
 });
 
 test('stream stalls time out explicitly and private order blobs are not exposed through Worker asset routes', async () => {

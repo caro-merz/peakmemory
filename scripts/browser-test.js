@@ -31,7 +31,7 @@ function terrainPng() {
 }
 
 const server = await startDevServer(0);
-async function dragPreview(page, dx = 80, dy = 0) {
+async function dragPreview(page, dx = 80, dy = 0, release = true) {
   const canvas = page.locator('#viewer canvas');
   await canvas.scrollIntoViewIfNeeded();
   const box = await canvas.boundingBox();
@@ -39,7 +39,7 @@ async function dragPreview(page, dx = 80, dy = 0) {
   await page.mouse.move(x, y);
   await page.mouse.down();
   await page.mouse.move(x + dx, y + dy, { steps: 10 });
-  await page.mouse.up();
+  if (release) await page.mouse.up();
 }
 async function assertMobileOrder(page) {
   const route = await page.locator('#routeControls').boundingBox();
@@ -89,6 +89,7 @@ try {
     await request.fulfill({status:200,contentType:'application/json',body:'{"ok":true}'});
   });
   const url = `http://127.0.0.1:${server.address().port}`;
+  console.log('Browser checks: loading configurator');
   await page.goto(url + '/configurator.html');
   assert.equal(page.url(), url + '/#konfigurator');
   assert.equal(await page.locator('#modelPrice').innerText(), '50 €');
@@ -105,6 +106,7 @@ try {
   assert.equal(await page.locator('#routeControls a[href="gpx-hilfe.html"]').getAttribute('target'), '_blank');
   assert.equal(await page.locator('.inquiry a[href="#kontakt"]').count(), 1);
   await page.locator('#sample').click();
+  console.log('Browser checks: sample terrain');
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Beispielroute');
   assert.equal(await page.locator('#fileName').innerText(), 'Allgäu Panorama Marathon – Marathon (Beispielroute)');
   assert.equal(await page.locator('#viewer canvas').count(), 1);
@@ -114,18 +116,19 @@ try {
   await page.waitForTimeout(150);
   const spinningImage = await canvas.screenshot();
   await page.waitForTimeout(500);
-  assert.notDeepEqual(await canvas.screenshot(), spinningImage, 'Model rotates automatically');
-  await dragPreview(page);
+  assert.ok(!(await canvas.screenshot()).equals(spinningImage), 'Model rotates automatically');
+  await dragPreview(page, 80, 0, false);
   const pausedImage = await canvas.screenshot();
   await page.waitForTimeout(500);
-  assert.deepEqual(await canvas.screenshot(), pausedImage, 'Manual controls pause automatic rotation');
-  await page.waitForTimeout(700);
-  assert.notDeepEqual(await canvas.screenshot(), pausedImage, 'Automatic rotation resumes after manual controls');
+  assert.ok((await canvas.screenshot()).equals(pausedImage), 'Manual controls pause automatic rotation');
+  await page.mouse.up();
+  await page.waitForTimeout(1100);
+  assert.ok(!(await canvas.screenshot()).equals(pausedImage), 'Automatic rotation resumes after manual controls');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.waitForTimeout(150);
   const stillImage = await canvas.screenshot();
   await page.waitForTimeout(350);
-  assert.deepEqual(await canvas.screenshot(), stillImage, 'Reduced-motion preference stops automatic rotation');
+  assert.ok((await canvas.screenshot()).equals(stillImage), 'Reduced-motion preference stops automatic rotation');
   assert.equal(await page.evaluate(() => document.fonts.check('400 44px "Quicksand Book"')), true);
   assert.equal(await page.locator('#inquiryForm').count(), 0);
   await dragPreview(page);
@@ -139,9 +142,9 @@ try {
   await page.locator('#wallMount').selectOption('yes');
   assert.equal(await page.locator('#modelPrice').innerText(), '51 €');
   assert.match(await page.locator('#configurationSummary').innerText(), /Wandaufhängung: ja.*4 transparente Schutzfüße/);
-  assert.notDeepEqual(await canvas.screenshot(), bareBack, 'Hanger becomes visible on the underside');
+  assert.ok(!(await canvas.screenshot()).equals(bareBack), 'Hanger becomes visible on the underside');
   await page.locator('#wallMount').selectOption('no');
-  assert.deepEqual(await canvas.screenshot(), bareBack, 'Feet remain when the hanger is removed');
+  assert.ok((await canvas.screenshot()).equals(bareBack), 'Feet remain when the hanger is removed');
   await page.locator('#resetView').click();
   const requestsBeforeProducts = terrainRequests;
   await page.locator('#product').selectOption('compact');
@@ -162,7 +165,7 @@ try {
   assert.equal(await page.locator('#engraving').isEnabled(), true);
   assert.equal(await page.locator('#engravingControls').isVisible(), true);
   assert.match(await page.locator('#configurationSummary').innerText(), /Passepartout.*20 × 20 cm/);
-  assert.notDeepEqual(await page.locator('#viewer canvas').screenshot(), compactImage);
+  assert.ok(!(await page.locator('#viewer canvas').screenshot()).equals(compactImage));
   await page.locator('#product').selectOption('base');
   assert.equal(await page.locator('#modelPrice').innerText(), '51 €');
   await page.locator('#wallMount').selectOption('no');
@@ -183,10 +186,11 @@ try {
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Beispielroute'
     && document.getElementById('marginValue').textContent === '50 %');
   const personal = '<gpx version="1.1"><trk><trkseg><trkpt lat="48.2" lon="9.1"/><trkpt lat="48.23" lon="9.13"/></trkseg></trk></gpx>';
+  console.log('Browser checks: local upload and error recovery');
   const upload = text => page.locator('#gpxFile').setInputFiles({name:'personal.gpx',mimeType:'application/gpx+xml',buffer:Buffer.from(text)});
   await upload(personal);
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
-  assert.equal(await page.locator('#gpxFile').evaluate(element => element.files[0]?.name), 'personal.gpx');
+  assert.equal(await page.locator('#routeFiles li span').innerText(), 'personal.gpx');
   await page.locator('#engraving').fill('Erste Zeile\nZweite Zeile\nDritte Zeile\nVierte Zeile');
   assert.equal(await page.locator('#engraving').evaluate(element => element.validity.valid), false);
   assert.match(await page.locator('#configurationSummary').innerText(), /maximal 3 Zeilen/);
@@ -198,7 +202,9 @@ try {
   if (process.env.SCREENSHOT_PATH) await page.screenshot({path:process.env.SCREENSHOT_PATH,fullPage:true});
   assert.equal(await page.locator('#viewer canvas').count(), 1);
   await upload('<not-gpx/>');
-  await page.waitForFunction(() => document.getElementById('previewStatus').textContent.includes('gültige GPX'));
+  await page.waitForFunction(() => document.getElementById('routeError').textContent.includes('gültige GPX'));
+  assert.equal(await page.locator('#previewBadge').innerText(), 'Deine Route', 'Invalid additions preserve the current preview');
+  await page.locator('#remove').click();
   terrainFailure = true;
   await upload(personal);
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Nicht verfügbar');
@@ -228,16 +234,18 @@ try {
   await page.locator('#margin').fill('5'); await page.locator('#margin').fill('35');
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
   terrainDelay = 400;
+  await page.locator('#remove').click();
   await upload(personal);
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Wird geladen');
   await upload('<invalid/>');
-  await page.waitForFunction(() => document.getElementById('previewStatus').textContent.includes('gültige GPX'));
-  await page.waitForTimeout(600);
-  assert.equal(await page.locator('#previewBadge').innerText(), 'Noch keine Route');
+  await page.waitForFunction(() => document.getElementById('routeError').textContent.includes('gültige GPX'));
+  await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
+  assert.equal(await page.locator('#previewBadge').innerText(), 'Deine Route', 'A failed addition does not cancel the valid terrain request');
   terrainDelay = 0;
   await page.goto(url + '/');
   await page.reload();
   await page.goto(url + '/#datenschutz');
+  console.log('Browser checks: homepage and legal dialogs');
   assert.equal(await page.locator('#datenschutzModal').evaluate(element => element.classList.contains('open')), true);
   const privacy = await page.locator('#datenschutzModal').innerText();
   assert.match(privacy, /Peak Memory GbR/);
@@ -299,9 +307,14 @@ try {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await insights.scrollIntoViewIfNeeded();
   await page.mouse.move(0, 0);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const reducedPeriod = await page.locator('.carousel-slide.is-clone').first()
+    .evaluate(element => element.offsetLeft - element.parentElement.firstElementChild.offsetLeft);
   const reducedStart = await insights.evaluate(element => element.scrollLeft);
   await page.waitForTimeout(400);
-  assert.equal(await insights.evaluate(element => element.scrollLeft), reducedStart, 'Insights must not auto-scroll with reduced motion');
+  const reducedEnd = await insights.evaluate(element => element.scrollLeft);
+  assert.equal(reducedEnd % reducedPeriod, reducedStart % reducedPeriod,
+    'Insights must not auto-scroll with reduced motion; equivalent clone positions are identical');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.waitForTimeout(100);
   const autoStart = await insights.evaluate(element => element.scrollLeft);
@@ -321,7 +334,7 @@ try {
   for (const id of ['contactName', 'contactEmail', 'contactType', 'contactMessage']) {
     assert.equal(await page.locator(`#${id}`).evaluate(element => element.labels.length), 1);
   }
-  assert.ok((await page.locator('#hero img').getAttribute('src')).endsWith('.webp'));
+  assert.ok(new URL(await page.locator('#hero img').getAttribute('src'), url).pathname.endsWith('.webp'));
   for (const image of await page.locator('main img').all()) {
     assert.ok(Number(await image.getAttribute('width')) > 0);
     assert.ok(Number(await image.getAttribute('height')) > 0);
@@ -346,7 +359,7 @@ try {
   assert.equal(await page.locator('#contactGpxFile').evaluate(element => element.files.length), 0);
   await page.locator('#contactGpxFile').setInputFiles({name:'contact.gpx',mimeType:'application/gpx+xml',buffer:Buffer.from(personal)});
   assert.match(await page.locator('#gpxFileName').innerText(), /contact.gpx/);
-  assert.equal(await page.locator('#gpxFile').evaluate(element => element.files[0].name), 'personal.gpx');
+  assert.equal(await page.locator('#routeFiles li span').innerText(), 'personal.gpx');
   await page.locator('.inquiry a[href="#kontakt"]').click();
   assert.equal(new URL(page.url()).hash, '#kontakt');
   assert.equal(await page.locator('#kontakt a[href*="etsy.com"]').count(), 0);
@@ -425,6 +438,7 @@ try {
   }
   await guideContext.close();
   const shop = await context.newPage();
+  console.log('Browser checks: single-file checkout');
   shop.on('pageerror', error => errors.push(error.message));
   await shop.route('**/shop-status', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
@@ -559,6 +573,123 @@ try {
   assert.equal(variantSubmissions.length, 3);
   await variants.close();
 
+  const multi = await context.newPage();
+  console.log('Browser checks: multi-file checkout and inquiry');
+  multi.on('pageerror', error => errors.push(error.message));
+  await multi.route('**/shop-status', request => request.fulfill({
+    status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
+  }));
+  await multi.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/png', body: png }));
+  const secondRoute = personal.replaceAll('48.2', '48.3');
+  const secondName = 'tag-2-mit-einem-sehr-langen-streckennamen-fuer-die-mobile-dateiliste.gpx';
+  const inputFile = (name, text) => ({ name, mimeType: 'application/gpx+xml', buffer: Buffer.from(text) });
+  const multiSubmissions = [];
+  const contactSubmissions = [];
+  for (const [endpoint, submissions] of [['checkout', multiSubmissions], ['contact', contactSubmissions]]) {
+    await multi.route(`**/${endpoint}`, async request => {
+      submissions.push(await new Response(request.request().postDataBuffer(), {
+        headers: { 'Content-Type': request.request().headers()['content-type'] },
+      }).formData());
+      await request.fulfill({ status: endpoint === 'checkout' ? 503 : 200, contentType: 'application/json',
+        body: endpoint === 'checkout' ? '{"error":"Multi-file captured"}' : '{"ok":true}' });
+    });
+  }
+  await multi.goto(url + '/');
+  await multi.locator('#checkoutForm').waitFor({ state: 'visible' });
+  await multi.locator('#engraving').fill('Meine Etappen');
+  await multi.locator('#gpxFile').setInputFiles(inputFile('tag-1.gpx', personal));
+  await multi.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
+  await multi.locator('#gpxFile').setInputFiles(inputFile(secondName, secondRoute));
+  await multi.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Routen');
+  assert.equal(await multi.locator('#routeFiles li').count(), 2);
+  assert.match(await multi.locator('#checkoutSummary').innerText(), /tag-1.gpx/);
+  assert.ok((await multi.locator('#checkoutSummary').innerText()).includes(secondName));
+  await multi.locator('#gpxFile').setInputFiles(inputFile('copy.gpx', personal));
+  await multi.waitForFunction(() => document.getElementById('routeError').textContent.includes('identischer Inhalt'));
+  assert.equal(await multi.locator('#routeFiles li').count(), 2);
+  await multi.locator('#gpxFile').setInputFiles([
+    inputFile('new.gpx', personal.replaceAll('48.2', '48.4')), inputFile('bad.gpx', '<not-gpx/>'),
+  ]);
+  await multi.waitForFunction(() => document.getElementById('routeError').textContent.includes('bad.gpx'));
+  assert.equal(await multi.locator('#routeFiles li').count(), 2, 'An invalid batch adds none of its files');
+  await multi.locator('#checkoutName').fill('Mehrere Etappen');
+  await multi.locator('#checkoutEmail').fill('etappen@example.invalid');
+  await multi.locator('#checkoutAcceptance').check();
+  await multi.locator('#submitCheckout').click();
+  await multi.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Multi-file captured'));
+  assert.equal(multiSubmissions[0].has('gpxFile'), false);
+  assert.equal(multiSubmissions[0].getAll('gpxFiles').length, 2);
+  assert.equal(await multiSubmissions[0].getAll('gpxFiles')[0].text(), personal);
+  assert.equal(await multiSubmissions[0].getAll('gpxFiles')[1].text(), secondRoute);
+  await multi.locator('#submitCheckout').click();
+  await multi.waitForFunction(() => document.getElementById('submitCheckout').disabled === false);
+  assert.equal(multiSubmissions.length, 2);
+  assert.equal(multiSubmissions[0].get('submissionKey'), multiSubmissions[1].get('submissionKey'));
+  for (const width of [1365, 390]) {
+    await multi.setViewportSize({ width, height: 950 });
+    assert.ok(await multi.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Multi-route names fit the viewport');
+    await multi.locator('#routeControls').scrollIntoViewIfNeeded();
+    if (process.env.ROUTE_SCREENSHOT_DIR) {
+      await multi.locator('#routeControls').screenshot({ path: `${process.env.ROUTE_SCREENSHOT_DIR}\\routes-${width}.png` });
+    }
+  }
+  await multi.locator('#routeFiles button').first().click();
+  await multi.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
+  assert.equal(await multi.locator('#routeFiles li').count(), 1);
+  assert.equal(await multi.locator('#engraving').inputValue(), 'Meine Etappen');
+  assert.equal(await multi.locator('#checkoutAcceptance').isChecked(), false);
+  assert.equal(await multi.locator('#gpxFile').evaluate(element => element === document.activeElement), true);
+  await multi.locator('#routeFiles button').click();
+  assert.equal(await multi.locator('#routeFiles').isHidden(), true);
+  assert.equal(await multi.locator('#submitCheckout').isDisabled(), true);
+  await multi.locator('#gpxFile').setInputFiles(Array.from({ length: 10 }, (_, index) =>
+    inputFile(`stage-${index}.gpx`, personal.replaceAll('48.2', `48.${30 + index}`))));
+  await multi.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Routen');
+  assert.equal(await multi.locator('#routeFiles li').count(), 10);
+  await multi.locator('#gpxFile').setInputFiles(inputFile('eleven.gpx', personal));
+  await multi.waitForFunction(() => document.getElementById('routeError').textContent.includes('1 bis 10'));
+  assert.equal(await multi.locator('#routeFiles li').count(), 10);
+  await multi.locator('#remove').click();
+  await multi.evaluate(text => {
+    const transfer = new DataTransfer();
+    transfer.items.add(new File([text], 'first.gpx', { type: 'application/gpx+xml' }));
+    transfer.items.add(new File([text.replaceAll('48.2', '48.3')], 'second.gpx', { type: 'application/gpx+xml' }));
+    document.getElementById('dropzone').dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, bubbles: true, cancelable: true }));
+  }, personal);
+  await multi.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Routen');
+  await multi.evaluate(() => {
+    const original = File.prototype.arrayBuffer;
+    window.restoreFileReader = () => { File.prototype.arrayBuffer = original; };
+    File.prototype.arrayBuffer = function() {
+      if (this.name !== 'pending.gpx') return original.call(this);
+      window.pendingReadStarted = true;
+      return new Promise(resolve => setTimeout(resolve, 400)).then(() => original.call(this))
+        .finally(() => { window.pendingReadFinished = true; });
+    };
+  });
+  await multi.locator('#gpxFile').setInputFiles(inputFile('pending.gpx', personal.replaceAll('48.2', '48.4')));
+  await multi.waitForFunction(() => window.pendingReadStarted === true);
+  await multi.locator('#routeFiles button').first().click();
+  await multi.waitForFunction(() => window.pendingReadFinished === true
+    && document.getElementById('previewBadge').textContent === 'Deine Route');
+  assert.equal(await multi.locator('#routeFiles li').count(), 1, 'Removal supersedes an in-flight file addition');
+  assert.doesNotMatch(await multi.locator('#routeFiles').innerText(), /pending.gpx/);
+  await multi.evaluate(() => { window.restoreFileReader(); delete window.restoreFileReader; });
+  await multi.locator('#contactGpxFile').setInputFiles([inputFile('contact-1.gpx', personal), inputFile(secondName, secondRoute)]);
+  assert.equal(await multi.locator('#contactRouteFiles li').count(), 2);
+  assert.ok(await multi.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Contact file names fit mobile width');
+  await multi.locator('#contactName').fill('Mehrere Etappen');
+  await multi.locator('#contactEmail').fill('etappen@example.invalid');
+  await multi.locator('#contactType').selectOption('individual');
+  await multi.locator('#contactMessage').fill('Bitte beide Etappen auf einem Relief darstellen.');
+  await multi.locator('#contactForm button[type="submit"]').click();
+  await multi.waitForFunction(() => document.getElementById('contactStatus').textContent.includes('wurde gesendet'));
+  assert.equal(contactSubmissions[0].getAll('gpxFiles').length, 2);
+  assert.equal(await contactSubmissions[0].getAll('gpxFiles')[0].text(), personal);
+  assert.equal(await multi.locator('#contactRouteFiles').isHidden(), true);
+  assert.equal(await multi.locator('#routeFiles li').count(), 1, 'Contact submission does not reset the configurator');
+  await multi.close();
+
   const liveShop = await context.newPage();
   liveShop.on('pageerror', error => errors.push(error.message));
   await liveShop.route('**/shop-status', request => request.fulfill({
@@ -600,7 +731,7 @@ try {
   assert.match(await liveShop.locator('#paymentStatus').innerText(), /Wir senden dir und Peak Memory/);
   assert.equal(await liveShop.locator('#paymentStatus strong').innerText(), 'Zahlung bestätigt');
   assert.deepEqual(errors, []);
-  console.log('Browser checks passed: homepage configurator, mobile galleries, inquiry flow, privacy, no WebGL, disabled/test/live checkout UI, final-selection acceptance, idempotent retries, Stripe-only redirects and verified payment return states.');
+  console.log('Browser checks passed: multi-GPX add/remove/drop, atomic errors, mobile file lists, original checkout/contact payloads, homepage configurator, inquiry flow, privacy, no WebGL, disabled/test/live checkout UI, final-selection acceptance, idempotent retries, Stripe-only redirects and verified payment return states.');
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

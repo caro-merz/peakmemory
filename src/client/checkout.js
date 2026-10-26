@@ -8,20 +8,20 @@ export function initializeCheckout({ state, capture, setBusy }) {
   const status = get('checkoutStatus');
   let previousSelection;
   const priceLabel = () => formatPrice(configurationPrice({
-    version: 4, product: get('product').value,
+    version: 5, product: get('product').value,
     wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
   }));
   const buttonLabel = () => `${testMode ? 'Zur Testzahlung bei Stripe' : 'Zahlungspflichtig bestellen'} · ${priceLabel()}`;
   function update() {
     const current = state();
-    const selection = JSON.stringify([current.file?.name, current.summary, current.preview]);
+    const selection = JSON.stringify([current.files.map(file => [file.name, file.size, file.lastModified]), current.summary, current.preview]);
     if (previousSelection !== selection) get('checkoutAcceptance').checked = false;
     previousSelection = selection;
     get('checkoutFields').disabled = submitting || current.busy;
     get('submitCheckout').disabled = !enabled || submitting || current.busy || !current.file
       || current.sample || current.preview !== 'ready' || !current.valid;
     get('checkoutSummary').textContent = current.file
-      ? `${current.file.name}\n${current.summary}\nGesamt: ${priceLabel()} inkl. Versand innerhalb Deutschlands`
+      ? `${current.files.map(file => file.name).join('\n')}\n${current.summary}\nGesamt: ${priceLabel()} inkl. Versand innerhalb Deutschlands`
       : 'Lade zuerst deine eigene GPX-Datei hoch.';
     if (!submitting) get('submitCheckout').textContent = buttonLabel();
   }
@@ -50,7 +50,8 @@ export function initializeCheckout({ state, capture, setBusy }) {
         const body = new FormData();
         body.set('name', name);
         body.set('email', email);
-        body.set('gpxFile', current.file);
+        if (current.files.length === 1) body.set('gpxFile', current.files[0]);
+        else for (const file of current.files) body.append('gpxFiles', file);
         body.set('configuration', JSON.stringify(current.configuration));
         body.set('previewImage', await capture(), 'peakmemory-vorschau.png');
         body.set('submissionKey', crypto.randomUUID());

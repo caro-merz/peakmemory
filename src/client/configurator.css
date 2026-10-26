@@ -35,6 +35,10 @@
 .configurator .dropzone p{font-size:.85rem;margin:12px 0 2px}
 .configurator .dropzone.is-dragover{background:#e4edda;border-color:var(--accent)}
 .configurator .file-name{font-size:.85rem;overflow-wrap:anywhere;margin:12px 0}
+.configurator .route-files{list-style:none;margin:12px 0;padding:0;font-size:.85rem}
+.configurator .route-files li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.configurator .route-files span{min-width:0;overflow-wrap:anywhere}
+.configurator .route-files button{flex-shrink:0}
 .configurator .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .configurator .secondary{background:var(--surface);color:var(--text);font-size:.85rem}
 .configurator .text-button{background:transparent;color:var(--accent);padding-left:8px;padding-right:8px;font-size:.85rem}

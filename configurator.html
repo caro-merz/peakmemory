@@ -27,13 +27,16 @@
         <fieldset id="routeControls" class="card">
           <legend><span class="step">1</span> Deine Route</legend>
           <div id="dropzone" class="dropzone">
-            <label for="gpxFile">GPX-Datei auswählen</label>
-            <input id="gpxFile" type="file" accept=".gpx,application/gpx+xml">
-            <p>Oder eine Datei hierher ziehen.</p>
-            <small>Max. 5 MB · 100.000 Punkte · 100 Abschnitte</small>
+            <label for="gpxFile">GPX-Dateien auswählen oder hinzufügen</label>
+            <input id="gpxFile" type="file" accept=".gpx,application/gpx+xml" multiple aria-describedby="routeLimits">
+            <p>Oder Dateien hierher ziehen.</p>
+            <small id="routeLimits">Bis zu 10 Dateien · zusammen max. 5 MB, 100.000 Punkte und 100 Abschnitte. Auch die kombinierte GPX muss in 5 MB passen.</small>
           </div>
           <p id="fileName" class="file-name" aria-live="polite">Noch keine Route ausgewählt.</p>
-          <div class="actions"><button id="sample" type="button" class="secondary">Beispielroute testen</button><button id="remove" type="button" class="text-button" disabled>Entfernen</button></div>
+          <ul id="routeFiles" class="route-files" aria-label="Ausgewählte GPX-Dateien" hidden></ul>
+          <p id="routeError" class="error file-name" role="status" aria-live="polite"></p>
+          <div class="actions"><button id="sample" type="button" class="secondary">Beispielroute testen</button><button id="remove" type="button" class="text-button" disabled>Alle entfernen</button></div>
+          <p class="hint">Etappen oder Triathlon-Teilstrecken erscheinen gemeinsam auf einem Gelände. Alle Routen bleiben rot, getrennte Abschnitte werden nicht verbunden. Weit entfernte Strecken ergeben weniger Geländedetails. Fehlende GPS-Strecken werden nicht ergänzt.</p>
           <p class="hint">Exportiere deine Tour zum Beispiel aus Komoot, Strava oder Garmin als GPX-Datei.</p>
           <p class="hint"><a href="gpx-hilfe.html" target="_blank" rel="noopener noreferrer">Wie bekomme ich meine GPX-Datei? ↗</a></p>
         </fieldset>
@@ -82,7 +85,7 @@
           <button id="resetView" type="button" class="text-button" disabled>Ansicht zurücksetzen</button><button id="retry" type="button" class="secondary" hidden>Erneut laden</button>
         </div>
         <p id="configurationSummary" class="configuration-summary"></p>
-        <div class="preview-note"><strong>Illustrative Vorschau, kein exaktes Fertigungsbild.</strong><p>Beim Direktkauf gelten deine Route und Einstellungen als final. Die Fertigung beginnt nach bestätigter Zahlung, ohne zusätzliche Vorschau-Freigabe. Prüfe deshalb besonders deine Gravur.</p><details><summary>Maße &amp; Hinweise zur Vorschau</summary><p><span id="productDimensionsNote">10 × 10 cm Relief auf 11 × 13,5 × 2 cm Eiche-Holzsockel.</span> Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Höhen sind <span id="elevationNote">2-fach</span> skaliert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, natürliche Holzmaserung, Rahmenprofil, Passepartout, Gravur und Geländedetails können vom gefertigten Produkt abweichen. Deine unveränderte GPX-Datei wird mit der Bestellung oder Anfrage gesendet.</p></details></div>
+        <div class="preview-note"><strong>Illustrative Vorschau, kein exaktes Fertigungsbild.</strong><p>Beim Direktkauf gelten deine Routen und Einstellungen als final. Die Fertigung beginnt nach bestätigter Zahlung, ohne zusätzliche Vorschau-Freigabe. Prüfe deshalb besonders deine Gravur.</p><details><summary>Maße &amp; Hinweise zur Vorschau</summary><p><span id="productDimensionsNote">10 × 10 cm Relief auf 11 × 13,5 × 2 cm Eiche-Holzsockel.</span> Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Höhen sind <span id="elevationNote">2-fach</span> skaliert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, natürliche Holzmaserung, Rahmenprofil, Passepartout, Gravur und Geländedetails können vom gefertigten Produkt abweichen. Beim Kauf werden alle Original-GPX-Dateien und bei mehreren Dateien zusätzlich eine kombinierte GPX übermittelt. Für eine unverbindliche Anfrage lade deine Dateien im Kontaktformular erneut hoch.</p></details></div>
         <details class="attribution"><summary>Geländedaten &amp; Quellen</summary>
           <p>Mapzen Terrain Tiles, bereitgestellt über das <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener noreferrer">AWS Open Data Programm</a>. <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener noreferrer">Datenquellen und Lizenzhinweise</a>:</p>
           <ul>

@@ -1,5 +1,6 @@
 import './configurator.css';
-import { parseGpx, validateFile } from '../shared/gpx.js';
+import { parseGpx } from '../shared/gpx.js';
+import { readGpxCollection } from '../shared/gpx-collection.js';
 import { parseConfiguration } from '../shared/configuration.js';
 import { terrainPlan } from '../shared/geometry.js';
 import { loadTerrain } from './terrain.js';
@@ -12,6 +13,7 @@ const fileInput = get('gpxFile'), dropzone = get('dropzone');
 const viewButtons = ['resetView'].map(get);
 let file = null, route = null, sample = false, preview = 'unavailable', viewer = null;
 let generation = 0, controller = null, marginTimer = null, sending = false;
+let files = [], selectionRevision = 0, selecting = false;
 let checkout;
 
 function configuration() {
@@ -65,6 +67,7 @@ function updateActions() {
   get('remove').disabled = sending || !route && !file;
   get('retry').hidden = !route || preview !== 'unavailable';
   for (const button of viewButtons) button.disabled = sending || preview !== 'ready';
+  for (const button of get('routeFiles').querySelectorAll('button')) button.disabled = sending;
   checkout?.update();
 }
 function status(message, error = false) {
@@ -82,8 +85,11 @@ function invalidate() {
   return generation;
 }
 function clearRoute(resetPicker = true) {
+  selectionRevision += 1; selecting = false;
   invalidate();
-  file = route = null; sample = false;
+  file = route = null; files = []; sample = false;
+  get('routeError').textContent = '';
+  showFiles();
   if (resetPicker) fileInput.value = '';
   get('fileName').textContent = 'Noch keine Route ausgewählt.';
   get('previewBadge').textContent = 'Noch keine Route';
@@ -127,7 +133,7 @@ async function renderPreview() {
     viewer.show(grid, settings.elevationScale, settings.engraving, true, settings.product, settings.wallMount);
     get('placeholder').hidden = true;
     preview = 'ready';
-    get('previewBadge').textContent = sample ? 'Beispielroute' : 'Deine Route';
+    get('previewBadge').textContent = sample ? 'Beispielroute' : files.length > 1 ? 'Deine Routen' : 'Deine Route';
     status('Deine Gelände-Vorschau ist bereit. Drehe das Relief und gestalte deine Erinnerung.');
   } catch (error) {
     if (generation !== current) return;
@@ -138,28 +144,61 @@ async function renderPreview() {
     if (generation === current) { get('viewer').setAttribute('aria-busy', 'false'); updateActions(); }
   }
 }
-async function selectFile(selected, keepPicker = false) {
-  clearRoute(!keepPicker);
-  const current = generation;
-  if (!selected) return;
+function showFiles() {
+  const list = get('routeFiles');
+  list.replaceChildren();
+  list.hidden = !files.length;
+  for (const [index, source] of files.entries()) {
+    const item = document.createElement('li');
+    const name = document.createElement('span');
+    name.textContent = source.name;
+    const remove = document.createElement('button');
+    remove.type = 'button'; remove.className = 'text-button';
+    remove.textContent = 'Entfernen';
+    remove.setAttribute('aria-label', `${source.name} entfernen`);
+    remove.addEventListener('click', () => {
+      const remaining = files.filter((_, position) => position !== index);
+      if (!remaining.length) {
+        clearRoute();
+        fileInput.focus();
+      } else {
+        selectFiles(remaining, false, true);
+      }
+    });
+    item.append(name, remove); list.append(item);
+  }
+}
+async function selectFiles(selected, append = true, restoreFocus = false) {
+  if (sending || !selected.length) return;
+  const current = ++selectionRevision;
+  selecting = true;
+  get('routeError').textContent = 'Deine GPX-Dateien werden geprüft …';
+  updateActions();
   try {
-    validateFile(selected);
-    status('Deine GPX-Datei wird geprüft …');
-    const parsed = parseGpx(await selected.text());
-    if (generation !== current) return;
-    file = selected; route = parsed;
-    get('fileName').textContent = selected.name;
+    const next = append ? [...files, ...selected] : selected;
+    const collection = await readGpxCollection(next);
+    if (selectionRevision !== current) return;
+    terrainPlan(collection.route, configuration().margin);
+    files = next; route = collection.route; sample = false;
+    file = next.length === 1 ? next[0] : new File([collection.gpx], collection.filename, { type: 'application/gpx+xml' });
+    selecting = false;
+    get('routeError').textContent = '';
+    get('fileName').textContent = files.length === 1 ? files[0].name : `${files.length} von 10 GPX-Dateien ausgewählt.`;
+    showFiles();
+    if (restoreFocus) fileInput.focus();
     await renderPreview();
   } catch (error) {
-    if (generation !== current) return;
-    fileInput.value = '';
-    status(error instanceof Error ? error.message : 'Die Datei konnte nicht gelesen werden.', true);
+    if (selectionRevision !== current) return;
+    get('routeError').textContent = `${error instanceof Error ? error.message : 'Die Dateien konnten nicht gelesen werden.'} Deine bisherige Auswahl bleibt erhalten.`;
+  } finally {
+    if (selectionRevision === current) selecting = false;
     updateActions();
   }
 }
 fileInput.addEventListener('change', () => {
-  if (fileInput.files.length > 1) { clearRoute(); status('Bitte nur eine GPX-Datei auswählen.', true); return; }
-  selectFile(fileInput.files[0], true);
+  const selected = Array.from(fileInput.files);
+  fileInput.value = '';
+  selectFiles(selected);
 });
 for (const event of ['dragenter', 'dragover']) dropzone.addEventListener(event, e => {
   e.preventDefault();
@@ -170,11 +209,11 @@ for (const event of ['dragleave', 'drop']) dropzone.addEventListener(event, e =>
 });
 dropzone.addEventListener('drop', e => {
   if (sending) return;
-  const files = e.dataTransfer?.files;
-  if (!files || files.length !== 1) {
-    clearRoute(); status('Bitte genau eine GPX-Datei hineinziehen.', true); return;
+  const dropped = Array.from(e.dataTransfer?.files || []);
+  if (!dropped.length) {
+    get('routeError').textContent = 'Bitte GPX-Dateien hineinziehen.'; return;
   }
-  selectFile(files[0]);
+  selectFiles(dropped);
 });
 get('sample').addEventListener('click', async () => {
   clearRoute(); sample = true; route = parseGpx(sampleXml);
@@ -224,7 +263,7 @@ window.addEventListener('pagehide', () => { controller?.abort(); viewer?.dispose
 window.addEventListener('pageshow', event => { if (event.persisted && route) renderPreview(); });
 checkout = initializeCheckout({
   state: () => ({
-    file, sample, preview, busy: sending, valid: get('engraving').validity.valid,
+    file, files, sample, preview, busy: sending || selecting, valid: get('engraving').validity.valid,
     configuration: get('engraving').validity.valid ? configuration() : null,
     summary: get('configurationSummary').textContent,
   }),

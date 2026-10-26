@@ -196,13 +196,12 @@ is **5–10 working days after payment**. The captured preview is illustrative, 
 manufacturing template. Acceptance covers these terms and no additional manual
 production approval after payment. Only a verified live payment may trigger
 production-labelled email or internal WhatsApp alert. Sandbox payments never
-send WhatsApp alerts or instruct actual production. Live checkout stays disabled
-until the WhatsApp sender, approved template, API version, and internal recipient
-are configured.
+send WhatsApp alerts or instruct actual production. WhatsApp is optional:
+live checkout and order-confirmation emails work without WhatsApp configuration.
 
 ## Internal WhatsApp production alert
 
-After a verified live payment, the system sends an approved Meta WhatsApp Cloud
+When all WhatsApp settings validate, after a verified live payment the system sends an approved Meta WhatsApp Cloud
 API template to the configured business recipient. The alert contains only the
 order reference, product name, and customer name, with a payment-confirmed /
 start-production notice. It is not sent to the customer and contains no customer
@@ -212,7 +211,7 @@ resending a channel already accepted by its provider. Meta API acceptance is not
 a delivery receipt, and an ambiguous network timeout can result in a duplicate
 message on retry.
 
-Before enabling live checkout:
+Before enabling optional WhatsApp alerts:
 
 1. Provision a WhatsApp Business Platform sender in Meta and create/approve a
    German utility template named `peak_memory_production_alert` with three body
@@ -232,7 +231,9 @@ Before enabling live checkout:
    new orders are marked pending for live notification.
 4. Review and publish the updated privacy notice and confirm Meta's actual
    contracting entity, processing terms, and any required transfer safeguards.
-   Live shop status will remain disabled until the notification settings validate.
+   Without valid WhatsApp settings, alerts are skipped; live checkout, email
+   delivery, and retention cleanup continue normally. Configured alerts retain
+   their independent retry behavior.
 
 Meta may retry an accepted-but-unrecorded message if the network or database
 fails ambiguously. Check the WhatsApp conversation before manually starting
@@ -350,9 +351,9 @@ new payment.
    For a new environment, keep both modes disabled until setup and access-control
    checks pass. Set `CHECKOUT_ORIGIN="https://peak-memory.de"`.
    Install **secrets** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (`whsec_…`)
-   `RESEND_API_KEY`, `WHATSAPP_ACCESS_TOKEN`, and `WHATSAPP_RECIPIENT` with
-   Wrangler/Cloudflare secret management, never in Git. Configure the WhatsApp
-   sender ID and Graph API version as deployment vars.
+   `RESEND_API_KEY` with Wrangler/Cloudflare secret management, never in Git.
+   WhatsApp credentials, sender ID, and Graph API version are optional; see the
+   setup above when enabling internal alerts.
    Existing email addresses are reused:
    `kontakt@peak-memory.de` → owner `peak.memory@web.de`. Buyer confirmation is
    sent to the submitted email. Verify the Resend sending domain and use

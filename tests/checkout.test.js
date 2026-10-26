@@ -1014,14 +1014,30 @@ test('live checkout isolates storage and verifies live-mode webhook before sendi
   assert.equal((await handleOrderStatus(req(`/order-status?mode=test&order=${order.id}&token=${order.status_token}`), context.env)).status, 404);
 });
 
-test('live checkout stays disabled until the internal WhatsApp destination is configured', async () => {
+test('live checkout and paid-order emails work without WhatsApp configuration', async () => {
   const context = configureLive(environment());
-  context.env.WHATSAPP_RECIPIENT = undefined;
-  mockServices();
+  for (const name of ['WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_RECIPIENT', 'WHATSAPP_GRAPH_API_VERSION']) {
+    delete context.env[name];
+  }
+  const services = mockServices();
   assert.deepEqual(await (await handleShopStatus(req('/shop-status'), context.env)).json(),
-    { enabled: false, testMode: false, mode: 'live' });
-  assert.equal((await handleCheckout(checkout(), context.env, 'live')).status, 503);
-  assert.equal(context.live.db.prepare('SELECT count(*) AS count FROM checkout_orders').get().count, 0);
+    { enabled: true, testMode: false, mode: 'live' });
+  const response = await handleCheckout(checkout(), context.env, 'live');
+  assert.equal(response.status, 200);
+  const order = state(context.live, (await response.json()).orderId);
+  const event = eventFor(order, {}, 'checkout.session.completed', true);
+  const options = { mode: 'live', secret: 'whsec_livemock' };
+  assert.equal((await handleStripeWebhook(await webhook(event, options), context.env, 'live')).status, 200);
+  assert.equal(state(context.live, order.id).status, 'paid');
+  assert.equal(services.emails.length, 2);
+  assert.equal(services.whatsapp.length, 0);
+  assert.equal((await handleStripeWebhook(await webhook(event, options), context.env, 'live')).status, 200);
+  await checkoutMaintenance(context.env, 'live');
+  assert.equal(services.emails.length, 2);
+  assert.equal(services.whatsapp.length, 0);
+  Date.now = () => originalNow() + 91 * 86400_000;
+  await checkoutMaintenance(context.env, 'live');
+  assert.equal(state(context.live, order.id).stage, 'purged');
 });
 
 test('WhatsApp failure retries independently without resending accepted emails', async () => {

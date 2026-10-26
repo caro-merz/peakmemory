@@ -47,7 +47,7 @@ export function handleShopStatus(request, env) {
   if (request.method !== 'GET') return Promise.resolve(json({ error: 'Methode nicht erlaubt.' }, 405, { Allow: 'GET' }));
   const testing = modeEnvironment(env, 'test'), live = modeEnvironment(env, 'live');
   const testEnabled = testing.CHECKOUT_ENABLED === 'true' && configured(testing);
-  const liveEnabled = live.CHECKOUT_ENABLED === 'true' && configured(live) && whatsappReady(live);
+  const liveEnabled = live.CHECKOUT_ENABLED === 'true' && configured(live);
   if (testEnabled && liveEnabled) return Promise.resolve(json({ enabled: false, testMode: true, mode: 'test' }));
   if (live.CHECKOUT_ENABLED === 'true') {
     return Promise.resolve(json({ enabled: liveEnabled, testMode: false, mode: 'live' }));
@@ -118,9 +118,6 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
       throw new CheckoutError('Checkout ist deaktiviert oder der Zahlungsmodus ist nicht eindeutig ausgewählt.', 503);
     }
     ready(env);
-    if (mode === 'live' && !whatsappReady(env)) {
-      throw new CheckoutError('WhatsApp-Benachrichtigung ist nicht konfiguriert.', 503);
-    }
     if (request.headers.has('Origin') && request.headers.get('Origin') !== trustedOrigin(env)) {
       throw new CheckoutError('Ungültiger Ursprung.', 403);
     }
@@ -247,7 +244,8 @@ export function handleStripeWebhook(request, sourceEnv, mode = 'test') {
   });
 }
 async function notify(env, order) {
-  if (order.owner_sent && order.buyer_sent && (order.mode !== 'live' || order.whatsapp_sent)) return;
+  if (order.owner_sent && order.buyer_sent
+    && (order.mode !== 'live' || !whatsappReady(env) || order.whatsapp_sent)) return;
   const lease = crypto.randomUUID();
   if (!changed(await run(env, `UPDATE checkout_orders SET notify_lease=?,notify_until=? WHERE id=? AND status='paid'
     AND stage IN ('ready','session') AND notify_until<?`, lease, now() + 120, order.id, now()))) {
@@ -257,7 +255,7 @@ async function notify(env, order) {
     order = { ...await first(env, 'SELECT * FROM checkout_orders WHERE id=?', order.id), mode: order.mode };
     const details = JSON.parse(order.shipping);
     let whatsappFailure;
-    if (order.mode === 'live' && !order.whatsapp_sent) {
+    if (order.mode === 'live' && whatsappReady(env) && !order.whatsapp_sent) {
       try {
         await sendProductionAlert(env, order);
         if (!changed(await run(env, `UPDATE checkout_orders SET whatsapp_sent=1
@@ -355,11 +353,12 @@ export async function checkoutMaintenance(sourceEnv, mode = 'test') {
   const env = modeEnvironment(sourceEnv, mode);
   if (!env.CHECKOUT_DB || !env.CHECKOUT_FILES) return;
   const timestamp = now();
+  const alertMode = mode === 'live' && whatsappReady(env) ? 'live' : 'test';
   const orders = await guarded(() => statement(env, `SELECT * FROM checkout_orders WHERE stage!='deleting'
     AND ((status='paid' AND (owner_sent=0 OR buyer_sent=0 OR (?='live' AND whatsapp_sent=0))
       AND notify_after<=? AND notify_until<?)
     OR (stage='ready' AND session_url IS NULL AND created_at>? AND lease_until<?))
-    ORDER BY created_at LIMIT 25`, mode, timestamp, timestamp, timestamp - 23 * 3600, timestamp).all());
+    ORDER BY created_at LIMIT 25`, alertMode, timestamp, timestamp, timestamp - 23 * 3600, timestamp).all());
   for (const order of orders.results) {
     try {
       if (!configured(env)) continue;
@@ -379,7 +378,7 @@ export async function checkoutMaintenance(sourceEnv, mode = 'test') {
     (stage='deleting' OR (status!='paid' AND created_at<?) OR (status='paid' AND paid_at<? AND owner_sent=1 AND buyer_sent=1
       AND (? != 'live' OR whatsapp_sent=1)))
     AND lease_until<? AND notify_until<? LIMIT 25`, timestamp - 7 * 86400, timestamp - 90 * 86400,
-  mode, timestamp, timestamp).all());
+  alertMode, timestamp, timestamp).all());
   for (const order of abandoned.results) {
     const lease = crypto.randomUUID();
     // Claim before touching R2. Webhooks and creators cannot transition a deleting order.
@@ -387,7 +386,7 @@ export async function checkoutMaintenance(sourceEnv, mode = 'test') {
       WHERE id=? AND stage!='purged' AND lease_until<? AND notify_until<? AND
       (stage='deleting' OR (status!='paid' AND created_at<?) OR (status='paid' AND paid_at<? AND owner_sent=1 AND buyer_sent=1
         AND (? != 'live' OR whatsapp_sent=1)))`,
-    lease, now() + 120, order.id, now(), now(), timestamp - 7 * 86400, timestamp - 90 * 86400, mode))) continue;
+    lease, now() + 120, order.id, now(), now(), timestamp - 7 * 86400, timestamp - 90 * 86400, alertMode))) continue;
     try {
       await guarded(() => env.CHECKOUT_FILES.delete([
         ...originalArtifacts(order).map(artifact => artifact.key), order.gpx_key, order.preview_key,

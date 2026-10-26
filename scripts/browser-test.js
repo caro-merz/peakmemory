@@ -1,33 +1,16 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
-import { deflateSync } from 'node:zlib';
+import sharp from 'sharp';
 import { startDevServer } from './dev.js';
 
-function crc32(buffer) {
-  let crc = 0xffffffff;
-  for (const byte of buffer) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+async function terrainWebp() {
+  const size = 512, pixels = Buffer.alloc(size * size * 3);
+  for (let y = 0; y < size; y += 1) for (let x = 0; x < size; x += 1) {
+    const offset = (y * size + x) * 3;
+    pixels[offset] = 128; pixels[offset + 1] = 100 + Math.floor((x + y) / 8);
   }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-function chunk(type, data) {
-  const name = Buffer.from(type);
-  const length = Buffer.alloc(4), crc = Buffer.alloc(4);
-  length.writeUInt32BE(data.length); crc.writeUInt32BE(crc32(Buffer.concat([name, data])));
-  return Buffer.concat([length, name, data, crc]);
-}
-function terrainPng() {
-  const header = Buffer.alloc(13);
-  header.writeUInt32BE(256, 0); header.writeUInt32BE(256, 4);
-  header[8] = 8; header[9] = 2;
-  const rows = Buffer.alloc(256 * (256 * 3 + 1));
-  for (let y = 0; y < 256; y += 1) for (let x = 0; x < 256; x += 1) {
-    const offset = y * (256 * 3 + 1) + 1 + x * 3;
-    rows[offset] = 128; rows[offset + 1] = 100 + Math.floor((x + y) / 8); rows[offset + 2] = 0;
-  }
-  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),
-    chunk('IHDR', header), chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]);
+  return sharp(pixels, { raw: { width: size, height: size, channels: 3 } })
+    .webp({ lossless: true }).toBuffer();
 }
 
 const server = await startDevServer(0);
@@ -72,7 +55,7 @@ try {
     }
   });
   page.on('pageerror', error => errors.push(error.message));
-  const png = terrainPng();
+  const webp = await terrainWebp();
   let terrainFailure = false, terrainOffline = false, terrainDelay = 0, terrainRequests = 0;
   await page.route('**/shop-status', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":false,"testMode":true,"mode":"test"}',
@@ -83,7 +66,7 @@ try {
     if (terrainDelay) await new Promise(resolve => setTimeout(resolve, terrainDelay));
     await request.fulfill(terrainFailure
       ? {status:502,contentType:'application/json',body:'{"error":"unavailable"}'}
-      : {status:200,contentType:'image/png',body:png});
+      : {status:200,contentType:'image/webp',body:webp});
   });
   await page.route('**/contact', async request => {
     await request.fulfill({status:200,contentType:'application/json',body:'{"ok":true}'});
@@ -405,7 +388,7 @@ try {
   await noWebgl.route('**/shop-status', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
   }));
-  await noWebgl.route('**/terrain/**', request => request.fulfill({status:200,contentType:'image/png',body:png}));
+  await noWebgl.route('**/terrain/**', request => request.fulfill({status:200,contentType:'image/webp',body:webp}));
   await noWebgl.goto(url + '/configurator.html');
   await noWebgl.locator('#gpxFile').setInputFiles({name:'valid.gpx',mimeType:'application/gpx+xml',buffer:Buffer.from(personal)});
   await noWebgl.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Nicht verfügbar');
@@ -443,7 +426,7 @@ try {
   await shop.route('**/shop-status', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
   }));
-  await shop.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/png', body: png }));
+  await shop.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/webp', body: webp }));
   let checkoutAttempt = 0;
   const checkoutSubmissions = [];
   await shop.route('**/checkout', async request => {
@@ -541,7 +524,7 @@ try {
   await variants.route('**/shop-status', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
   }));
-  await variants.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/png', body: png }));
+  await variants.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/webp', body: webp }));
   const variantSubmissions = [];
   await variants.route('**/checkout', async request => {
     const body = await new Response(request.request().postDataBuffer(), {
@@ -579,7 +562,7 @@ try {
   await multi.route('**/shop-status', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
   }));
-  await multi.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/png', body: png }));
+  await multi.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/webp', body: webp }));
   const secondRoute = personal.replaceAll('48.2', '48.3');
   const secondName = 'tag-2-mit-einem-sehr-langen-streckennamen-fuer-die-mobile-dateiliste.gpx';
   const inputFile = (name, text) => ({ name, mimeType: 'application/gpx+xml', buffer: Buffer.from(text) });
@@ -695,7 +678,7 @@ try {
   await liveShop.route('**/shop-status', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":false,"mode":"live"}',
   }));
-  await liveShop.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/png', body: png }));
+  await liveShop.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/webp', body: webp }));
   let liveCheckoutMode = null;
   await liveShop.route('**/checkout/live', async request => {
     liveCheckoutMode = new URL(request.request().url()).pathname;

@@ -278,7 +278,10 @@ schützt diese alternativen Zugänge nicht.
   Web-Mercator-Abdeckung werden ausdrücklich abgelehnt.
 - Antimeridian-Routen verwenden gewrappte Kacheln.
 - Pro Vorschau maximal 16 Kacheln, vier parallele Downloads, Zoom 0-14,
-  ein 129 × 129 Geländeraster und maximal 12.000 dargestellte Routenpunkte.
+  ein 513 × 513 Geländeraster (524.288 Oberflächen-Dreiecke, viermal so viele
+  wie beim 257 × 257 Raster) und maximal 12.000 dargestellte Routenpunkte.
+  Das dichtere Raster erhält mehr Details der Mapterhorn-Kacheln ohne zusätzliche
+  Downloads; es erhöht nicht die regionale Auflösung der ursprünglichen Höhendaten.
 - Sehr komplexe Routen werden nur für die Darstellung vereinfacht. Die
   Originaldatei wird unverändert angehängt. Zu komplexe Darstellungen oder
   fehlende Geländedaten werden als nicht verfügbar angezeigt.
@@ -342,23 +345,21 @@ informationen für personalisierte Produkte, Lieferbedingungen, Datenschutz,
 steuerliche Angaben und der finale zahlungspflichtige Bestellschritt rechtlich
 geprüft werden. Der Testmodus ist keine rechtliche Freigabe eines Live-Shops.
 
-Geländekacheln werden über `/terrain/{z}/{x}/{y}.png` von einem fest vorgegebenen
-AWS-Endpunkt abgerufen und gecacht. Die Kacheladressen geben die ungefähre
+Geländekacheln werden über `/terrain/{z}/{x}/{y}.webp` vom fest vorgegebenen
+Mapterhorn-Endpunkt abgerufen und gecacht. Die 512 × 512 Pixel WebP-Kacheln
+verwenden verlustfreie Terrarium-Höhencodierung. Die Kacheladressen geben die ungefähre
 Region preis; weder die vollständige GPX-Datei noch die Besucher-IP wird
 gezielt an den Geländeprovider weitergereicht. Cloudflare sieht die
 Besucher-IP und nutzt sie für den kurzlebigen Limiter. Route-Inhalte nicht
 in Logs schreiben.
 
-- [Terrain Tiles im AWS Open Data Programm](https://registry.opendata.aws/terrain-tiles/)
-- [Terrarium-Format](https://github.com/tilezen/joerd/blob/master/docs/formats.md)
-- [Quellen und erforderliche Attribution](https://github.com/tilezen/joerd/blob/master/docs/attribution.md)
+- [Mapterhorn Data Access](https://mapterhorn.com/data-access/)
+- [Mapterhorn Attribution](https://mapterhorn.com/attribution)
+- [Mapterhorn TileJSON](https://tiles.mapterhorn.com/tilejson.json)
 
-Die aktuelle Quelle ist
-`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/...`.
-Die im Register genannte EU-Replik lieferte beim Prüfen 403 und wird nicht
-als Standard verwendet. Auflösung und Verfügbarkeit variieren; keine
+Auflösung und Verfügbarkeit variieren; keine
 Verfügbarkeitsgarantie oder LiDAR-/Produktionsgenauigkeit behaupten.
-Die vollständigen Terrain-Credits stehen im Konfigurator; lokal gebündelte
+Die Terrain-Credits und Datenquellen stehen im Konfigurator; lokal gebündelte
 Software-Lizenzen werden nach `assets/licenses.txt` geschrieben.
 
 Vor Veröffentlichung die Datenlizenzen, Cache-Regeln, produktive

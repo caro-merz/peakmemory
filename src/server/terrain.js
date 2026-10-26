@@ -1,8 +1,7 @@
 export const TERRAIN_TIMEOUT_MS = 8000;
 export const TERRAIN_CACHE_TTL = 86400;
 export const MAX_TILE_SIZE = 1024 * 1024;
-const UPSTREAM = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium';
-const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
+const UPSTREAM = 'https://tiles.mapterhorn.com';
 
 function errorResponse(message, status, headers = {}) {
   return new Response(JSON.stringify({ error: message }), {
@@ -14,8 +13,8 @@ function errorResponse(message, status, headers = {}) {
 async function readTile(response) {
   const contentType = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
   const length = response.headers.get('content-length');
-  if (contentType !== 'image/png' || (length !== null && (!/^\d+$/.test(length)
-    || Number(length) < 33 || Number(length) > MAX_TILE_SIZE)) || !response.body) {
+  if (contentType !== 'image/webp' || (length !== null && (!/^\d+$/.test(length)
+    || Number(length) < 26 || Number(length) > MAX_TILE_SIZE)) || !response.body) {
     await response.body?.cancel();
     throw new Error('Ungültige Geländedaten.');
   }
@@ -42,25 +41,33 @@ async function readTile(response) {
     bytes.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  if (size < 33 || PNG_SIGNATURE.some((byte, index) => bytes[index] !== byte)
-    || (length !== null && Number(length) !== size)) throw new Error('Ungültige Geländedaten.');
+  if (size < 26 || (length !== null && Number(length) !== size)) throw new Error('Ungültige Geländedaten.');
   const view = new DataView(bytes.buffer);
-  if (view.getUint32(8) !== 13 || String.fromCharCode(...bytes.subarray(12, 16)) !== 'IHDR'
-    || view.getUint32(16) !== 256 || view.getUint32(20) !== 256
-    || bytes[24] !== 8 || ![2, 6].includes(bytes[25])) throw new Error('Ungültige Geländedaten.');
+  const chunkSize = view.getUint32(16, true);
+  const dimensions = view.getUint32(21, true);
+  if (String.fromCharCode(...bytes.subarray(0, 4)) !== 'RIFF'
+    || view.getUint32(4, true) !== size - 8
+    || String.fromCharCode(...bytes.subarray(8, 12)) !== 'WEBP'
+    || String.fromCharCode(...bytes.subarray(12, 16)) !== 'VP8L'
+    || bytes[20] !== 0x2f
+    || 20 + chunkSize + (chunkSize % 2) !== size
+    || (dimensions & 0x3fff) + 1 !== 512
+    || ((dimensions >>> 14) & 0x3fff) + 1 !== 512) {
+    throw new Error('Ungültige Geländedaten.');
+  }
   return bytes;
 }
 
 export async function handleTerrain(request, env = {}, context) {
   if (request.method !== 'GET') return errorResponse('Methode nicht erlaubt.', 405, { Allow: 'GET' });
   const url = new URL(request.url);
-  const match = /^\/terrain\/(0|[1-9]\d?)\/(0|[1-9]\d{0,4})\/(0|[1-9]\d{0,4})\.png$/.exec(url.pathname);
+  const match = /^\/terrain\/(0|[1-9]\d?)\/(0|[1-9]\d{0,4})\/(0|[1-9]\d{0,4})\.webp$/.exec(url.pathname);
   if (!match || url.search) return errorResponse('Ungültige Geländekachel.', 400);
   const [z, x, y] = match.slice(1).map(Number);
   if (z > 14 || x >= 2 ** z || y >= 2 ** z) return errorResponse('Ungültige Geländekachel.', 400);
 
   const cache = globalThis.caches?.default;
-  const cacheKey = new Request(`${url.origin}/terrain/${z}/${x}/${y}.png`, { method: 'GET' });
+  const cacheKey = new Request(`${url.origin}/terrain/${z}/${x}/${y}.webp`, { method: 'GET' });
   if (cache) {
     try {
       const cached = await cache.match(cacheKey);
@@ -88,8 +95,8 @@ export async function handleTerrain(request, env = {}, context) {
   const timer = setTimeout(() => controller.abort(), TERRAIN_TIMEOUT_MS);
   let bytes;
   try {
-    const response = await fetch(`${UPSTREAM}/${z}/${x}/${y}.png`, {
-      signal: controller.signal, redirect: 'manual', headers: { Accept: 'image/png' },
+    const response = await fetch(`${UPSTREAM}/${z}/${x}/${y}.webp`, {
+      signal: controller.signal, redirect: 'manual', headers: { Accept: 'image/webp' },
     });
     if (!response.ok) {
       await response.body?.cancel();
@@ -105,7 +112,7 @@ export async function handleTerrain(request, env = {}, context) {
   }
   const response = new Response(bytes, {
     headers: {
-      'Content-Type': 'image/png', 'Content-Length': String(bytes.length),
+      'Content-Type': 'image/webp', 'Content-Length': String(bytes.length),
       'Cache-Control': `public, max-age=${TERRAIN_CACHE_TTL}`,
       'X-Content-Type-Options': 'nosniff',
     },

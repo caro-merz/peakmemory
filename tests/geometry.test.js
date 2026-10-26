@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { terrainPlan, terrainGrid, sampleTiles, decodeHeight, surfaceHeight, routePaths, GRID_SIZE, MAX_TILES, MAX_DRAW_POINTS } from '../src/shared/geometry.js';
+import { terrainPlan, terrainGrid, sampleTiles, decodeHeight, surfaceHeight, routePaths, GRID_SIZE, MAX_TILES, MAX_DRAW_POINTS, TERRAIN_TILE_SIZE } from '../src/shared/geometry.js';
 
 const route = {segments: [[{lat:48.1,lon:9.1}, {lat:48.12,lon:9.14}]]};
 function fixture(plan) {
   const tiles = new Map();
   for (const tile of plan.tiles) {
-    const rgba = new Uint8ClampedArray(256 * 256 * 4);
+    const rgba = new Uint8ClampedArray(TERRAIN_TILE_SIZE * TERRAIN_TILE_SIZE * 4);
     for (let index = 0; index < rgba.length; index += 4) {
       rgba[index] = 128; rgba[index + 1] = 100; rgba[index + 2] = 128; rgba[index + 3] = 255;
     }
@@ -23,17 +23,17 @@ test('bilinear heights interpolate continuously across tile seams', () => {
   const plan = {zoom:1, tileBounds:{x0:0,x1:1,y0:0,y1:0}};
   const tiles = new Map();
   for (const tileX of [0,1]) {
-    const rgba = new Uint8ClampedArray(256 * 256 * 4);
-    for (let y = 0; y < 256; y += 1) for (let x = 0; x < 256; x += 1) {
-      const height = tileX * 256 + x;
-      const offset = (y * 256 + x) * 4;
+    const rgba = new Uint8ClampedArray(TERRAIN_TILE_SIZE * TERRAIN_TILE_SIZE * 4);
+    for (let y = 0; y < TERRAIN_TILE_SIZE; y += 1) for (let x = 0; x < TERRAIN_TILE_SIZE; x += 1) {
+      const height = tileX * TERRAIN_TILE_SIZE + x;
+      const offset = (y * TERRAIN_TILE_SIZE + x) * 4;
       rgba[offset] = 128 + Math.floor(height / 256);
       rgba[offset + 1] = height % 256; rgba[offset + 3] = 255;
     }
     tiles.set(`${tileX},0`,rgba);
   }
-  for (const pixel of [254.9,255.2,255.5,255.9,256.1]) {
-    assert.ok(Math.abs(sampleTiles(plan,tiles,(pixel+0.5)/512,0.1) - pixel) < 1e-10);
+  for (const pixel of [510.9,511.2,511.5,511.9,512.1]) {
+    assert.ok(Math.abs(sampleTiles(plan,tiles,(pixel+0.5)/(TERRAIN_TILE_SIZE * 2),0.1) - pixel) < 1e-10);
   }
 });
 test('margin contains route; budgets and fixed grid are bounded', () => {
@@ -50,6 +50,27 @@ test('margin contains route; budgets and fixed grid are bounded', () => {
     assert.equal(surfaceHeight(grid, 0.4, 0.6), 0.045);
     assert.ok(routePaths(grid).flat().length <= MAX_DRAW_POINTS);
   }
+});
+test('detail grid preserves narrow ridges missed by the previous 257-point grid', () => {
+  assert.equal(GRID_SIZE, 513);
+  assert.equal(2 * (GRID_SIZE - 1) ** 2, 524288);
+  const pixels = new Uint8ClampedArray(TERRAIN_TILE_SIZE ** 2 * 4);
+  for (let y = 0; y < TERRAIN_TILE_SIZE; y += 1) for (let x = 0; x < TERRAIN_TILE_SIZE; x += 1) {
+    const height = x === 129 ? 300 : 100;
+    const offset = (y * TERRAIN_TILE_SIZE + x) * 4;
+    pixels[offset] = 128 + Math.floor(height / 256);
+    pixels[offset + 1] = height % 256;
+    pixels[offset + 3] = 255;
+  }
+  const grid = terrainGrid({
+    zoom: 0, left: 0.5 / TERRAIN_TILE_SIZE, top: 0.5 / TERRAIN_TILE_SIZE,
+    size: 1, groundWidth: 1000,
+    tiles: [{ x: 0, y: 0 }], coordinates: [],
+  }, new Map([['0,0', pixels]]));
+  assert.equal(grid.heights[129], 300);
+  assert.equal(grid.heights[128], 100);
+  assert.equal(grid.heights[130], 100);
+  assert.equal(surfaceHeight(grid, 129 / (GRID_SIZE - 1), 0), 0.445);
 });
 test('antimeridian routes use nearby wrapped tiles rather than the whole world', () => {
   const plan = terrainPlan({segments:[[{lat:0,lon:179.9},{lat:0.1,lon:-179.9}]]}, 0.1);
@@ -70,7 +91,7 @@ test('route heights follow triangulated surface and separate tracks remain separ
   grid.heights[GRID_SIZE] = 130;
   grid.heights[GRID_SIZE + 1] = 300;
   const scale = 2 / grid.plan.groundWidth;
-  assert.ok(Math.abs(surfaceHeight(grid, 0.25/128, 0.25/128) - (0.045 + (117.5-grid.minimum)*scale)) < 1e-7);
+  assert.ok(Math.abs(surfaceHeight(grid, 0.25/(GRID_SIZE - 1), 0.25/(GRID_SIZE - 1)) - (0.045 + (117.5-grid.minimum)*scale)) < 1e-7);
   assert.equal(routePaths(grid).length, 2);
 });
 test('every linear route portion stays above its triangulated terrain', () => {

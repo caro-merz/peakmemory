@@ -41,7 +41,7 @@ function collectionContact(files, overrides = {}, configure) {
   configure?.(form);
   return new Request('https://peak-memory.de/contact', { method: 'POST', body: form });
 }
-function tile(path = '/terrain/5/16/10.png', options) {
+function tile(path = '/terrain/5/16/10.webp', options) {
   return new Request(`https://peak-memory.de${path}`, options);
 }
 function png() {
@@ -55,6 +55,21 @@ function png() {
   bytes[24] = 8;
   bytes[25] = 2;
   return bytes;
+}
+function webp(width = 512, height = 512, chunk = 'VP8L') {
+  const bytes = new Uint8Array(26);
+  bytes.set([82, 73, 70, 70]);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(4, bytes.length - 8, true);
+  bytes.set([87, 69, 66, 80], 8);
+  bytes.set([...chunk].map(character => character.charCodeAt(0)), 12);
+  view.setUint32(16, 5, true);
+  bytes[20] = 0x2f;
+  view.setUint32(21, (width - 1) | ((height - 1) << 14), true);
+  return bytes;
+}
+function webpResponse(bytes = webp(), headers = {}) {
+  return new Response(bytes, { headers: { 'Content-Type': 'image/webp', ...headers } });
 }
 function pngResponse(bytes = png(), headers = {}) {
   return new Response(bytes, { headers: { 'Content-Type': 'image/png', ...headers } });
@@ -414,28 +429,28 @@ test('contact missing secret and unsupported method never fetch', async () => {
   assert.equal(response.headers.get('Allow'), 'POST');
 });
 
-test('terrain fetch uses fixed upstream, verifies PNG and sets cache headers', async () => {
+test('terrain fetch uses fixed Mapterhorn upstream, verifies lossless WebP and sets cache headers', async () => {
   globalThis.fetch = async (url, options) => {
-    assert.equal(url, 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/5/16/10.png');
+    assert.equal(url, 'https://tiles.mapterhorn.com/5/16/10.webp');
     assert.equal(options.redirect, 'manual');
-    assert.equal(options.headers.Accept, 'image/png');
-    return pngResponse();
+    assert.equal(options.headers.Accept, 'image/webp');
+    return webpResponse();
   };
   const response = await handleTerrain(tile());
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get('Content-Type'), 'image/png');
+  assert.equal(response.headers.get('Content-Type'), 'image/webp');
   assert.equal(response.headers.get('Cache-Control'), `public, max-age=${TERRAIN_CACHE_TTL}`);
   assert.equal(response.headers.get('X-Content-Type-Options'), 'nosniff');
-  assert.deepEqual(new Uint8Array(await response.arrayBuffer()), png());
+  assert.deepEqual(new Uint8Array(await response.arrayBuffer()), webp());
 });
 
 test('terrain rejects invalid coordinates, queries, arbitrary URLs and methods before fetch', async () => {
   globalThis.fetch = () => assert.fail('Must not proxy invalid inputs');
   for (const path of [
-    '/terrain', '/terrain/15/0/0.png', '/terrain/-1/0/0.png', '/terrain/1/2/0.png',
-    '/terrain/1/0/2.png', '/terrain/1/0/0.5.png', '/terrain/01/0/0.png',
-    '/terrain/0/0/0.jpg', '/terrain/0/0/0.png?url=https://evil.example/',
-    '/terrain/https://evil.example/x.png', '/terrain/14/16384/0.png', '/terrain/14/0/16384.png',
+    '/terrain', '/terrain/15/0/0.webp', '/terrain/-1/0/0.webp', '/terrain/1/2/0.webp',
+    '/terrain/1/0/2.webp', '/terrain/1/0/0.5.webp', '/terrain/01/0/0.webp',
+    '/terrain/0/0/0.png', '/terrain/0/0/0.webp?url=https://evil.example/',
+    '/terrain/https://evil.example/x.webp', '/terrain/14/16384/0.webp', '/terrain/14/0/16384.webp',
   ]) assert.equal((await handleTerrain(tile(path))).status, 400, path);
   const response = await handleTerrain(tile(undefined, { method: 'POST' }));
   assert.equal(response.status, 405);
@@ -443,8 +458,8 @@ test('terrain rejects invalid coordinates, queries, arbitrary URLs and methods b
 });
 
 test('terrain accepts zoom and tile coordinate bounds', async () => {
-  globalThis.fetch = async () => pngResponse();
-  for (const path of ['/terrain/0/0/0.png', '/terrain/14/16383/16383.png']) {
+  globalThis.fetch = async () => webpResponse();
+  for (const path of ['/terrain/0/0/0.webp', '/terrain/14/16383/16383.webp']) {
     assert.equal((await handleTerrain(tile(path))).status, 200);
   }
 });
@@ -463,7 +478,7 @@ test('cache hit avoids rate limiter and provider; cache miss writes using waitUn
     limiterCalls++;
     return { success: true };
   } } };
-  globalThis.fetch = async () => { fetchCalls++; return pngResponse(); };
+  globalThis.fetch = async () => { fetchCalls++; return webpResponse(); };
   const pending = [];
   const context = { waitUntil: promise => pending.push(promise) };
   const request = tile(undefined, { headers: { 'CF-Connecting-IP': '192.0.2.42' } });
@@ -499,7 +514,7 @@ test('cache outages do not break valid terrain responses', async () => {
     match: async () => { throw new Error('cache read outage'); },
     put: () => { throw new Error('cache write outage'); },
   } };
-  globalThis.fetch = async () => pngResponse();
+  globalThis.fetch = async () => webpResponse();
   assert.equal((await handleTerrain(tile())).status, 200);
   assert.deepEqual(logged, [
     ['Terrain cache read failure', 'Error'],
@@ -522,19 +537,20 @@ test('terrain provider HTTP and network failures remain errors, never cached', a
   assert.equal((await handleTerrain(tile())).status, 504);
 });
 
-test('terrain rejects invalid content, PNG signature, tile dimensions and size bounds', async () => {
-  const wrongSignature = png();
+test('terrain rejects invalid content, WebP format, tile dimensions and size bounds', async () => {
+  const wrongSignature = webp();
   wrongSignature[0] = 0;
-  const wrongDimensions = png();
-  new DataView(wrongDimensions.buffer).setUint32(16, 1);
+  const wrongDimensions = webp(256, 256);
+  const lossyTile = webp(512, 512, 'VP8 ');
   const responses = [
     new Response('html', { headers: { 'Content-Type': 'text/html' } }),
-    pngResponse(new Uint8Array(32)), pngResponse(wrongSignature), pngResponse(wrongDimensions),
-    pngResponse(png(), { 'Content-Length': String(MAX_TILE_SIZE + 1) }),
-    pngResponse(png(), { 'Content-Length': '32' }),
-    pngResponse(png(), { 'Content-Length': '63' }),
-    pngResponse(new Uint8Array(MAX_TILE_SIZE + 1)),
-    pngResponse(png(), { 'Content-Length': 'not-a-number' }),
+    webpResponse(new Uint8Array(25)), webpResponse(wrongSignature), webpResponse(wrongDimensions),
+    webpResponse(lossyTile),
+    webpResponse(webp(), { 'Content-Length': String(MAX_TILE_SIZE + 1) }),
+    webpResponse(webp(), { 'Content-Length': '25' }),
+    webpResponse(webp(), { 'Content-Length': '27' }),
+    webpResponse(new Uint8Array(MAX_TILE_SIZE + 1)),
+    webpResponse(webp(), { 'Content-Length': 'not-a-number' }),
   ];
   for (const response of responses) {
     globalThis.fetch = async () => response;
@@ -546,7 +562,7 @@ test('Worker and Pages both route through the shared handlers', async () => {
   captureMail();
   assert.equal((await worker.fetch(contact(), env, {})).status, 200);
   assert.equal((await pagesContact({ request: contact(), env })).status, 200);
-  globalThis.fetch = async () => pngResponse();
+  globalThis.fetch = async () => webpResponse();
   assert.equal((await worker.fetch(tile(), {}, {})).status, 200);
   assert.equal((await pagesTerrain({ request: tile(), env: {} })).status, 200);
   assert.equal((await worker.fetch(tile('/terrain/nope'), {}, {})).status, 400);

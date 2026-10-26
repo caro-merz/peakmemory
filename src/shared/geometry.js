@@ -1,7 +1,8 @@
-export const GRID_SIZE = 129;
+export const GRID_SIZE = 513;
 export const MAX_TILES = 16;
 export const MAX_DRAW_POINTS = 12000;
 export const DEFAULT_ELEVATION_SCALE = 2;
+export const TERRAIN_TILE_SIZE = 512;
 const EARTH_CIRCUMFERENCE = 40075016.686;
 
 export function project({ lat, lon }) {
@@ -54,11 +55,11 @@ export const decodeHeight = (red, green, blue) => red * 256 + green + blue / 256
 export function sampleTiles(plan, tiles, x, y) {
   const scale = 2 ** plan.zoom;
   // Pixels encode heights at their centers. Interpolation crosses tile boundaries.
-  const px = x * scale * 256 - 0.5;
-  const py = y * scale * 256 - 0.5;
+  const px = x * scale * TERRAIN_TILE_SIZE - 0.5;
+  const py = y * scale * TERRAIN_TILE_SIZE - 0.5;
   const ix = Math.floor(px), iy = Math.floor(py);
   function height(pixelX, pixelY) {
-    const tx = Math.floor(pixelX / 256), ty = Math.floor(pixelY / 256);
+    const tx = Math.floor(pixelX / TERRAIN_TILE_SIZE), ty = Math.floor(pixelY / TERRAIN_TILE_SIZE);
     const tile = tiles.get(`${tx},${ty}`);
     if (!tile) {
       // At a requested outer edge, use the closest available pixel, never invented terrain.
@@ -66,12 +67,13 @@ export function sampleTiles(plan, tiles, x, y) {
       const nearestY = Math.max(plan.tileBounds.y0, Math.min(plan.tileBounds.y1, ty));
       const edge = tiles.get(`${nearestX},${nearestY}`);
       if (!edge) throw new Error('Unvollständige Geländedaten.');
-      const localX = Math.max(0, Math.min(255, pixelX - nearestX * 256));
-      const localY = Math.max(0, Math.min(255, pixelY - nearestY * 256));
-      const offset = (localY * 256 + localX) * 4;
+      const localX = Math.max(0, Math.min(TERRAIN_TILE_SIZE - 1, pixelX - nearestX * TERRAIN_TILE_SIZE));
+      const localY = Math.max(0, Math.min(TERRAIN_TILE_SIZE - 1, pixelY - nearestY * TERRAIN_TILE_SIZE));
+      const offset = (localY * TERRAIN_TILE_SIZE + localX) * 4;
       return decodeHeight(edge[offset], edge[offset + 1], edge[offset + 2]);
     }
-    const offset = ((pixelY - ty * 256) * 256 + pixelX - tx * 256) * 4;
+    const offset = ((pixelY - ty * TERRAIN_TILE_SIZE) * TERRAIN_TILE_SIZE
+      + pixelX - tx * TERRAIN_TILE_SIZE) * 4;
     return decodeHeight(tile[offset], tile[offset + 1], tile[offset + 2]);
   }
   const fx = px - ix, fy = py - iy;

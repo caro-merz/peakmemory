@@ -1,4 +1,4 @@
-import { terrainGrid } from '../shared/geometry.js';
+import { TERRAIN_TILE_SIZE, terrainGrid } from '../shared/geometry.js';
 
 export async function loadTerrain(plan, signal) {
   const tiles = new Map();
@@ -8,7 +8,7 @@ export async function loadTerrain(plan, signal) {
       const tile = plan.tiles[cursor++];
       let response;
       try {
-        response = await fetch(`/terrain/${tile.zoom}/${tile.wrappedX}/${tile.y}.png`, { signal });
+        response = await fetch(`/terrain/${tile.zoom}/${tile.wrappedX}/${tile.y}.webp`, { signal });
       } catch (error) {
         signal.throwIfAborted();
         console.error('Terrain connection failed', error instanceof Error ? error.name : 'UnknownError');
@@ -19,20 +19,22 @@ export async function loadTerrain(plan, signal) {
           ? 'Zu viele Gelände-Anfragen. Bitte warte eine Minute und versuche es erneut.'
           : 'Das Gelände konnte nicht geladen werden. Bitte versuche es erneut oder sende deine Anfrage ohne Vorschau.');
       }
-      if (!response.headers.get('content-type')?.includes('image/png')) {
+      if (!response.headers.get('content-type')?.includes('image/webp')) {
         throw new Error('Der Server liefert keine gültigen Geländedaten.');
       }
       const bitmap = await createImageBitmap(await response.blob(), {
         colorSpaceConversion: 'none', premultiplyAlpha: 'none',
       });
       try {
-        if (bitmap.width !== 256 || bitmap.height !== 256) throw new Error('Unerwartetes Format der Geländedaten.');
+        if (bitmap.width !== TERRAIN_TILE_SIZE || bitmap.height !== TERRAIN_TILE_SIZE) {
+          throw new Error('Unerwartetes Format der Geländedaten.');
+        }
         const canvas = document.createElement('canvas');
-        canvas.width = canvas.height = 256;
+        canvas.width = canvas.height = TERRAIN_TILE_SIZE;
         const context = canvas.getContext('2d', { willReadFrequently: true });
         if (!context) throw new Error('Dein Browser unterstützt die Gelände-Auswertung nicht.');
         context.drawImage(bitmap, 0, 0);
-        tiles.set(`${tile.x},${tile.y}`, context.getImageData(0, 0, 256, 256).data);
+        tiles.set(`${tile.x},${tile.y}`, context.getImageData(0, 0, TERRAIN_TILE_SIZE, TERRAIN_TILE_SIZE).data);
       } finally { bitmap.close(); }
     }
   }

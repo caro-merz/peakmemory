@@ -8,7 +8,8 @@ Datei und kein exaktes Fertigungsbild.
 ## Funktionen
 
 - Zwei Eingaben im Konfigurator: **GPX-Route** (Standard) oder **Kartenausschnitt**
-  ohne Route. Bei der Karte verschiebst und zoomst du OpenStreetMap unter einem
+  ohne Route, auswählbar über Bildkarten mit Tastaturbedienung.
+  Bei der Karte verschiebst und zoomst du OpenStreetMap unter einem
   festen Quadrat und bestätigst mit „Diesen Ausschnitt verwenden“. Das Relief
   entspricht genau dem Quadrat, Norden oben, ohne zusätzlichen Geländerand.
   Ca. 300 m bis 150 km Breite sind möglich; die Breite ist wegen der

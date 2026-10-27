@@ -74,7 +74,9 @@ builtHomepage = builtHomepage.replace(/<img\b[^>]*>/g, tag => {
   const image = imageManifest[source];
   if (!image) return tag;
   const hero = source === 'images/main.jpeg';
+  const sourceCard = source === 'images/GPX_Route.png' || source === 'images/Kartenausschnitt.png';
   const sizes = hero ? '(max-width: 848px) calc(100vw - 48px), 800px'
+    : sourceCard ? '(max-width: 560px) 88px, 180px'
     : '(max-width: 768px) calc(100vw - 48px), 540px';
   return tag.replace(/\s(?:loading|width|height)="[^"]*"/g, '')
     .replace(/\bsrc="[^"]*"/, `src="${image.variants.at(-1).src}"`)

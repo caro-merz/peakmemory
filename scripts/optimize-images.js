@@ -7,6 +7,8 @@ import sharp from 'sharp';
 const projectDirectory = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const outputDirectory = path.join(projectDirectory, 'images', 'optimized');
 const homepageImages = [
+  'GPX_Route.png',
+  'Kartenausschnitt.png',
   'classic.jpeg',
   'main.jpeg',
   'compact.jpeg',

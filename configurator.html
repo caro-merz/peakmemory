@@ -25,8 +25,22 @@
     <fieldset id="sourceControls" class="card source-controls">
       <legend>Wie möchtest du dein Relief gestalten?</legend>
       <div class="source-options">
-        <label><input type="radio" name="terrainSource" value="gpx" checked> GPX-Route</label>
-        <label><input type="radio" name="terrainSource" value="area"> Kartenausschnitt</label>
+        <label class="source-option">
+          <input type="radio" name="terrainSource" value="gpx" checked>
+          <span class="source-card">
+            <img src="images/GPX_Route.png" alt="" width="500" height="500" loading="lazy" decoding="async">
+            <span class="source-card-copy"><strong>GPX-Route</strong><span>Mit deiner GPX-Datei</span></span>
+            <svg class="source-card-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12 4 4 8-8"/></svg>
+          </span>
+        </label>
+        <label class="source-option">
+          <input type="radio" name="terrainSource" value="area">
+          <span class="source-card">
+            <img src="images/Kartenausschnitt.png" alt="" width="500" height="500" loading="lazy" decoding="async">
+            <span class="source-card-copy"><strong>Kartenausschnitt</strong><span>Direkt auf der Karte wählen</span></span>
+            <svg class="source-card-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12 4 4 8-8"/></svg>
+          </span>
+        </label>
       </div>
     </fieldset>
     <fieldset id="areaControls" class="card area-controls" hidden>
@@ -34,7 +48,7 @@
       <p id="areaInstructions">Verschiebe und zoome die Karte unter dem Quadrat.</p>
       <div class="area-map-wrap">
         <div id="areaMap" class="area-map" tabindex="0" role="region" aria-label="Karte zur Geländeauswahl" aria-describedby="areaInstructions"></div>
-        <div id="areaFrame" class="area-frame" aria-hidden="true"><span>Dein Relief · Nord oben</span></div>
+        <div id="areaFrame" class="area-frame" aria-hidden="true"><span>Dein Relief</span></div>
       </div>
       <p id="areaStatus" class="hint" role="status" aria-live="polite">Karte wird geladen …</p>
       <p id="areaDescription" class="configuration-summary"></p>

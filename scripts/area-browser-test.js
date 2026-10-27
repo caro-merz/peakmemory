@@ -45,13 +45,31 @@ try {
   await page.goto(url + '/#konfigurator');
   await page.waitForFunction(() => document.documentElement.dataset.checkoutMode === 'test');
   assert.equal(mapRequests, 0, 'GPX default must not contact OSM');
+  const sourceCards = page.locator('#sourceControls .source-option');
+  const gpxSource = page.locator('input[name=terrainSource][value=gpx]');
+  const areaSource = page.locator('input[name=terrainSource][value=area]');
+  assert.equal(await sourceCards.count(), 2);
+  for (const image of await sourceCards.locator('img').all()) {
+    await image.scrollIntoViewIfNeeded();
+    await image.evaluate(image => image.decode());
+    assert.ok(await image.evaluate(image => image.naturalWidth > 0));
+  }
+  await gpxSource.focus();
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await areaSource.isChecked(), true);
+  assert.equal(await areaSource.evaluate(input => input.matches(':focus-visible')), true);
+  await page.keyboard.press('ArrowLeft');
+  assert.equal(await gpxSource.isChecked(), true);
+  await sourceCards.first().click();
+  assert.equal(await gpxSource.isChecked(), true);
   const selectArea = () => page.locator('input[name=terrainSource][value=area]').check();
   const confirm = async () => {
     await page.waitForFunction(() => !document.getElementById('confirmArea').disabled);
     await page.locator('#confirmArea').click();
     await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Ohne Route');
   };
-  await selectArea();
+  await sourceCards.last().click();
+  assert.equal(await page.locator('#areaFrame span').innerText(), 'Dein Relief');
   await page.waitForFunction(() => !document.getElementById('confirmArea').disabled);
   assert.ok(mapRequests > 0);
   assert.ok(referrers.every(referrer => referrer === url + '/'), 'OSM receives origin referrer despite page no-referrer default');
@@ -127,6 +145,7 @@ try {
   await page.locator('#removeContactArea').click();
   if (process.env.PM_SCREENSHOT_DIR) {
     await mkdir(process.env.PM_SCREENSHOT_DIR, { recursive: true });
+    await page.locator('#sourceControls').screenshot({ path: path.join(process.env.PM_SCREENSHOT_DIR, 'source-cards-desktop.png') });
     await page.locator('#areaControls').screenshot({ path: path.join(process.env.PM_SCREENSHOT_DIR, 'area-desktop.png') });
     await page.locator('.preview').screenshot({ path: path.join(process.env.PM_SCREENSHOT_DIR, 'area-preview-desktop.png') });
   }
@@ -138,6 +157,7 @@ try {
   await page.locator('#removeContactArea').click();
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
   if (process.env.PM_SCREENSHOT_DIR) {
+    await page.locator('#sourceControls').screenshot({ path: path.join(process.env.PM_SCREENSHOT_DIR, 'source-cards-mobile.png') });
     await page.locator('#areaControls').screenshot({ path: path.join(process.env.PM_SCREENSHOT_DIR, 'area-mobile.png') });
     await page.locator('.preview').screenshot({ path: path.join(process.env.PM_SCREENSHOT_DIR, 'area-preview-mobile.png') });
   }

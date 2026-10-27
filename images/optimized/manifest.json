@@ -1,4 +1,28 @@
 {
+  "images/GPX_Route.png": {
+    "width": 510,
+    "height": 484,
+    "variants": [
+      {
+        "src": "images/optimized/GPX_Route-480.webp?v=462e256e31aba8a4",
+        "width": 480,
+        "height": 456,
+        "bytes": 57410
+      }
+    ]
+  },
+  "images/Kartenausschnitt.png": {
+    "width": 501,
+    "height": 499,
+    "variants": [
+      {
+        "src": "images/optimized/Kartenausschnitt-480.webp?v=73e4de4339f6da3f",
+        "width": 480,
+        "height": 478,
+        "bytes": 56506
+      }
+    ]
+  },
   "images/classic.jpeg": {
     "width": 1600,
     "height": 1437,

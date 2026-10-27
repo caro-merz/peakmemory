@@ -6,6 +6,7 @@ import { PURCHASE_INFORMATION } from '../src/shared/purchase.js';
 await import('./optimize-images.js');
 
 await mkdir('assets', { recursive: true });
+await cp('src/client/language-toggle.js', path.join('assets', 'language-toggle.js'));
 for (const directory of ['assets', path.join('dist', 'assets')]) {
   let files;
   try { files = await readdir(directory); }
@@ -73,18 +74,18 @@ builtHomepage = builtHomepage.replace(/<img\b[^>]*>/g, tag => {
   const source = tag.match(/\bsrc="([^"]+)"/)?.[1];
   const image = imageManifest[source];
   if (!image) return tag;
-  const hero = source === 'images/main.jpeg';
+  const hero = source === 'images/main.png';
   const sourceCard = source === 'images/GPX_Route.png' || source === 'images/Kartenausschnitt.png';
-  const sizes = hero ? '(max-width: 848px) calc(100vw - 48px), 800px'
+  const sizes = hero ? '(max-width: 488px) calc(100vw - 48px), 440px'
     : sourceCard ? '(max-width: 560px) 88px, 180px'
     : '(max-width: 768px) calc(100vw - 48px), 540px';
   return tag.replace(/\s(?:loading|width|height)="[^"]*"/g, '')
     .replace(/\bsrc="[^"]*"/, `src="${image.variants.at(-1).src}"`)
     .replace(/>$/, ` srcset="${srcset(image)}" sizes="${sizes}" width="${image.width}" height="${image.height}" loading="${hero ? 'eager' : 'lazy'}" decoding="async"${hero ? ' fetchpriority="high"' : ''}>`);
 });
-const heroImage = imageManifest['images/main.jpeg'];
+const heroImage = imageManifest['images/main.png'];
 if (!heroImage) throw new Error('Missing optimized hero image');
 builtHomepage = builtHomepage.replace(/<link rel="preload" as="image"[^>]*>/,
-  `<link rel="preload" as="image" href="${heroImage.variants.at(-1).src}" imagesrcset="${srcset(heroImage)}" imagesizes="(max-width: 848px) calc(100vw - 48px), 800px" fetchpriority="high">`);
+  `<link rel="preload" as="image" href="${heroImage.variants.at(-1).src}" imagesrcset="${srcset(heroImage)}" imagesizes="(max-width: 488px) calc(100vw - 48px), 440px" fetchpriority="high">`);
 await writeFile(path.join('dist', 'index.html'), builtHomepage);
 console.log('Built local configurator assets and public-only dist directory.');

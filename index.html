@@ -15,11 +15,12 @@
   <meta property="og:image" content="https://peak-memory.de/images/classic.jpeg">
   <meta name="twitter:card" content="summary_large_image">
   <title>Peak Memory | Personalisierte 3D-Topografie aus deiner GPX-Route</title>
-  <link rel="preload" as="image" href="images/main.jpeg" fetchpriority="high">
+  <link rel="preload" as="image" href="images/main.png" fetchpriority="high">
   <link rel="preload" as="font" href="fonts/InterVariable.woff2" type="font/woff2" crossorigin>
   <link rel="icon" href="images/logo_grey.png" type="image/png">
   <link rel="stylesheet" href="assets/configurator.css">
   <script type="module" src="assets/configurator.js"></script>
+  <script defer src="assets/language-toggle.js?v=10"></script>
   <style>
     @font-face {
       font-family: 'Inter';
@@ -264,6 +265,37 @@
       color: var(--white) !important;
     }
 
+    .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 16px;
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    }
+
+    .lang-option {
+      border: 0;
+      background: transparent;
+      color: var(--text-light);
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 6px 11px;
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      transition: all var(--transition);
+    }
+
+    .lang-option.is-active {
+      background: var(--accent);
+      color: var(--white);
+    }
+
     .hamburger {
       display: none;
       flex-direction: column;
@@ -300,16 +332,13 @@
       position: relative;
       overflow: hidden;
       padding: 76px 0 88px;
-      text-align: left;
+      text-align: center;
     }
 
     .hero .container {
-      display: grid;
-      grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
-      grid-template-rows: auto auto;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      column-gap: clamp(32px, 5vw, 72px);
-      row-gap: 0;
     }
 
     .hero-bg {
@@ -330,31 +359,23 @@
     }
 
     .hero-content:first-child {
-      grid-column: 1;
-      grid-row: 1;
-      align-self: end;
+      align-self: center;
     }
 
     .hero-content:last-child {
-      grid-column: 1;
-      grid-row: 2;
-      align-self: start;
-      padding-top: 20px;
+      align-self: center;
     }
 
     .hero-image {
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: none;
-      grid-column: 2;
-      grid-row: 1 / span 2;
-      margin: 0;
+      max-width: 440px;
+      margin: 28px auto;
     }
 
     .hero-image-placeholder {
       width: 100%;
-      aspect-ratio: 4 / 3;
       border-radius: 16px;
       overflow: hidden;
       box-shadow: 0 20px 56px rgba(45, 80, 22, 0.12);
@@ -367,9 +388,9 @@
     }
 
     .hero-image-placeholder img {
+      display: block;
       width: 100%;
-      height: 100%;
-      object-fit: cover;
+      height: auto;
     }
 
     .hero h1 {
@@ -1340,7 +1361,12 @@
       .hero-image {
         margin: 22px 0;
       }
-      .hero-image-placeholder { max-height: 230px; }
+      .hero-image-placeholder { height: 230px; }
+      .hero-image-placeholder img {
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
       .hero-subtitle { font-size: 1rem; margin-bottom: 20px; }
       .hero-secondary { font-size: .85rem; }
       .hero .shop-facts { margin-top: 16px!important; }
@@ -1580,6 +1606,11 @@
         <a href="#konfigurator" class="btn btn-primary nav-cta">Jetzt gestalten</a>
       </div>
 
+      <div class="lang-switch" aria-label="Sprache">
+        <button type="button" class="lang-option is-active" data-lang-toggle="de" aria-pressed="true">DE</button>
+        <button type="button" class="lang-option" data-lang-toggle="en" aria-pressed="false">EN</button>
+      </div>
+
       <button class="hamburger" id="hamburger" aria-label="Menü öffnen" aria-expanded="false">
         <span></span>
         <span></span>
@@ -1613,7 +1644,7 @@
 
       <div class="hero-image fade-in">
         <div class="hero-image-placeholder">
-          <img src="images/main.jpeg" alt="Peak Memory 3D-Reliefmodell auf Holzsockel">
+          <img src="images/main.png" alt="Handgehaltenes 3D-Geländerelief auf Eiche vor alpiner Berglandschaft">
         </div>
       </div>
 

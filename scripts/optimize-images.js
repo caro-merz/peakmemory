@@ -10,7 +10,7 @@ const homepageImages = [
   'GPX_Route.png',
   'Kartenausschnitt.png',
   'classic.jpeg',
-  'main.jpeg',
+  'main.png',
   'compact.jpeg',
   'custom.jpeg',
   'rahmen.jpeg',
@@ -47,8 +47,8 @@ for (const filename of homepageImages) {
     throw new Error(`Could not determine image dimensions: ${sourcePath}`);
   }
 
-  const widths = filename === 'main.jpeg' ? [480, 960, 1440] : [480, 960];
-  const stem = path.parse(filename).name;
+  const widths = filename === 'main.png' ? [480, 960, 1440] : [480, 960];
+  const stem = filename === 'main.png' ? 'main-png' : path.parse(filename).name;
   const variants = [];
   for (const width of widths) {
     if (width > metadata.width) continue;

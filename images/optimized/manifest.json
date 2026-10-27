@@ -41,27 +41,21 @@
       }
     ]
   },
-  "images/main.jpeg": {
-    "width": 3024,
-    "height": 2766,
+  "images/main.png": {
+    "width": 1254,
+    "height": 1254,
     "variants": [
       {
-        "src": "images/optimized/main-480.webp?v=9f7934f068f439c3",
+        "src": "images/optimized/main-png-480.webp?v=42e9c71f8e770b5b",
         "width": 480,
-        "height": 439,
-        "bytes": 38174
+        "height": 480,
+        "bytes": 42400
       },
       {
-        "src": "images/optimized/main-960.webp?v=dcc9bb5856b17c11",
+        "src": "images/optimized/main-png-960.webp?v=ed676524ab3a7db6",
         "width": 960,
-        "height": 878,
-        "bytes": 105714
-      },
-      {
-        "src": "images/optimized/main-1440.webp?v=044d3fe117875d8c",
-        "width": 1440,
-        "height": 1317,
-        "bytes": 194320
+        "height": 960,
+        "bytes": 105514
       }
     ]
   },

@@ -53,7 +53,14 @@ await mkdir('dist', { recursive: true });
 try { await unlink(path.join('dist', 'configurator.html')); }
 catch (error) { if (error.code !== 'ENOENT') throw error; }
 for (const entry of ['index.html', 'gpx-hilfe.html', 'images', 'fonts', 'assets', '_headers', '_redirects', 'robots.txt', 'sitemap.xml']) {
-  await cp(entry, path.join('dist', entry), { recursive: true });
+  if (entry === 'images') {
+    try { await unlink(path.join('dist', 'images', 'main_old.jpeg')); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
+  await cp(entry, path.join('dist', entry), {
+    recursive: true,
+    ...(entry === 'images' ? { filter: source => path.basename(source) !== 'main_old.jpeg' } : {}),
+  });
 }
 const configurator = await readFile('configurator.html', 'utf8');
 const content = configurator.match(/    <noscript>[\s\S]*?(?=  <\/main>)/)?.[0];

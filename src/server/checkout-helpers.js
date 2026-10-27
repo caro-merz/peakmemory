@@ -154,28 +154,35 @@ export async function validateCheckout(request) {
     || text('acceptance') !== 'true') throw new CheckoutError('Name, E-Mail, UUID oder ausdrückliche Zustimmung ungültig.');
   const rawConfiguration = text('configuration');
   if (rawConfiguration.length > 4096) throw new CheckoutError('Konfiguration zu groß.');
-  const configuration = parseConfiguration(rawConfiguration);
-  if (![2, 3, 4, 5].includes(configuration?.version) || configuration.preview !== 'ready') {
-    throw new CheckoutError('Konfiguration Version 2, 3, 4 oder 5 mit fertiger Vorschau erforderlich.');
+  let configuration;
+  try { configuration = parseConfiguration(rawConfiguration); }
+  catch (error) { throw new CheckoutError(error.message); }
+  if (![2, 3, 4, 5, 6].includes(configuration?.version) || configuration.preview !== 'ready') {
+    throw new CheckoutError('Konfiguration Version 2 bis 6 mit fertiger Vorschau erforderlich.');
   }
   if (form.has('gpxFile') && form.has('gpxFiles')) throw new CheckoutError('GPX-Formularfelder dürfen nicht gemischt werden.');
-  const files = form.has('gpxFiles') ? form.getAll('gpxFiles') : [form.get('gpxFile')];
-  const { sources, gpx, filename: collectionFilename } = await readGpxCollection(files);
+  const isArea = configuration.source === 'area';
+  if (isArea && (form.has('gpxFile') || form.has('gpxFiles'))) {
+    throw new CheckoutError('Ein Kartenausschnitt ohne Route darf keine GPX-Dateien enthalten.');
+  }
+  const collection = isArea ? null : await readGpxCollection(form.has('gpxFiles') ? form.getAll('gpxFiles') : [form.get('gpxFile')]);
+  const sources = collection?.sources ?? [], gpx = collection?.gpx ?? null;
   const image = form.get('previewImage');
   if (!image || typeof image.arrayBuffer !== 'function' || image.type !== 'image/png'
     || !image.size || image.size > MAX_PREVIEW_SIZE) throw new CheckoutError('PNG-Vorschau erforderlich (maximal 1 MB).');
   const preview = new Uint8Array(await image.arrayBuffer());
   validatePng(preview);
-  const filename = collectionFilename.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 200);
+  const filename = collection ? collection.filename.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 200) : '';
   // Hash the exact submitted fields and original bytes, not just normalized manufacturing settings.
   const ignoredPrice = form.has('price') ? text('price') : null;
   const ignoredCurrency = form.has('currency') ? text('currency') : null;
   const sourceDigests = await Promise.all(sources.map(async source =>
     [source.name, source.type, await sha256(source.bytes)]));
   // Keep the legacy single-file digest stable so in-flight requests remain retryable.
-  const sourceIdentity = sources.length === 1 ? [sources[0].name, sources[0].type] : ['gpx-collection-v1', sourceDigests];
+  const sourceIdentity = isArea ? ['map-area-v1', configuration.area]
+    : sources.length === 1 ? [sources[0].name, sources[0].type] : ['gpx-collection-v1', sourceDigests];
   const digest = await sha256(JSON.stringify([name, email, rawConfiguration, ...sourceIdentity,
-    image.name, image.type, 'true', ignoredPrice, ignoredCurrency, await sha256(gpx), await sha256(preview)]));
+    image.name, image.type, 'true', ignoredPrice, ignoredCurrency, isArea ? null : await sha256(gpx), await sha256(preview)]));
   return { name: name.trim(), email, key: key.toLowerCase(), configuration: JSON.stringify(configuration),
     filename, digest, sources, gpx, preview };
 }

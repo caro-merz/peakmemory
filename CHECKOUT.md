@@ -1,5 +1,39 @@
 # Stripe Checkout
 
+## Terrain-only map areas
+
+Configuration version 6 explicitly selects `source: "gpx"` or `source: "area"`.
+Versions 1-5 remain GPX configurations. Area configurations contain `area` with
+`left`, `top`, `size`: a normalized Web Mercator square, north-up, with `left`
+in [0,1), `top` >= 0 and `top + size` <= 1. The square may cross the antimeridian;
+tile X wraps, while the stored footprint remains continuous. Approximate center
+ground width must be 300 m through 150 km. No `margin` or GPX upload is allowed
+for an area. GPX version 6 keeps the existing margin and attachment requirements.
+
+The server validates the area independently and includes the precise configuration
+in the submission digest. Areas use the existing configuration column; no
+additional migration is required. Legacy NOT NULL `filename` and `gpx_key`
+fields are empty for area orders, with no GPX object created. Source-aware upload,
+notification and cleanup paths skip these fields. The workshop receives exactly
+two attachments: preview PNG and `konfiguration.json`, with the complete area
+and personalization. Readable coordinates appear in buyer and owner emails.
+Workshop tools should use the stored Mercator square directly, without adding
+route margin, rotating it or inventing a route.
+
+The inquiry endpoint accepts a validated area configuration without a GPX and
+sends the configuration JSON to the workshop without creating an order. The
+frontend explicitly transfers a snapshot via "Zum Kontakt"; the form shows the
+selected coordinates and supports removing the snapshot before adding GPX files.
+
+Validate with `npm test`, `npm run build:pages`, `npm run test:browser`,
+`npm run test:browser:area` and `npm run test:browser:strava`.
+The area browser suite intercepts OSM/elevation requests and mocks checkout/contact:
+no paid order or production email is created. Set `PM_SCREENSHOT_DIR` to an
+existing session-artifact directory to capture desktop/mobile map and preview.
+OSM standard tiles are best-effort; retain attribution and HTTP cache/referrer
+requirements, never prefetch/bulk download, and assess provider capacity before
+increasing production traffic. Map requests begin only after map mode is selected.
+
 ## Editing order confirmations
 
 The branded HTML and plain-text email templates are in

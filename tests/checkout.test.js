@@ -194,6 +194,93 @@ async function webhook(event, { timestamp = Math.floor(Date.now() / 1000), secre
 }
 function state(context, id) { return context.db.prepare('SELECT * FROM checkout_orders WHERE id=?').get(id); }
 
+const areaConfiguration = {
+  version: 6, source: 'area', area: { left: 0.525, top: 0.35, size: 0.0004 },
+  product: 'base', wallMount: false, engraving: 'Meine Landschaft', elevationScale: 2, preview: 'ready',
+};
+const areaCheckout = (submissionKey = key(), configuration = areaConfiguration) =>
+  checkout(submissionKey, { gpxFile: undefined, configuration: JSON.stringify(configuration) });
+
+test('area checkout stores only preview, retains exact selection, retries idempotently and delivers no GPX', async () => {
+  const context = environment(), services = mockServices(), submissionKey = key();
+  const getObject = context.env.CHECKOUT_FILES.get;
+  context.env.CHECKOUT_FILES.get = async path => {
+    assert.ok(path, 'Never read an empty legacy GPX key');
+    return getObject(path);
+  };
+  const response = await handleCheckout(areaCheckout(submissionKey), context.env);
+  assert.equal(response.status, 200, await response.clone().text());
+  const data = await response.json(), order = state(context, data.orderId);
+  assert.equal(context.objects.size, 1);
+  assert.equal(order.gpx_key, '');
+  assert.equal(order.filename, '');
+  assert.equal(order.gpx_manifest, null);
+  assert.deepEqual(JSON.parse(order.configuration), areaConfiguration);
+  assert.equal((await handleCheckout(areaCheckout(submissionKey), context.env)).status, 200);
+  assert.equal(services.calls.length, 1);
+  assert.equal((await handleCheckout(areaCheckout(submissionKey, {
+    ...areaConfiguration, area: { ...areaConfiguration.area, left: 0.526 },
+  }), context.env)).status, 409);
+  const event = eventFor(order);
+  assert.equal((await handleStripeWebhook(await webhook(event), context.env)).status, 200);
+  const owner = services.emails[0].payload;
+  assert.deepEqual(owner.attachments.map(attachment => attachment.filename), ['peakmemory-vorschau.png', 'konfiguration.json']);
+  assert.deepEqual(JSON.parse(Buffer.from(owner.attachments[1].content, 'base64')), areaConfiguration);
+  assert.match(owner.text, /ohne Route.*Nord oben/);
+  assert.doesNotMatch(owner.text, /Geländerand|Original-GPX/);
+  assert.match(services.emails[1].payload.html, /Nordwest/);
+  assert.equal((await handleStripeWebhook(await webhook(event), context.env)).status, 200);
+  assert.equal(services.emails.length, 2);
+  const remove = context.env.CHECKOUT_FILES.delete;
+  context.env.CHECKOUT_FILES.delete = async paths => {
+    assert.deepEqual(paths, [order.preview_key]);
+    return remove(paths);
+  };
+  Date.now = () => originalNow() + 91 * 86400000;
+  await checkoutMaintenance(context.env);
+  assert.equal(context.objects.size, 0);
+  assert.equal(state(context, order.id).stage, 'purged');
+});
+
+test('area checkout rejects mixed sources, invalid areas and unavailable previews before creating sessions', async () => {
+  const context = environment(), services = mockServices();
+  for (const request of [
+    checkout(key(), { configuration: JSON.stringify(areaConfiguration) }),
+    areaCheckout(key(), { ...areaConfiguration, area: { ...areaConfiguration.area, size: 0 } }),
+    areaCheckout(key(), { ...areaConfiguration, margin: 0.15 }),
+    areaCheckout(key(), { ...areaConfiguration, preview: 'unavailable' }),
+    checkout(key(), { configuration: JSON.stringify(areaConfiguration), previewImage: undefined, gpxFile: undefined }),
+  ]) {
+    assert.equal((await handleCheckout(request, context.env)).status, 400);
+  }
+  assert.equal(services.calls.length, 0);
+  assert.equal(context.objects.size, 0);
+});
+
+test('area preview partial-write retry and paid notification retry retain the source selection', async () => {
+  const context = environment();
+  let mailFails = true;
+  const services = mockServices({ mail: () => mailFails ? new Response('{}', { status: 500 }) : Response.json({ id: 'mail-area' }) });
+  const put = context.env.CHECKOUT_FILES.put;
+  let fail = true;
+  context.env.CHECKOUT_FILES.put = async (...args) => {
+    if (fail) { fail = false; throw new Error('Temporary preview write failure'); }
+    return put(...args);
+  };
+  const submissionKey = key();
+  assert.equal((await handleCheckout(areaCheckout(submissionKey), context.env)).status, 503);
+  assert.equal(services.calls.length, 0);
+  assert.equal((await handleCheckout(areaCheckout(submissionKey), context.env)).status, 200);
+  const order = context.db.prepare('SELECT * FROM checkout_orders').get();
+  assert.equal((await handleStripeWebhook(await webhook(eventFor(order)), context.env)).status, 502);
+  mailFails = false;
+  Date.now = () => originalNow() + 901000;
+  await checkoutMaintenance(context.env);
+  assert.equal(state(context, order.id).owner_sent, 1);
+  assert.equal(state(context, order.id).buyer_sent, 1);
+  assert.equal(context.objects.size, 1);
+});
+
 test('multiple originals and regenerated combined GPX are durable before Stripe and all reach the workshop', async () => {
   const context = environment(), files = collectionFiles();
   const expected = await readGpxCollection(files);

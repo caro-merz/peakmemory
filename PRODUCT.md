@@ -12,7 +12,7 @@ web
 - **Secondary:** event organizers (marathons, bike races, trade fairs) who order series of five or more pieces as finisher rewards, trophies or gifts, optionally with the organizer's logo on the base.
 
 ## Product Purpose
-Peak Memory turns a GPX route into a handmade 3D terrain relief with the route marked in red. The website lets visitors upload their own GPX file (or try a sample route), see their own landscape in an interactive 3D preview, choose a product variant, personalize the engraving, and then either buy directly via Stripe (when enabled) or send a non-binding inquiry. Success means a visitor goes from "that's nice" to "that's *my* route" and then orders.
+Peak Memory turns a GPX route into a handmade 3D terrain relief with the route marked in red, or a selected map area into a landscape relief without a route. The website lets visitors upload their own GPX file (or try a sample route), or pan and zoom an OpenStreetMap map beneath a fixed north-up square and confirm the area. They see their landscape in an interactive 3D preview, choose a product variant, personalize the engraving, and then either buy directly via Stripe (when enabled) or send a non-binding inquiry. Success means a visitor recognizes their own route or landscape and then orders.
 
 ## Positioning
 Your own route in your own landscape, previewed live in 3D before you order, and made by hand by two athletes from Baden-Württemberg. It is not a generic mountain print or a poster.
@@ -26,6 +26,7 @@ Your own route in your own landscape, previewed live in 3D before you order, and
 - Products: oak base with engraving (11 × 13.5 × 2 cm, 50 EUR), compact oak base without engraving (11 × 11 × 2 cm, 45 EUR), white frame with engraved white passe-partout (20 × 20 cm, 60 EUR). The relief is 10 × 10 cm in every variant. Optional wall mount on wooden bases (+1 EUR). Prices include shipping within Germany. No VAT shown per §19 UStG. Delivery takes 5–10 working days after confirmed payment.
 - Engraving: up to 3 lines on wood, up to 2 lines on the passe-partout, 120 characters in total. Engraving font is Quicksand Book.
 - Vertical exaggeration from 1× to 8×. Adjustable terrain margin.
+- Map areas: approximately 300 m to 150 km across, north-up Web Mercator squares. No route or additional margin. Map tiles load directly from OpenStreetMap only after choosing map mode; elevation tiles continue through the existing Cloudflare terrain endpoint. Precise area coordinates are retained with the order configuration.
 - The online preview is illustrative only. It is not a print-ready file or an exact image of the finished piece.
 - Direct checkout via Stripe is gated (test or live mode). The non-binding inquiry stays available as a fallback. Custom formats and event series of 5+ are available on request.
 - Static HTML with Cloudflare endpoints. Fonts are self-hosted, with no third-party font requests. The homepage and legal texts must stay readable without JavaScript.

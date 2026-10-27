@@ -1,9 +1,10 @@
+import { EARTH_CIRCUMFERENCE, parseArea, geographicPoint } from './area.js';
+
 export const GRID_SIZE = 513;
 export const MAX_TILES = 16;
 export const MAX_DRAW_POINTS = 12000;
 export const DEFAULT_ELEVATION_SCALE = 2;
 export const TERRAIN_TILE_SIZE = 512;
-const EARTH_CIRCUMFERENCE = 40075016.686;
 
 export function project({ lat, lon }) {
   const radians = lat * Math.PI / 180;
@@ -36,6 +37,16 @@ export function terrainPlan(route, margin) {
   if (size >= 1 || top < 0 || top + size > 1) {
     throw new Error('Der Geländeausschnitt ist zu groß oder reicht in die Polarregion. Bitte eine kleinere Route oder weniger Rand wählen.');
   }
+  return squarePlan(left, top, size, coordinates, metersPerWorld);
+}
+
+export function areaPlan(value) {
+  const { left, top, size } = parseArea(value);
+  const { lat } = geographicPoint(left + size / 2, top + size / 2);
+  return squarePlan(left, top, size, [], EARTH_CIRCUMFERENCE * Math.cos(lat * Math.PI / 180));
+}
+
+function squarePlan(left, top, size, coordinates, metersPerWorld) {
   for (let zoom = 14; zoom >= 0; zoom -= 1) {
     const scale = 2 ** zoom;
     const x0 = Math.floor(left * scale), x1 = Math.floor((left + size) * scale);
@@ -114,6 +125,7 @@ export function surfaceHeight(grid, u, v) {
 
 export function routePaths(grid) {
   const coordinates = grid.plan.coordinates;
+  if (!coordinates.length) return [];
   const total = coordinates.reduce((sum, segment) => sum + segment.length, 0);
   for (let stride = Math.max(1, Math.ceil(total / 3000)); stride <= total * 2; stride *= 2) {
     let count = 0;

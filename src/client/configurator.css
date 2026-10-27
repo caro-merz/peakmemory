@@ -19,9 +19,24 @@
 .configurator h2{font-size:1.4rem;line-height:1.3;letter-spacing:-.025em;margin:0 0 16px}
 .configurator p{margin:0 0 16px}.configurator .intro>p:last-child{color:var(--muted);font-size:1.07rem;max-width:65ch;text-wrap:pretty}
 .configurator .workspace{display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;align-items:start}
+.configurator .source-options{display:flex;flex-wrap:wrap;gap:12px 28px}
+.configurator .source-options label{display:flex;align-items:center;gap:10px;cursor:pointer}
+.configurator .source-options input[type=radio]{width:20px;height:20px;margin:0;accent-color:var(--accent)}
+.configurator .source-controls .hint{margin-bottom:0}
+.configurator .area-map-wrap{position:relative;overflow:hidden;border-radius:12px;isolation:isolate}
+.configurator .area-map{height:440px;background:var(--surface);z-index:0;touch-action:none}
+.configurator .area-frame{position:absolute;width:min(340px,calc(100% - 88px));aspect-ratio:1;top:50%;left:50%;transform:translate(-50%,-50%);border:3px solid var(--accent);box-shadow:0 0 0 2000px rgb(26 26 26 / .25);pointer-events:none;z-index:1}
+.configurator .area-frame span{position:absolute;left:8px;top:8px;background:#fff;color:var(--accent);padding:3px 8px;font-size:.75rem;font-weight:650}
+.configurator .area-controls .primary{width:auto}
+.configurator .area-map .leaflet-control-zoom a{width:36px;height:36px;line-height:36px;background:#fff}
+.configurator .area-map .leaflet-control-attribution{color:#333;background:#fff;font-size:12px}
+.configurator .area-map .leaflet-control-attribution a{color:var(--accent)}
+.configurator .area-map .leaflet-tile{max-width:none!important;max-height:none!important}
+.configurator .area-map .leaflet-control{z-index:3}
+@media(max-width:700px){.configurator .area-map{height:380px}.configurator .area-controls .actions{align-items:stretch;flex-direction:column}}
 .configurator .card{background:white;border:1px solid var(--line);border-radius:16px;padding:26px;margin:0 0 24px;min-width:0}
 .configurator fieldset{border:0;padding:0;min-width:0}
-.configurator legend{font-weight:750;padding:0 6px}
+.configurator legend{font-weight:750;padding:0 6px}
 .configurator .step{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:white;width:28px;height:28px;border-radius:50%;font-size:.85rem;margin-right:8px}
 .configurator label{display:block;font-weight:650;font-size:.9rem;margin:16px 0 7px}
 .configurator input:not([type=range]),.configurator textarea,.configurator select{width:100%;padding:12px 14px;background:var(--bg);border:1px solid #d8d8d1;border-radius:8px;color:var(--text)}

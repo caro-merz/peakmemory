@@ -7,6 +7,23 @@ Datei und kein exaktes Fertigungsbild.
 
 ## Funktionen
 
+- Zwei Eingaben im Konfigurator: **GPX-Route** (Standard) oder **Kartenausschnitt**
+  ohne Route. Bei der Karte verschiebst und zoomst du OpenStreetMap unter einem
+  festen Quadrat und bestätigst mit „Diesen Ausschnitt verwenden“. Das Relief
+  entspricht genau dem Quadrat, Norden oben, ohne zusätzlichen Geländerand.
+  Ca. 300 m bis 150 km Breite sind möglich; die Breite ist wegen der
+  Web-Mercator-Projektion eine Näherung. Größere Gebiete zeigen weniger Details.
+  GPX-Grenzen werden dadurch nicht verändert.
+  Die Karte und die lokal gebündelte Leaflet-Bibliothek werden erst im Kartenmodus
+  geladen. OSM-Attribution bleibt sichtbar; Kacheln werden nur für die aktuelle
+  Ansicht geladen, ohne Vorabladen oder Offline-Download. Der einzelne Bildabruf
+  nutzt `strict-origin-when-cross-origin`, auch bei der restriktiveren Seitenvorgabe,
+  damit die OSM-Nutzungsrichtlinie einen Herkunftshinweis erhält.
+  Für hohes Verkehrsaufkommen ist ein anderer Kartenanbieter zu prüfen.
+  Produkte, Preise, Gravur, Höhenüberhöhung und Checkout gelten für beide Eingaben.
+  Kartenbewegungen machen die Bestätigung und Bestellfreigabe ungültig.
+  Ausgewählte GPX-Dateien bleiben beim Moduswechsel im Browser erhalten.
+  Nach Neuladen müssen Dateien/Ausschnitt erneut gewählt werden.
 - Eigene GPX-Datei oder unverbindliche Beispielroute in interaktivem 3D-Gelände.
   Bis zu 10 lokale GPX-Dateien können auf einem gemeinsamen Relief erscheinen,
   etwa Triathlon-Teilstrecken oder Tagesetappen. Zusammen gelten maximal 5 MiB,
@@ -64,7 +81,12 @@ Datei und kein exaktes Fertigungsbild.
   License unter `fonts/Inter-OFL.txt`; beide Schriftlizenzen sind im Build enthalten.
 - „Lieber persönlich abstimmen?“ verlinkt zum breiten Kontaktbereich der Homepage.
   Dort sind unverbindliche Anfragen mit optionaler Original-GPX möglich.
-  Konfiguration und Vorschaubild werden nur beim Checkout automatisch übertragen.
+  Konfiguration und Vorschaubild werden beim Checkout automatisch übertragen.
+  Ein bestätigter Kartenausschnitt wird über „Zum Kontakt“ ausdrücklich in die
+  Anfrage übernommen, dort angezeigt und ohne GPX als Konfigurations-JSON
+  versendet. Eine übernommene Auswahl kann dort entfernt werden. Spätere Änderungen
+  im Konfigurator müssen erneut übernommen werden; vorhandene GPX-Anfrageanhänge
+  werden niemals stillschweigend entfernt oder mit einem Kartenausschnitt gemischt.
 - Direktkauf: Upload → Produktauswahl → Personalisierung → Auswahl prüfen → Stripe-Zahlung
   → Produktion ohne zusätzliche persönliche Freigabe. Test- und Live-Modus
   verwenden getrennte Endpunkte und getrennte private Speicher. Beide sind

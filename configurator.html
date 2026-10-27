@@ -19,9 +19,30 @@
   <main id="main" class="page">
     <div class="intro">
       <h1>Ein Abenteuer.<br>Ein Stück für Zuhause.</h1>
-      <p>Lade deine GPX-Datei hoch, entdecke die Landschaft in 3D und gestalte dein persönliches Erinnerungsstück. Kostenlos, ohne Anmeldung und ohne Bestellung.</p>
+      <p>Lade deine GPX-Datei hoch oder wähle eine Landschaft auf der Karte. Entdecke dein Relief in 3D und gestalte dein persönliches Erinnerungsstück. Kostenlos, ohne Anmeldung und ohne Bestellung.</p>
     </div>
     <noscript><p class="error">Für die interaktive Vorschau brauchst du JavaScript. Du kannst deine Route stattdessen an <a href="mailto:peak.memory@web.de">peak.memory@web.de</a> senden.</p></noscript>
+    <fieldset id="sourceControls" class="card source-controls">
+      <legend>Wie möchtest du dein Relief gestalten?</legend>
+      <div class="source-options">
+        <label><input type="radio" name="terrainSource" value="gpx" checked> GPX-Route</label>
+        <label><input type="radio" name="terrainSource" value="area"> Kartenausschnitt</label>
+      </div>
+    </fieldset>
+    <fieldset id="areaControls" class="card area-controls" hidden>
+      <legend id="areaTitle"><span class="step">1</span> Wähle deine Landschaft</legend>
+      <p id="areaInstructions">Verschiebe und zoome die Karte unter dem Quadrat.</p>
+      <div class="area-map-wrap">
+        <div id="areaMap" class="area-map" tabindex="0" role="region" aria-label="Karte zur Geländeauswahl" aria-describedby="areaInstructions"></div>
+        <div id="areaFrame" class="area-frame" aria-hidden="true"><span>Dein Relief · Nord oben</span></div>
+      </div>
+      <p id="areaStatus" class="hint" role="status" aria-live="polite">Karte wird geladen …</p>
+      <p id="areaDescription" class="configuration-summary"></p>
+      <div class="actions">
+        <button id="confirmArea" type="button" class="primary" disabled>Diesen Ausschnitt verwenden</button>
+        <button id="retryMap" type="button" class="secondary">Karte erneut laden</button>
+      </div>
+    </fieldset>
     <div class="workspace">
       <div class="settings">
         <fieldset id="routeControls" class="card">
@@ -67,9 +88,11 @@
             <small id="engravingHint">Max. 3 Zeilen und insgesamt 120 Zeichen. Beispielwerte – bitte an deine Tour anpassen.</small>
           </div>
           <p id="engravingUnavailable" class="hint" hidden>Der kompakte Holzsockel wird ohne Gravur gefertigt. Geländerand und Höhenüberhöhung kannst du weiterhin anpassen.</p>
+          <div id="marginControls">
           <label for="margin">Gelände rund um deine Route: <output id="marginValue" for="margin">15 %</output></label>
           <input id="margin" type="range" min="5" max="50" step="5" value="15">
           <div class="range-labels"><span>Wenig Rand</span><span>Mehr Landschaft</span></div>
+          </div>
           <label for="elevationScale">Höhenüberhöhung: <output id="elevationValue" for="elevationScale">2×</output></label>
           <input id="elevationScale" type="range" min="1" max="8" step="0.5" value="2">
           <div class="range-labels"><span>1× · Natürliche Höhen</span><span>8× · Markantes Relief</span></div>
@@ -85,7 +108,7 @@
           <button id="resetView" type="button" class="text-button" disabled>Ansicht zurücksetzen</button><button id="retry" type="button" class="secondary" hidden>Erneut laden</button>
         </div>
         <p id="configurationSummary" class="configuration-summary"></p>
-        <div class="preview-note"><strong>Illustrative Vorschau, kein exaktes Fertigungsbild.</strong><p>Beim Direktkauf gelten deine Routen und Einstellungen als final. Die Fertigung beginnt nach bestätigter Zahlung, ohne zusätzliche Vorschau-Freigabe. Prüfe deshalb besonders deine Gravur.</p><details><summary>Maße &amp; Hinweise zur Vorschau</summary><p><span id="productDimensionsNote">10 × 10 cm Relief auf 11 × 13,5 × 2 cm Eiche-Holzsockel.</span> Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Höhen sind <span id="elevationNote">2-fach</span> skaliert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, natürliche Holzmaserung, Rahmenprofil, Passepartout, Gravur und Geländedetails können vom gefertigten Produkt abweichen. Beim Kauf werden alle Original-GPX-Dateien und bei mehreren Dateien zusätzlich eine kombinierte GPX übermittelt. Für eine unverbindliche Anfrage lade deine Dateien im Kontaktformular erneut hoch.</p></details></div>
+        <div class="preview-note"><strong>Illustrative Vorschau, kein exaktes Fertigungsbild.</strong><p>Beim Direktkauf gelten deine Routen oder dein Kartenausschnitt und Einstellungen als final. Die Fertigung beginnt nach bestätigter Zahlung, ohne zusätzliche Vorschau-Freigabe. Prüfe deshalb besonders deine Gravur.</p><details><summary>Maße &amp; Hinweise zur Vorschau</summary><p><span id="productDimensionsNote">10 × 10 cm Relief auf 11 × 13,5 × 2 cm Eiche-Holzsockel.</span> Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Höhen sind <span id="elevationNote">2-fach</span> skaliert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, natürliche Holzmaserung, Rahmenprofil, Passepartout, Gravur und Geländedetails können vom gefertigten Produkt abweichen. Beim Kauf werden alle Original-GPX-Dateien und bei mehreren Dateien zusätzlich eine kombinierte GPX übermittelt. Bei Kartenausschnitten werden stattdessen die genauen Ausschnittskoordinaten gespeichert. Für eine unverbindliche GPX-Anfrage lade deine Dateien im Kontaktformular erneut hoch; einen bestätigten Kartenausschnitt kannst du über „Zum Kontakt“ übernehmen.</p></details></div>
         <details class="attribution"><summary>Geländedaten &amp; Quellen</summary>
           <p>Öffentliche Terrarium-Höhendaten von <a href="https://mapterhorn.com/" target="_blank" rel="noopener noreferrer">Mapterhorn</a>, bereitgestellt als 512 × 512 Pixel WebP-Kacheln. <a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener noreferrer">Datenquellen und Attribution</a> · <a href="https://mapterhorn.com/data-access" target="_blank" rel="noopener noreferrer">Technische Informationen</a>.</p>
         </details>
@@ -114,9 +137,9 @@
           <label for="checkoutEmail">E-Mail-Adresse</label><input id="checkoutEmail" name="email" type="email" autocomplete="email" maxlength="200" required>
           <p><strong>Deine Auswahl</strong></p>
           <p id="checkoutSummary" class="configuration-summary"></p>
-          <label class="acceptance" for="checkoutAcceptance"><input id="checkoutAcceptance" type="checkbox" required> <span>Ich habe meine Route, Gravur und Einstellungen geprüft. Beim Direktkauf sind sie final; eine weitere Produktionsfreigabe erfolgt nicht. Die 3D-Vorschau ist illustrativ.</span></label>
-          <p class="hint"><strong>Kein gesetzliches Widerrufsrecht:</strong> Dein Relief wird individuell nach deiner GPX-Route und Konfiguration angefertigt (§ 312g Abs. 2 Nr. 1 BGB). Gesetzliche Mängelrechte bleiben unberührt. <a href="/#kaufbedingungen">Kaufhinweise, Vertragsschluss &amp; Widerruf</a></p>
-          <p class="hint">Beim Start des Checkouts werden deine Kontaktdaten, GPX-Datei, Konfiguration und das Vorschaubild privat bei Cloudflare gespeichert. Stripe erhält E-Mail-Adresse und Bestellreferenz sowie anschließend deine Liefer- und Zahlungsdaten. <a href="/#datenschutz">Datenschutzhinweise</a></p>
+          <label class="acceptance" for="checkoutAcceptance"><input id="checkoutAcceptance" type="checkbox" required> <span>Ich habe meine Route oder meinen Kartenausschnitt, Gravur und Einstellungen geprüft. Beim Direktkauf sind sie final; eine weitere Produktionsfreigabe erfolgt nicht. Die 3D-Vorschau ist illustrativ.</span></label>
+          <p class="hint"><strong>Kein gesetzliches Widerrufsrecht:</strong> Dein Relief wird individuell nach deiner GPX-Route oder deinem Kartenausschnitt und Konfiguration angefertigt (§ 312g Abs. 2 Nr. 1 BGB). Gesetzliche Mängelrechte bleiben unberührt. <a href="/#kaufbedingungen">Kaufhinweise, Vertragsschluss &amp; Widerruf</a></p>
+          <p class="hint">Beim Start des Checkouts werden deine Kontaktdaten, GPX-Dateien oder Ausschnittskoordinaten, Konfiguration und das Vorschaubild privat bei Cloudflare gespeichert. Stripe erhält E-Mail-Adresse und Bestellreferenz sowie anschließend deine Liefer- und Zahlungsdaten. <a href="/#datenschutz">Datenschutzhinweise</a></p>
           <button id="submitCheckout" type="submit" class="primary" disabled>Zur Testzahlung bei Stripe · 50 €</button>
         </fieldset>
         <p id="checkoutStatus" role="status" aria-live="polite"></p>

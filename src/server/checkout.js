@@ -80,7 +80,7 @@ function parameters(order) {
     'shipping_options[0][shipping_rate_data][fixed_amount][currency]': 'eur',
     'shipping_options[0][shipping_rate_data][display_name]': 'Versand Deutschland inklusive',
     'custom_text[submit][message]': live
-      ? 'Individuell nach deiner GPX-Route gefertigt: kein gesetzliches Widerrufsrecht (§ 312g Abs. 2 Nr. 1 BGB). Mängelrechte bleiben bestehen. Vertragsschluss bei erfolgreicher Zahlungsbestätigung. Deine Auswahl ist final; Vorschau illustrativ.'
+      ? 'Individuell nach deiner Route oder deinem Kartenausschnitt gefertigt: kein gesetzliches Widerrufsrecht (§ 312g Abs. 2 Nr. 1 BGB). Mängelrechte bleiben bestehen. Vertragsschluss bei erfolgreicher Zahlungsbestätigung. Deine Auswahl ist final; Vorschau illustrativ.'
       : 'Nur Testzahlung – keine echte Bestellung. Illustrative Vorschau; im späteren Verkauf keine zusätzliche Produktionsfreigabe.',
   });
 }
@@ -132,7 +132,7 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
       (id,submission_key,payload_digest,status_token,created_at,updated_at,origin,name,email,configuration,filename,acceptance,gpx_key,preview_key,session_params,whatsapp_sent,gpx_manifest)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,0,?) ON CONFLICT(submission_key) DO NOTHING`,
     id, data.key, data.digest, secret, timestamp, timestamp, trustedOrigin(env), data.name, data.email,
-    data.configuration, data.filename, `orders/${id}/${data.sources.length > 1 ? 'combined' : 'original'}.gpx`,
+    data.configuration, data.filename, data.gpx ? `orders/${id}/${data.sources.length > 1 ? 'combined' : 'original'}.gpx` : '',
     `orders/${id}/preview.png`, sessionParams, data.sources.length > 1 ? JSON.stringify(data.sources.map((source, index) => ({
       name: source.name, type: source.type, key: `orders/${id}/original-${index + 1}.gpx`,
     }))) : null);
@@ -152,7 +152,9 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
           await guarded(() => env.CHECKOUT_FILES.put(artifact.key, data.sources[index].bytes,
             { httpMetadata: { contentType: 'application/gpx+xml' } }));
         }
-        await guarded(() => env.CHECKOUT_FILES.put(order.gpx_key, data.gpx, { httpMetadata: { contentType: 'application/gpx+xml' } }));
+        if (order.gpx_key) {
+          await guarded(() => env.CHECKOUT_FILES.put(order.gpx_key, data.gpx, { httpMetadata: { contentType: 'application/gpx+xml' } }));
+        }
         await guarded(() => env.CHECKOUT_FILES.put(order.preview_key, data.preview, { httpMetadata: { contentType: 'image/png' } }));
         if (!changed(await run(env, `UPDATE checkout_orders SET stage='ready',updated_at=? WHERE id=? AND lease=? AND stage='staging'`,
           now(), order.id, lease))) throw new CheckoutError('Speicherung nicht bestätigt.', 503);
@@ -269,11 +271,12 @@ async function notify(env, order) {
       if (!env.RESEND_API_KEY) throw new CheckoutError('E-Mail-Benachrichtigung nicht konfiguriert; Zahlung gespeichert.', 503);
       let attachments;
       if (kind === 'owner') {
-        const gpx = await guarded(() => env.CHECKOUT_FILES.get(order.gpx_key));
+        const isArea = parseConfiguration(order.configuration).source === 'area';
+        const gpx = isArea ? null : await guarded(() => env.CHECKOUT_FILES.get(order.gpx_key));
         const preview = await guarded(() => env.CHECKOUT_FILES.get(order.preview_key));
-        if (!gpx || !preview) throw new CheckoutError('Bestellanhänge fehlen; Benachrichtigung wird wiederholt.', 503);
+        if ((!isArea && !gpx) || !preview) throw new CheckoutError('Bestellanhänge fehlen; Benachrichtigung wird wiederholt.', 503);
         attachments = [
-          { filename: attachmentName(order.filename), content: base64(new Uint8Array(await guarded(() => gpx.arrayBuffer()))) },
+          ...(!isArea ? [{ filename: attachmentName(order.filename), content: base64(new Uint8Array(await guarded(() => gpx.arrayBuffer()))) }] : []),
           { filename: 'peakmemory-vorschau.png', content_type: 'image/png', content: base64(new Uint8Array(await guarded(() => preview.arrayBuffer()))) },
           { filename: 'konfiguration.json', content: base64(new TextEncoder().encode(order.configuration)), content_type: 'application/json' },
         ];
@@ -390,7 +393,7 @@ export async function checkoutMaintenance(sourceEnv, mode = 'test') {
     try {
       await guarded(() => env.CHECKOUT_FILES.delete([
         ...originalArtifacts(order).map(artifact => artifact.key), order.gpx_key, order.preview_key,
-      ]));
+      ].filter(Boolean)));
       await guarded(() => env.CHECKOUT_DB.batch([
         statement(env, 'DELETE FROM checkout_events WHERE order_id=? AND EXISTS(SELECT 1 FROM checkout_orders WHERE id=? AND lease=?)',
           order.id, order.id, lease),

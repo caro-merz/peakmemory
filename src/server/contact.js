@@ -3,6 +3,7 @@ import { readGpxCollection } from '../shared/gpx-collection.js';
 import { parseConfiguration } from '../shared/configuration.js';
 import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
 import { getProduct, configurationPrice } from '../shared/product.js';
+import { describeArea } from '../shared/area.js';
 
 export const CONTACT_TIMEOUT_MS = 10000;
 export const MAX_CONTACT_SIZE = MAX_GPX_SIZE + MAX_PREVIEW_SIZE + 64 * 1024;
@@ -112,10 +113,17 @@ export async function handleContact(request, env) {
   let previewAttachment;
   try {
     configuration = parseConfiguration(data.configuration);
+    if (configuration?.source === 'area' && (Object.hasOwn(data, 'gpxFile') || Object.hasOwn(data, 'gpxFiles'))) {
+      throw new Error('Ein Kartenausschnitt ohne Route darf keine GPX-Dateien enthalten.');
+    }
     attachments = await createAttachments(data);
-    if (configuration && !attachments.length) {
+    if (configuration && configuration.source !== 'area' && !attachments.length) {
       throw new Error('Bitte deine persönliche GPX-Datei für die Konfigurator-Anfrage hochladen.');
     }
+    if (configuration?.source === 'area') attachments.push({
+      filename: 'konfiguration.json', content_type: 'application/json',
+      content: base64(new TextEncoder().encode(JSON.stringify(configuration))),
+    });
     if (data.previewImage != null) {
       const image = data.previewImage;
       if (!configuration || configuration.preview !== 'ready' || typeof image !== 'object'
@@ -150,7 +158,7 @@ export async function handleContact(request, env) {
       `Produkt: ${configuration.version >= 3 ? getProduct(configuration.product).name
         : configuration.product === 'base' ? 'Relief auf Eichenholzsockel' : 'Gerahmtes Relief'}`,
       `Gravur: ${configuration.engraving || '(keine)'}`,
-      `Geländerand: ${Math.round(configuration.margin * 100)} %`,
+      configuration.source === 'area' ? describeArea(configuration.area) : `Geländerand: ${Math.round(configuration.margin * 100)} %`,
       `Höhenüberhöhung: ${configuration.version >= 2 ? configuration.elevationScale : 1.5}×`,
       `Online-Vorschau: ${configuration.preview === 'ready' ? 'bereit (illustrativ)' : 'nicht verfügbar'}`,
       'Die endgültige Produktionsvorschau wird separat abgestimmt.');

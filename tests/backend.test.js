@@ -92,6 +92,27 @@ function timeoutFetch() {
   });
 }
 
+test('terrain-only contact retains reproducible area in JSON without GPX and rejects mixed sources', async () => {
+  const payloads = captureMail();
+  const area = {
+    version: 6, source: 'area', area: { left: 0.525, top: 0.35, size: 0.0004 },
+    product: 'base', wallMount: false, engraving: 'Meine Landschaft', elevationScale: 2, preview: 'unavailable',
+  };
+  assert.equal((await handleContact(formContact({ configuration: JSON.stringify(area) }), env)).status, 200);
+  assert.match(payloads[0].text, /ohne Route.*Nord oben/);
+  assert.doesNotMatch(payloads[0].text, /Geländerand/);
+  assert.equal(payloads[0].attachments.length, 1);
+  assert.equal(payloads[0].attachments[0].filename, 'konfiguration.json');
+  assert.deepEqual(JSON.parse(Buffer.from(payloads[0].attachments[0].content, 'base64')), area);
+  const mixed = await handleContact(formContact({ configuration: JSON.stringify(area) }, new File([gpx], 'route.gpx')), env);
+  assert.equal(mixed.status, 400);
+  assert.match((await mixed.json()).error, /keine GPX/);
+  assert.equal((await handleContact(formContact({ configuration: JSON.stringify({
+    ...area, area: { ...area.area, size: 0.5 },
+  }) }), env)).status, 400);
+  assert.equal(payloads.length, 1);
+});
+
 test('ordinary JSON contact remains attachment-optional and preserves delivery fields', async () => {
   const payloads = captureMail();
   const response = await handleContact(contact(), env);

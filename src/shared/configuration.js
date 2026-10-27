@@ -1,4 +1,5 @@
 import { getProduct } from './product.js';
+import { parseArea } from './area.js';
 
 export function validateEngraving(value, productId = 'base') {
   if (typeof value !== 'string' || value.length > 120
@@ -22,7 +23,7 @@ export function parseConfiguration(value) {
     throw new Error('Die Konfiguration ist kein gültiges JSON.');
   }
   if (!configuration || Array.isArray(configuration) || typeof configuration !== 'object'
-    || ![1, 2, 3, 4, 5].includes(configuration.version)
+    || ![1, 2, 3, 4, 5, 6].includes(configuration.version)
     || !(configuration.version >= 3 ? ['base', 'compact', 'frame'] : ['base', 'frame']).includes(configuration.product)
     || (configuration.version === 2 && (configuration.product !== 'base'
       || typeof configuration.elevationScale !== 'number' || !Number.isFinite(configuration.elevationScale)
@@ -30,8 +31,9 @@ export function parseConfiguration(value) {
     || (configuration.version >= 3 && (typeof configuration.elevationScale !== 'number'
       || !Number.isFinite(configuration.elevationScale)
       || configuration.elevationScale < 1 || configuration.elevationScale > 8))
-    || typeof configuration.margin !== 'number' || !Number.isFinite(configuration.margin)
-    || configuration.margin < 0.05 || configuration.margin > 0.5
+    || (!(configuration.version === 6 && configuration.source === 'area')
+      && (typeof configuration.margin !== 'number' || !Number.isFinite(configuration.margin)
+        || configuration.margin < 0.05 || configuration.margin > 0.5))
     || !['ready', 'unavailable'].includes(configuration.preview)) {
     throw new Error('Ungültige Produktkonfiguration.');
   }
@@ -41,12 +43,23 @@ export function parseConfiguration(value) {
     throw new Error('Ungültige Auswahl der Wandaufhängung.');
   }
   const engraving = validateEngraving(configuration.engraving, configuration.product);
+  if (configuration.version === 6 && (!['gpx', 'area'].includes(configuration.source)
+    || (configuration.source === 'area' && Object.hasOwn(configuration, 'margin'))
+    || (configuration.source === 'gpx' && Object.hasOwn(configuration, 'area')))) {
+    throw new Error('Ungültige Geländequelle oder widersprüchliche Ausschnittseinstellungen.');
+  }
+  if (configuration.version < 6 && (Object.hasOwn(configuration, 'source') || Object.hasOwn(configuration, 'area'))) {
+    throw new Error('Kartenausschnitte benötigen Konfiguration Version 6.');
+  }
   if (configuration.version >= 3 && !getProduct(configuration.product).engraving && engraving) {
     throw new Error('Der kompakte Holzsockel wird ohne Gravur gefertigt.');
   }
   return {
     version: configuration.version, product: configuration.product, engraving,
-    margin: configuration.margin, preview: configuration.preview,
+    ...(configuration.version === 6 && configuration.source === 'area'
+      ? { source: 'area', area: parseArea(configuration.area) }
+      : { margin: configuration.margin, ...(configuration.version === 6 ? { source: 'gpx' } : {}) }),
+    preview: configuration.preview,
     ...(configuration.version >= 2 ? { elevationScale: configuration.elevationScale } : {}),
     ...(configuration.version >= 4 ? { wallMount: configuration.wallMount } : {}),
   };

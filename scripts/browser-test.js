@@ -437,7 +437,7 @@ try {
     assert.equal(body.get('name'), 'Test Checkout');
     assert.equal(body.get('email'), 'checkout@example.invalid');
     assert.equal(await body.get('gpxFile').text(), personal);
-    assert.equal(JSON.parse(body.get('configuration')).version, 5);
+    assert.equal(JSON.parse(body.get('configuration')).version, 6);
     assert.equal(body.get('previewImage').type, 'image/png');
     assert.equal(body.has('price'), false);
     checkoutSubmissions.push(body);
@@ -549,7 +549,7 @@ try {
     await variants.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Variant test captured'));
     assert.equal(variantSubmissions.at(-1).product, product);
     assert.equal(variantSubmissions.at(-1).engraving, product === 'compact' ? '' : 'Mein Text');
-    assert.equal(variantSubmissions.at(-1).version, 5);
+    assert.equal(variantSubmissions.at(-1).version, 6);
     assert.equal(variantSubmissions.at(-1).wallMount, product !== 'frame');
     assert.equal(await variants.locator('#selectionControls').isEnabled(), true);
   }

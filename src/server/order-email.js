@@ -1,5 +1,6 @@
 import { PURCHASE_INFORMATION, PURCHASE_INFORMATION_TEXT } from '../shared/purchase.js';
 import { getProduct, configurationPrice } from '../shared/product.js';
+import { describeArea } from '../shared/area.js';
 
 const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -9,6 +10,7 @@ export function orderEmail(order, details, kind) {
   const live = order.mode === 'live';
   const owner = kind === 'owner';
   const configuration = JSON.parse(order.configuration);
+  const isArea = configuration.source === 'area';
   const product = getProduct(configuration.product);
   const shipping = details.shipping;
   const address = shipping.address;
@@ -16,7 +18,7 @@ export function orderEmail(order, details, kind) {
     : 'Testzahlung bestätigt';
   const introduction = live
     ? owner ? 'Die Zahlung ist bestätigt. Die Bestellung kann gefertigt werden.'
-      : `Danke, ${order.name}! Deine Route wird zu deinem persönlichen Erinnerungsstück.`
+      : `Danke, ${order.name}! Deine ${isArea ? 'Landschaft' : 'Route'} wird zu deinem persönlichen Erinnerungsstück.`
     : 'Dies ist eine Sandbox-Testbestellung. Kein Geld wurde abgebucht; es wird kein Produkt gefertigt.';
   const rows = [
     ['Bestellreferenz', order.id],
@@ -28,18 +30,21 @@ export function orderEmail(order, details, kind) {
       ['Schutzfüße', '4 transparente Schutzfüße inklusive'],
     ] : []),
     ['Gravur', configuration.engraving || 'Ohne Gravur'],
-    ['Geländerand', `${Math.round(configuration.margin * 100)} %`],
+    ...(isArea ? [['Gelände', describeArea(configuration.area)]]
+      : [['Geländerand', `${Math.round(configuration.margin * 100)} %`]]),
     ['Höhenüberhöhung', `${configuration.elevationScale}×`],
     ['Lieferadresse', [shipping.name, address.line1, address.line2,
       `${address.postal_code} ${address.city}`, address.state, address.country].filter(Boolean).join('\n')],
     ...(owner ? [['Name / E-Mail', `${order.name}\n${order.email}`],
-      ['GPX-Datei', order.filename], ['Stripe Checkout', order.session_id]] : []),
+      ...(!isArea ? [['GPX-Datei', order.filename]] : []), ['Stripe Checkout', order.session_id]] : []),
   ];
   const next = live
     ? 'Nach bestätigter Zahlung beginnt die Fertigung ohne weitere persönliche Produktionsfreigabe. Lieferung innerhalb Deutschlands in 5–10 Werktagen.'
     : 'Keine Produktion und keine Lieferung. Diese E-Mail dient nur zur Prüfung des Bestellablaufs; keine manuelle Produktionsfreigabe ist erforderlich (im späteren echten Verkauf).';
   const note = 'Kein Umsatzsteuerausweis gemäß §19 UStG. Die Online-Vorschau ist illustrativ, keine exakte Fertigungsvorlage.';
-  const attachments = owner ? order.gpx_manifest
+  const attachments = owner ? isArea
+    ? 'Ausschnittskoordinaten (Web Mercator, Nord oben) in der Konfiguration und das Vorschaubild findest du in den zwei Anhängen. Das Relief wird ohne Route gefertigt.'
+    : order.gpx_manifest
     ? 'Alle Original-GPX-Dateien, die kombinierte GPX, Vorschaubild und Konfiguration findest du in den Anhängen.'
     : 'Original-GPX, Vorschaubild und Konfiguration findest du in den drei Anhängen.' : '';
   const subject = `Peak Memory${live ? '' : ' TEST'} · ${title} · ${order.id}`;

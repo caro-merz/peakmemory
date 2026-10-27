@@ -1,8 +1,9 @@
 import './configurator.css';
 import { parseGpx } from '../shared/gpx.js';
 import { readGpxCollection } from '../shared/gpx-collection.js';
-import { parseConfiguration } from '../shared/configuration.js';
-import { terrainPlan } from '../shared/geometry.js';
+import { parseConfiguration, validateEngraving } from '../shared/configuration.js';
+import { terrainPlan, areaPlan } from '../shared/geometry.js';
+import { describeArea } from '../shared/area.js';
 import { loadTerrain } from './terrain.js';
 import sampleXml from './sample.gpx';
 import { getProduct, formatPrice, configurationPrice } from '../shared/product.js';
@@ -15,14 +16,19 @@ let file = null, route = null, sample = false, preview = 'unavailable', viewer =
 let generation = 0, controller = null, marginTimer = null, sending = false;
 let files = [], selectionRevision = 0, selecting = false;
 let checkout;
+let source = 'gpx', confirmedArea = null, candidateArea = null, mapError = '', areaPicker = null, mapLoading = null;
+const routeExample = get('engraving').value;
+const areaExample = 'Deine Landschaft';
 
 function configuration() {
+  if (source === 'area' && !confirmedArea) return null;
   return parseConfiguration({
-    version: 5, product: get('product').value,
+    version: 6, source, product: get('product').value,
     wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
     engraving: getProduct(get('product').value).engraving ? get('engraving').value : '',
     elevationScale: Number(get('elevationScale').value),
-    margin: Number(get('margin').value) / 100, preview: preview === 'ready' ? 'ready' : 'unavailable',
+    ...(source === 'area' ? { area: confirmedArea } : { margin: Number(get('margin').value) / 100 }),
+    preview: preview === 'ready' ? 'ready' : 'unavailable',
   });
 }
 function summary() {
@@ -32,7 +38,7 @@ function summary() {
   get('engravingUnavailable').hidden = product.engraving;
   if (product.engraving) {
     get('engraving').rows = product.engravingMaxLines;
-    get('engravingHint').textContent = `Max. ${product.engravingMaxLines} Zeilen und insgesamt 120 Zeichen. Beispielwerte – bitte an deine Tour anpassen.`;
+    get('engravingHint').textContent = `Max. ${product.engravingMaxLines} Zeilen und insgesamt 120 Zeichen. Beispielwerte – bitte an deine ${source === 'area' ? 'Landschaft' : 'Tour'} anpassen.`;
   }
   get('wallMountControls').hidden = product.id === 'frame';
   get('wallMount').disabled = sending || product.id === 'frame';
@@ -46,7 +52,10 @@ function summary() {
   get('productDimensionsNote').textContent = `10 × 10 cm Relief · ${product.support}: ${product.dimensions}.`;
   let settings;
   try {
-    settings = configuration();
+    settings = configuration() ?? {
+      engraving: validateEngraving(product.engraving ? get('engraving').value : '', product.id),
+      elevationScale: Number(get('elevationScale').value), margin: Number(get('margin').value) / 100,
+    };
     get('engraving').setCustomValidity('');
     get('configurationSummary').classList.remove('error');
   } catch (error) {
@@ -56,16 +65,20 @@ function summary() {
     updateActions();
     return false;
   }
-  get('configurationSummary').textContent = `${product.name} · ${product.dimensions} · Rand ${Math.round(settings.margin * 100)} % · Höhen ${settings.elevationScale}× · Gravur: ${settings.engraving || 'keine'}${product.id !== 'frame' ? ` · Wandaufhängung: ${settings.wallMount ? 'ja (+1 €)' : 'nein'} · 4 transparente Schutzfüße` : ''}`;
+  get('configurationSummary').textContent = `${product.name} · ${product.dimensions} · ${source === 'area'
+    ? confirmedArea ? describeArea(confirmedArea) : 'Bitte Kartenausschnitt bestätigen'
+    : `Rand ${Math.round(settings.margin * 100)} %`} · Höhen ${settings.elevationScale}× · Gravur: ${settings.engraving || 'keine'}${product.id !== 'frame' ? ` · Wandaufhängung: ${get('wallMount').value === 'yes' ? 'ja (+1 €)' : 'nein'} · 4 transparente Schutzfüße` : ''}`;
   get('elevationValue').textContent = `${settings.elevationScale}×`;
   get('elevationNote').textContent = `${settings.elevationScale}-fach`;
-  get('marginValue').textContent = `${Math.round(settings.margin * 100)} %`;
+  get('marginValue').textContent = `${Math.round(Number(get('margin').value))} %`;
   updateActions();
   return true;
 }
 function updateActions() {
   get('remove').disabled = sending || !route && !file;
-  get('retry').hidden = !route || preview !== 'unavailable';
+  get('retry').hidden = !(source === 'area' ? confirmedArea : route) || preview !== 'unavailable';
+  get('confirmArea').disabled = sending || source !== 'area' || !candidateArea || !!mapError;
+  get('retryMap').disabled = sending || !!mapLoading;
   for (const button of viewButtons) button.disabled = sending || preview !== 'ready';
   for (const button of get('routeFiles').querySelectorAll('button')) button.disabled = sending;
   checkout?.update();
@@ -107,7 +120,7 @@ function unavailable(message) {
 }
 async function renderPreview() {
   const current = invalidate();
-  if (!route) return;
+  if (!(source === 'area' ? confirmedArea : route)) return;
   preview = 'loading';
   controller = new AbortController();
   const activeController = controller;
@@ -117,7 +130,8 @@ async function renderPreview() {
   status('Öffentliche Höhendaten werden geladen und deine Landschaft wird geformt …');
   updateActions();
   try {
-    const plan = terrainPlan(route, configuration().margin);
+    const settings = configuration();
+    const plan = source === 'area' ? areaPlan(settings.area) : terrainPlan(route, settings.margin);
     const [{ createViewer }, grid] = await Promise.all([
       import('./renderer.js'), loadTerrain(plan, activeController.signal),
     ]);
@@ -129,11 +143,11 @@ async function renderPreview() {
       viewer = nextViewer;
     }
     activeController.signal.throwIfAborted();
-    const settings = configuration();
-    viewer.show(grid, settings.elevationScale, settings.engraving, true, settings.product, settings.wallMount);
+    const latest = configuration();
+    viewer.show(grid, latest.elevationScale, latest.engraving, true, latest.product, latest.wallMount);
     get('placeholder').hidden = true;
     preview = 'ready';
-    get('previewBadge').textContent = sample ? 'Beispielroute' : files.length > 1 ? 'Deine Routen' : 'Deine Route';
+    get('previewBadge').textContent = source === 'area' ? 'Ohne Route' : sample ? 'Beispielroute' : files.length > 1 ? 'Deine Routen' : 'Deine Route';
     status('Deine Gelände-Vorschau ist bereit. Drehe das Relief und gestalte deine Erinnerung.');
   } catch (error) {
     if (generation !== current) return;
@@ -178,7 +192,7 @@ async function selectFiles(selected, append = true, restoreFocus = false) {
     const next = append ? [...files, ...selected] : selected;
     const collection = await readGpxCollection(next);
     if (selectionRevision !== current) return;
-    terrainPlan(collection.route, configuration().margin);
+    terrainPlan(collection.route, Number(get('margin').value) / 100);
     files = next; route = collection.route; sample = false;
     file = next.length === 1 ? next[0] : new File([collection.gpx], collection.filename, { type: 'application/gpx+xml' });
     selecting = false;
@@ -186,7 +200,7 @@ async function selectFiles(selected, append = true, restoreFocus = false) {
     get('fileName').textContent = files.length === 1 ? files[0].name : `${files.length} von 10 GPX-Dateien ausgewählt.`;
     showFiles();
     if (restoreFocus) fileInput.focus();
-    await renderPreview();
+    if (source === 'gpx') await renderPreview();
   } catch (error) {
     if (selectionRevision !== current) return;
     get('routeError').textContent = `${error instanceof Error ? error.message : 'Die Dateien konnten nicht gelesen werden.'} Deine bisherige Auswahl bleibt erhalten.`;
@@ -252,7 +266,7 @@ get('elevationScale').addEventListener('input', () => {
 });
 get('margin').addEventListener('input', () => {
   if (!summary()) return;
-  if (!route) return;
+  if (source !== 'gpx' || !route) return;
   invalidate(); preview = 'loading'; updateActions();
   get('previewBadge').textContent = 'Wird angepasst';
   status('Der Geländeausschnitt wird angepasst …');
@@ -260,10 +274,12 @@ get('margin').addEventListener('input', () => {
 });
 get('resetView').addEventListener('click', () => viewer?.reset());
 window.addEventListener('pagehide', () => { controller?.abort(); viewer?.dispose(); viewer = null; });
-window.addEventListener('pageshow', event => { if (event.persisted && route) renderPreview(); });
+window.addEventListener('pageshow', event => { if (event.persisted && (source === 'area' ? confirmedArea : route)) renderPreview(); });
 checkout = initializeCheckout({
   state: () => ({
-    file, files, sample, preview, busy: sending || selecting, valid: get('engraving').validity.valid,
+    source, area: confirmedArea, file: source === 'gpx' ? file : null,
+    files: source === 'gpx' ? files : [], sample: source === 'gpx' && sample,
+    preview, busy: sending || selecting, valid: get('engraving').validity.valid,
     configuration: get('engraving').validity.valid ? configuration() : null,
     summary: get('configurationSummary').textContent,
   }),
@@ -273,10 +289,102 @@ checkout = initializeCheckout({
   },
   setBusy: busy => {
     sending = busy;
-    for (const id of ['routeControls', 'productControls', 'selectionControls']) get(id).disabled = busy;
+    for (const id of ['sourceControls', 'routeControls', 'productControls', 'selectionControls']) get(id).disabled = busy;
+    areaPicker?.setBusy(busy);
     get('engraving').disabled = busy || !getProduct(get('product').value).engraving;
     for (const button of viewButtons) button.disabled = busy || preview !== 'ready';
     updateActions();
   },
+});
+
+function unconfirmArea() {
+  if (source !== 'area' || !confirmedArea) return;
+  confirmedArea = null;
+  invalidate();
+  get('previewBadge').textContent = 'Ausschnitt bestätigen';
+  status('Die Karte wurde verändert. Bestätige deinen neuen Ausschnitt für die 3D-Vorschau.');
+  summary();
+}
+
+async function openMap() {
+  if (areaPicker) { areaPicker.refresh(); return; }
+  if (mapLoading) return mapLoading;
+  get('areaStatus').textContent = 'Karte wird geladen …';
+  mapLoading = (async () => {
+    try {
+      const { createAreaPicker } = await import('./area-picker.js');
+      if (source !== 'area') return;
+      areaPicker = createAreaPicker({
+        container: get('areaMap'), frame: get('areaFrame'),
+        onMoving: () => {
+          candidateArea = null;
+          mapError = 'Die Karte wird verschoben …';
+          get('areaStatus').textContent = mapError;
+          unconfirmArea();
+          updateActions();
+        },
+        onChange: (area, error, description) => {
+          candidateArea = area; mapError = error;
+          if (error && confirmedArea) unconfirmArea();
+          get('areaDescription').textContent = description;
+          get('areaStatus').textContent = error || (confirmedArea
+            ? 'Dieser Ausschnitt wird für dein Relief ohne Route verwendet.'
+            : 'Ausschnitt bereit. Bestätige das Quadrat, um dein Relief zu sehen.');
+          get('areaStatus').className = error && !error.includes('geladen …') ? 'error' : 'hint';
+          updateActions();
+        },
+      });
+    } catch (error) {
+      mapError = error.message || 'Die Karte konnte nicht geladen werden.';
+      get('areaStatus').textContent = `${mapError} Bitte „Karte erneut laden“ wählen.`;
+      get('areaStatus').className = 'error';
+    } finally { mapLoading = null; updateActions(); }
+  })();
+  return mapLoading;
+}
+
+for (const input of document.querySelectorAll('input[name=terrainSource]')) {
+  input.addEventListener('change', async () => {
+    if (!input.checked || sending) return;
+    source = input.value;
+    invalidate();
+    get('routeControls').hidden = source === 'area';
+    get('areaControls').hidden = source !== 'area';
+    get('marginControls').hidden = source === 'area';
+    if (get('engraving').value === (source === 'area' ? routeExample : areaExample)) {
+      get('engraving').value = source === 'area' ? areaExample : routeExample;
+    }
+    get('placeholder').querySelector('small').textContent = source === 'area'
+      ? 'Wähle und bestätige einen Kartenausschnitt – ganz ohne Route.'
+      : 'Lade eine Route hoch oder probiere die Beispielroute.';
+    get('previewBadge').textContent = source === 'area' ? 'Ausschnitt bestätigen' : 'Noch keine Route';
+    status(source === 'area' ? 'Wähle einen Kartenausschnitt für die 3D-Vorschau.' : 'Wähle eine Route, um die 3D-Vorschau zu starten.');
+    summary();
+    if (source === 'area') await openMap();
+    if ((source === 'area' ? confirmedArea : route) && get('engraving').validity.valid) await renderPreview();
+  });
+}
+get('confirmArea').addEventListener('click', () => {
+  if (sending || source !== 'area' || !candidateArea || mapError) return;
+  confirmedArea = { ...candidateArea };
+  get('areaStatus').textContent = 'Dieser Ausschnitt wird für dein Relief ohne Route verwendet.';
+  if (summary()) renderPreview();
+});
+get('retryMap').addEventListener('click', () => {
+  if (sending) return;
+  if (areaPicker) areaPicker.retry(); else openMap();
+});
+document.querySelector('.inquiry a').addEventListener('click', event => {
+  if (source !== 'area') return;
+  if (sending || !confirmedArea || !summary()) {
+    event.preventDefault();
+    status('Bitte zuerst einen Kartenausschnitt bestätigen und deine Einstellungen prüfen.', true);
+    return;
+  }
+  const form = get('contactForm');
+  if (!form) { event.preventDefault(); status('Bitte öffne das Kontaktformular auf der Startseite.', true); return; }
+  document.dispatchEvent(new CustomEvent('peakmemory:area-inquiry', {
+    detail: { configuration: configuration(), description: get('configurationSummary').textContent },
+  }));
 });
 summary(); updateActions();

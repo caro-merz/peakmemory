@@ -11,7 +11,7 @@ for (const directory of ['assets', path.join('dist', 'assets')]) {
   try { files = await readdir(directory); }
   catch (error) { if (error.code !== 'ENOENT') throw error; continue; }
   for (const filename of files) {
-    if (/^(?:configurator\.(?:js|css)(?:\.LEGAL\.txt)?|(?:renderer|chunk)-[A-Z0-9]{8}\.js(?:\.LEGAL\.txt)?|licenses\.txt)$/.test(filename)) {
+    if (/^(?:configurator\.(?:js|css)(?:\.LEGAL\.txt)?|(?:renderer|chunk|area-picker)-[A-Z0-9]{8}\.(?:js|css)(?:\.LEGAL\.txt)?|licenses\.txt)$/.test(filename)) {
       await unlink(path.join(directory, filename));
     }
   }
@@ -20,10 +20,10 @@ await build({
   entryPoints: ['src/client/configurator.js'], bundle: true, format: 'esm', splitting: true,
   outdir: 'assets', entryNames: 'configurator', chunkNames: '[name]-[hash]',
   minify: true, target: ['es2022'], legalComments: 'linked', metafile: false,
-  loader: { '.gpx': 'text' },
+  loader: { '.gpx': 'text', '.png': 'dataurl' },
   external: ['/fonts/*'],
 });
-const packages = ['three', 'fast-xml-parser'];
+const packages = ['three', 'fast-xml-parser', 'leaflet'];
 let licenses = '';
 const visited = new Set();
 for (let index = 0; index < packages.length; index += 1) {

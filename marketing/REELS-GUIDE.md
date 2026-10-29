@@ -107,8 +107,6 @@ Kontrolle ohne Video: `python render.py --audio` → `build/sfx.wav`.
 | `12239218_2160_3840_60fps.mp4` | 4K hoch, 60 fps | 5,5 s | Wanderer mit Rucksack im Nadelwald | Einstieg „Wandern“ | – |
 | `12321884_2160_3840_60fps.mp4` | 4K hoch, 60 fps | 6,9 s | Wanderer breitet auf Gipfel die Arme aus, dunstiges Bergpanorama | **Hook**, sehr stark | Reel 1 (2,2–3,7 s), Feature-Reel (ab 2,0 s) |
 | `12836462_1080_1920_30fps.mp4` | 1080×1920, 30 fps | 31,6 s | Kletterer am Felsgrat/Klettersteig mit Schnee | Alpin/Klettern | – |
-| `13494091_2160_3840_25fps.mp4` | 4K hoch, 25 fps | 16,2 s | Trailrunner im grünen Frühlingswald (Mütze) | Laufen/Trail | – |
-| `13611904_2160_3840_60fps.mp4` | 4K hoch, 60 fps | 12,6 s | Drohne top-down: Trailrunner auf Erdpfad | Übergang, „Route von oben“ | Storyboard-Entwurf (6,0–7,5 s) |
 | `14322896_2160_3840_30fps.mp4` | 4K hoch, 30 fps | 12,2 s | Drohne: Forststraße durch Nadelwald, Berge | Landschaft/Karte | – |
 | `15059932_1080_1920_30fps.mp4` | 1080×1920, 30 fps | 13,4 s | Motorrad-POV, Bergstraße, Gebetsfahnen | Motorrad-/Pass-Touren | – |
 | `15110783_1080_1920_30fps.mp4` | 1080×1920, 30 fps | 14,0 s | Rennradfahrer auf Dolomitenstraße, Almwiese | Rad/Etappen | Feature-Reel (ab 1,5 s) |

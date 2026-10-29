@@ -26,8 +26,7 @@ desktop.ini
 *.njsproj
 *.sln
 
-# Marketing: large stock footage and regenerable reel build output
-marketing/video material/
+# Marketing: regenerable reel build output
 marketing/*/build/capture/
 marketing/*/build/fonts/
 marketing/*/build/sfx.wav

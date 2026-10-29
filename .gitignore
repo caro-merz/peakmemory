@@ -25,3 +25,11 @@ desktop.ini
 *.ntvs*
 *.njsproj
 *.sln
+
+# Marketing: large stock footage and regenerable reel build output
+marketing/video material/
+marketing/*/build/capture/
+marketing/*/build/fonts/
+marketing/*/build/sfx.wav
+marketing/*/build/preview-sheet.jpg
+__pycache__/

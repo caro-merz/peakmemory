@@ -126,7 +126,7 @@
     'Individuelle Formate & Motive auf Anfrage': 'Custom sizes & designs on request',
     'Wir können individuelle Formate (z.B. für größere Bergketten oder ganze Länder) abbilden – z.B. 20 × 24 cm Holzsockel mit 18 × 18 cm 3D-Modell. ': 'We can create custom sizes (for example, larger mountain ranges or entire countries), such as a 20 × 24 cm wood base with an 18 × 18 cm 3D model. ',
     'Kontaktiert uns dafür einfach': 'Get in touch to discuss your idea',
-    'Du möchtest einen besonderen Ort statt einer Route verewigen? Wir fertigen dein Bergrelief auch ohne Route – mit einem kleinen roten Herz an deinem besonderen Ort, zum Beispiel dort, wo ihr euch verlobt habt. Im Rahmen mit persönlich graviertem Passepartout. ': 'Want to capture a special place instead of a route? We can also create your mountain relief without a route – with a small red heart marking your special spot, for example where you got engaged. Framed with a personally engraved mount. ',
+    'Du möchtest einen besonderen Ort statt einer Route verewigen? Wir fertigen dein Bergrelief auch ohne Route – mit einem kleinen roten Herz an deinem besonderen Ort <3. Im Rahmen mit persönlich graviertem Passepartout. Oder auf dem Holzsockel. ': 'Want to capture a special place instead of a route? We can also create your mountain relief without a route – with a small red heart marking your special spot <3. Framed with a personally engraved mount. Or on an oak base. ',
     'Sprich uns einfach an': 'Just get in touch',
     'Bergrelief ohne Route mit rotem Herz am Verlobungsort, im Rahmen mit personalisiertem Passepartout': 'Mountain relief without a route, with a red heart marking the engagement spot, framed with a personalized mount',
     "So funktioniert's": 'How it works',

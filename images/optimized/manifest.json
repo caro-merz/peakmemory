@@ -167,6 +167,24 @@
       }
     ]
   },
+  "images/Relief_mitHerz.png": {
+    "width": 1024,
+    "height": 1536,
+    "variants": [
+      {
+        "src": "images/optimized/Relief_mitHerz-480.webp?v=9f9d54e66c2a503a",
+        "width": 480,
+        "height": 720,
+        "bytes": 25560
+      },
+      {
+        "src": "images/optimized/Relief_mitHerz-960.webp?v=b9fb18afdb104488",
+        "width": 960,
+        "height": 1440,
+        "bytes": 66836
+      }
+    ]
+  },
   "images/insights1.jpeg": {
     "width": 3288,
     "height": 4384,

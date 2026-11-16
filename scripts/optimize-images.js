@@ -17,6 +17,7 @@ const homepageImages = [
   'rahmen2.jpeg',
   'XXL_Fuji.jpeg',
   'XXL_E5.jpeg',
+  'Relief_mitHerz.png',
   'insights1.jpeg',
   'insight2.jpeg',
   'insights3.jpeg',

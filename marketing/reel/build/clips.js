@@ -1,0 +1,1 @@
+window.CLIPS = {"road": 23, "finish": 29};

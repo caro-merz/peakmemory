@@ -26,6 +26,19 @@
       <p>Lade deine GPX-Datei hoch oder wähle eine Landschaft auf der Karte. Entdecke dein Relief in 3D und gestalte dein persönliches Erinnerungsstück. Kostenlos, ohne Anmeldung und ohne Bestellung.</p>
     </div>
     <noscript><p class="error">Für die interaktive Vorschau brauchst du JavaScript. Du kannst deine Route stattdessen an <a href="mailto:peak.memory@web.de">peak.memory@web.de</a> senden.</p></noscript>
+    <fieldset id="uthRouteControls" class="card" hidden>
+      <legend>Wähle deine UTH-Strecke</legend>
+      <label for="uthRoute">Strecke</label>
+      <select id="uthRoute">
+        <option value="">Bitte wählen</option>
+        <option value="UTH50">UTH50 Endurance</option>
+        <option value="UTH25">UTH25 Trail Run</option>
+        <option value="UTH10">UTH10 Gravel</option>
+        <option value="UTH5">UTH5 Sprint</option>
+      </select>
+      <p class="hint">Die offizielle Strecke wird für dein Relief geladen. Kartendaten: <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a>.</p>
+      <p id="uthRouteStatus" role="status" aria-live="polite"></p>
+    </fieldset>
     <fieldset id="sourceControls" class="card source-controls">
       <legend>Wie möchtest du dein Relief gestalten?</legend>
       <div class="source-options">
@@ -135,15 +148,15 @@
     <section class="card checkout" aria-labelledby="checkoutTitle">
       <div>
         <h2 id="checkoutTitle">Dein Erinnerungsstück bestellen.</h2>
-        <p>Lieferadresse und Zahlung erfasst Stripe im nächsten Schritt.</p>
+        <p id="checkoutIntro">Lieferadresse und Zahlung erfasst Stripe im nächsten Schritt.</p>
         <dl class="order-details">
           <dt>Relief</dt><dd>10 × 10 cm</dd>
           <dt>Produkt</dt><dd id="orderProduct">Eiche-Holzsockel mit Gravur</dd>
           <dt id="orderSupport">Eiche-Holzsockel</dt><dd id="orderDimensions">11 × 13,5 × 2 cm</dd>
           <dt>Liefergebiet</dt><dd>Deutschland</dd>
-          <dt>Lieferzeit</dt><dd>5–10 Werktage nach Zahlung</dd>
+          <dt id="orderDeliveryLabel">Lieferzeit</dt><dd id="orderDeliveryTime">5–10 Werktage nach Zahlung</dd>
         </dl>
-        <p class="model-price"><strong id="modelPrice">50 €</strong> Gesamtpreis für dein Erinnerungsstück<br><small>Inkl. Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.</small></p>
+        <p class="model-price"><strong id="modelPrice">50 €</strong> Produktpreis vor Rabatt<br><small>Inkl. Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.</small></p>
         <p class="hint">Ein Stück pro Bestellung. Sonderformate bitte separat anfragen.</p>
         <p id="checkoutAvailability" role="status">Der Direktkauf ist noch nicht aktiviert. Du kannst dein Relief weiterhin unverbindlich anfragen.</p>
         <p id="paymentStatus" role="status" aria-live="polite"></p>
@@ -153,6 +166,8 @@
           <p id="testNotice" class="test-notice"><strong>Stripe-Testmodus:</strong> Keine echte Zahlung, keine echte Bestellung und keine Produktion. Keine echten Kartendaten eingeben. Test-Bestelldaten werden privat gespeichert.</p>
           <label for="checkoutName">Dein Name</label><input id="checkoutName" name="name" autocomplete="name" maxlength="200" required>
           <label for="checkoutEmail">E-Mail-Adresse</label><input id="checkoutEmail" name="email" type="email" autocomplete="email" maxlength="200" required>
+          <label for="checkoutCode">Rabattcode (optional)</label><input id="checkoutCode" name="discountCode" maxlength="32" autocomplete="off">
+          <p id="checkoutOffer" class="hint" role="status"></p>
           <p><strong>Deine Auswahl</strong></p>
           <p id="checkoutSummary" class="configuration-summary"></p>
           <label class="acceptance" for="checkoutAcceptance"><input id="checkoutAcceptance" type="checkbox" required> <span>Ich habe meine Route oder meinen Kartenausschnitt, Gravur und Einstellungen geprüft. Beim Direktkauf sind sie final; eine weitere Produktionsfreigabe erfolgt nicht. Die 3D-Vorschau ist illustrativ.</span></label>

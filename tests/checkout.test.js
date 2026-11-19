@@ -15,6 +15,7 @@ import { MAX_PREVIEW_SIZE } from '../src/shared/preview.js';
 import { PURCHASE_INFORMATION_TEXT } from '../src/shared/purchase.js';
 import { orderEmail } from '../src/server/order-email.js';
 import { PRODUCTS, configurationPrice } from '../src/shared/product.js';
+import { UTH_PICKUP_CUTOFF, UTH_DISCOUNT_END, UTH_ROUTES, offerFor } from '../src/shared/uth.js';
 import { onRequest as pagesCheckout } from '../functions/checkout.js';
 import { onRequest as pagesStatus } from '../functions/order-status.js';
 import { onRequest as pagesWebhook } from '../functions/stripe-webhook.js';
@@ -30,6 +31,15 @@ const gpx = '<?xml version="1.0"?><gpx version="1.1"><trk><trkseg><trkpt lat="47
 const config = { version: 2, product: 'base', engraving: 'Mein Gipfel', margin: 0.15, elevationScale: 1.5, preview: 'ready' };
 const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64');
 const origin = 'https://peak-memory.de';
+
+test('UTH product discount excludes the wall mount and expires at midnight Berlin time', () => {
+  const compact = { version: 5, product: 'compact', wallMount: true };
+  assert.deepEqual(offerFor(compact, 'uth', UTH_DISCOUNT_END - 1), {
+    route: '', code: 'UTH', full: 4600, discount: 450, amount: 4150,
+  });
+  assert.throws(() => offerFor(compact, 'UTH', UTH_DISCOUNT_END), /abgelaufen/);
+  assert.throws(() => offerFor(compact, 'invalid', UTH_DISCOUNT_END - 1), /ungültig/);
+});
 test('order emails escape personal content and distinguish test, live, buyer and owner details', () => {
   const order = { id: 'order-example', name: '<img src=x>', email: 'ada@example.com',
     filename: 'route.gpx', session_id: 'cs_test_example',
@@ -55,6 +65,7 @@ function environment() {
   db.exec(readFileSync(new URL('../migrations/0001_checkout.sql', import.meta.url), 'utf8'));
   db.exec(readFileSync(new URL('../migrations/0002_whatsapp_alert.sql', import.meta.url), 'utf8'));
   db.exec(readFileSync(new URL('../migrations/0003_gpx_collection.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0004_uth.sql', import.meta.url), 'utf8'));
   const d1 = {
     prepare(sql) {
       let args = [];
@@ -193,6 +204,89 @@ async function webhook(event, { timestamp = Math.floor(Date.now() / 1000), secre
   return req(`/stripe-webhook${mode === 'live' ? '/live' : ''}`, { method: 'POST', body, headers: { 'stripe-signature': signature ?? `t=${timestamp},v1=${hash}` } });
 }
 function state(context, id) { return context.db.prepare('SELECT * FROM checkout_orders WHERE id=?').get(id); }
+
+test('all official UTH files are accepted and altered or mismatched routes are rejected', async () => {
+  const context = environment(), services = mockServices();
+  Date.now = () => (UTH_PICKUP_CUTOFF - 3600) * 1000;
+  for (const route of Object.keys(UTH_ROUTES)) {
+    const bytes = readFileSync(new URL(`../src/uth/${route}.gpx`, import.meta.url));
+    const file = new File([bytes], `${route}.gpx`, { type: 'application/gpx+xml' });
+    const result = await handleCheckout(checkout(key(), { gpxFile: file, eventRoute: route, quotedAmount: '5000', quotedFulfillment: 'pickup' }), context.env);
+    assert.equal(result.status, 200, await result.clone().text());
+    const order = state(context, (await result.json()).orderId);
+    assert.equal(JSON.parse(order.offer).route, route);
+  }
+  const incorrect = new File([gpx], 'UTH50.gpx', { type: 'application/gpx+xml' });
+  const response = await handleCheckout(checkout(key(), { gpxFile: incorrect, eventRoute: 'UTH50', quotedAmount: '5000', quotedFulfillment: 'pickup' }), context.env);
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /Originalstrecke/);
+  assert.equal(services.calls.length, 4);
+  const correct = new File([readFileSync(new URL('../src/uth/UTH5.gpx', import.meta.url))], 'UTH5.gpx', { type: 'application/gpx+xml' });
+  Date.now = () => (UTH_PICKUP_CUTOFF + 1) * 1000;
+  const staleQuote = await handleCheckout(checkout(key(), {
+    gpxFile: correct, eventRoute: 'UTH5', quotedAmount: '5000', quotedFulfillment: 'pickup',
+  }), context.env);
+  assert.equal(staleQuote.status, 409);
+  assert.match((await staleQuote.json()).error, /geändert/);
+  assert.equal(services.calls.length, 4);
+});
+
+test('UTH pickup uses signed payment time, handles late payment as shipping and keeps retries stable', async () => {
+  const context = configureLive(environment()), services = mockServices();
+  const bytes = readFileSync(new URL('../src/uth/UTH25.gpx', import.meta.url));
+  const file = new File([bytes], 'UTH25.gpx', { type: 'application/gpx+xml' });
+  const product = { version: 5, product: 'compact', wallMount: true, engraving: '',
+    margin: 0.15, elevationScale: 2, preview: 'ready' };
+  Date.now = () => (UTH_PICKUP_CUTOFF - 100) * 1000;
+  const fields = { gpxFile: file, eventRoute: 'UTH25', discountCode: 'UTH', quotedAmount: '4150', quotedFulfillment: 'pickup', configuration: JSON.stringify(product) };
+  const submissionKey = key();
+  const response = await handleCheckout(checkout(submissionKey, fields), context.env, 'live');
+  assert.equal(response.status, 200, await response.clone().text());
+  const data = await response.json(), order = state(context.live, data.orderId);
+  assert.equal(JSON.parse(order.offer).amount, 4150);
+  assert.equal(services.calls[0].params.get('line_items[0][price_data][unit_amount]'), '4150');
+  assert.match(services.calls[0].params.get('success_url'), /\/uth\?/);
+  Date.now = () => (UTH_PICKUP_CUTOFF + 60) * 1000;
+  const event = eventFor(order, { amount_total: 4150 }, 'checkout.session.completed', true);
+  event.created = UTH_PICKUP_CUTOFF;
+  const wrongAmount = { ...event, id: `evt_${key().replaceAll('-', '')}`,
+    data: { object: { ...event.data.object, amount_total: 4149 } } };
+  assert.equal((await handleStripeWebhook(await webhook(wrongAmount, { secret: 'whsec_livemock', mode: 'live' }), context.env, 'live')).status, 400);
+  assert.equal((await handleStripeWebhook(await webhook(event, { secret: 'whsec_livemock', mode: 'live' }), context.env, 'live')).status, 200);
+  assert.equal(state(context.live, order.id).fulfillment, 'pickup');
+  assert.ok(services.emails.every(({ payload }) => payload.text.includes('24. April 2027 am Peak Memory Stand')));
+  const duplicate = await handleStripeWebhook(await webhook(event, { secret: 'whsec_livemock', mode: 'live' }), context.env, 'live');
+  assert.equal(duplicate.status, 200);
+  assert.equal(services.emails.length, 2);
+
+  Date.now = () => (UTH_PICKUP_CUTOFF - 100) * 1000;
+  const lateResponse = await handleCheckout(checkout(key(), fields), context.env, 'live');
+  assert.equal(lateResponse.status, 200, await lateResponse.clone().text());
+  const late = state(context.live, (await lateResponse.json()).orderId);
+  Date.now = () => (UTH_PICKUP_CUTOFF + 60) * 1000;
+  const lateEvent = eventFor(late, { amount_total: 4150 }, 'checkout.session.async_payment_succeeded', true);
+  lateEvent.created = UTH_PICKUP_CUTOFF + 1;
+  assert.equal((await handleStripeWebhook(await webhook(lateEvent, { secret: 'whsec_livemock', mode: 'live' }), context.env, 'live')).status, 200);
+  assert.equal(state(context.live, late.id).fulfillment, 'shipping');
+  assert.ok(services.emails.slice(2).every(({ payload }) => payload.text.includes('Zahlung wurde nach der Abholfrist bestätigt')));
+  Date.now = () => (UTH_DISCOUNT_END + 1) * 1000;
+  const retry = await handleCheckout(checkout(submissionKey, fields), context.env, 'live');
+  assert.equal(retry.status, 200, await retry.clone().text());
+  assert.equal((await retry.json()).orderId, order.id);
+});
+
+test('discount applies to ordinary checkout and rejects invalid or expired codes before creating Stripe sessions', async () => {
+  const context = environment(), services = mockServices();
+  Date.now = () => (UTH_DISCOUNT_END - 1) * 1000;
+  const response = await handleCheckout(checkout(key(), { discountCode: 'UTH', quotedAmount: '4500' }), context.env);
+  assert.equal(response.status, 200, await response.clone().text());
+  assert.equal(services.calls[0].params.get('line_items[0][price_data][unit_amount]'), '4500');
+  Date.now = () => UTH_DISCOUNT_END * 1000;
+  const expired = await handleCheckout(checkout(key(), { discountCode: 'UTH', quotedAmount: '4500' }), context.env);
+  assert.equal(expired.status, 400);
+  assert.match((await expired.json()).error, /abgelaufen/);
+  assert.equal(services.calls.length, 1);
+});
 
 const areaConfiguration = {
   version: 6, source: 'area', area: { left: 0.525, top: 0.35, size: 0.0004 },

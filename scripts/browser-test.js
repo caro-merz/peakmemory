@@ -57,7 +57,7 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   const webp = await terrainWebp();
   let terrainFailure = false, terrainOffline = false, terrainDelay = 0, terrainRequests = 0;
-  await page.route('**/shop-status', request => request.fulfill({
+  await page.route('**/shop-status**', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":false,"testMode":true,"mode":"test"}',
   }));
   await page.route('**/terrain/**', async request => {
@@ -385,7 +385,7 @@ try {
     };
   });
   const noWebgl = await unavailable.newPage();
-  await noWebgl.route('**/shop-status', request => request.fulfill({
+  await noWebgl.route('**/shop-status**', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
   }));
   await noWebgl.route('**/terrain/**', request => request.fulfill({status:200,contentType:'image/webp',body:webp}));
@@ -423,7 +423,7 @@ try {
   const shop = await context.newPage();
   console.log('Browser checks: single-file checkout');
   shop.on('pageerror', error => errors.push(error.message));
-  await shop.route('**/shop-status', request => request.fulfill({
+  await shop.route('**/shop-status**', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
   }));
   await shop.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/webp', body: webp }));
@@ -518,10 +518,91 @@ try {
   await shop.goto(url + '/?checkout=cancelled');
   await shop.waitForFunction(() => document.getElementById('paymentStatus').textContent.includes('verlassen'));
   assert.ok(!(await shop.locator('#paymentStatus').innerText()).includes('Testzahlung bestätigt'));
+  console.log('Browser checks: UTH routes and discount');
+  const uth = await context.newPage();
+  await uth.addInitScript(() => { Date.now = () => Date.parse('2027-04-15T10:00:00Z'); });
+  uth.on('pageerror', error => errors.push(error.message));
+  await uth.route('**/shop-status**', request => request.fulfill({
+    status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
+  }));
+  await uth.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/webp', body: webp }));
+  let uthSubmission;
+  await uth.route('**/checkout', async request => {
+    uthSubmission = await new Response(request.request().postDataBuffer(), {
+      headers: { 'Content-Type': request.request().headers()['content-type'] },
+    }).formData();
+    await request.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"Test checkout"}' });
+  });
+  assert.equal((await uth.goto(url + '/uth')).status(), 200);
+  await uth.locator('#checkoutForm').waitFor({ state: 'visible' });
+  assert.equal(await uth.locator('#sourceControls').isVisible(), false);
+  assert.equal(await uth.locator('h1').innerText(), 'Deine UTH-Strecke als Erinnerung');
+  assert.equal(await uth.locator('.preview-note').isVisible(), false);
+  assert.equal(await page.locator('.preview-note').isVisible(), true);
+  assert.match(await uth.locator('.uth-hero img').getAttribute('src'), /UTH_Hero/);
+  assert.ok(await uth.locator('.uth-hero img').evaluate(image => image.complete && image.naturalWidth > 0));
+  assert.doesNotMatch(await uth.locator('.uth-band').first().innerText(), /Die optionale Wandaufhängung ist ausgenommen/);
+  let delayedRouteRequested;
+  const delayedRoute = new Promise(resolve => { delayedRouteRequested = resolve; });
+  await uth.route('**/uth-routes/UTH50.gpx', async request => {
+    delayedRouteRequested();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    await request.continue();
+  });
+  await uth.locator('#uthRoute').selectOption('UTH50');
+  await delayedRoute;
+  await uth.locator('#uthRoute').selectOption('UTH5');
+  await uth.waitForFunction(() => document.getElementById('uthRouteStatus').textContent.includes('UTH5 ist'));
+  await uth.waitForTimeout(600);
+  assert.equal(await uth.locator('#engraving').inputValue(), 'UTH5 2027\n4,7 km | 120 hm');
+  assert.match(await uth.locator('#uthRouteStatus').innerText(), /UTH5 ist/);
+  await uth.unroute('**/uth-routes/UTH50.gpx');
+  for (const [route, engraving] of [
+    ['UTH5', 'UTH5 2027\n4,7 km | 120 hm'],
+    ['UTH10', 'UTH10 2027\n10,8 km | 310 hm'],
+    ['UTH25', 'UTH25 2027\n25,9 km | 1.270 hm'],
+    ['UTH50', 'UTH50 2027\n50,0 km | 2.100 hm'],
+  ]) {
+    await uth.locator('#uthRoute').selectOption(route);
+    await uth.waitForFunction(selected => document.getElementById('uthRouteStatus').textContent.includes(`${selected} ist`), route);
+    assert.equal(await uth.locator('#previewBadge').innerText(), 'Deine Route');
+    assert.equal(await uth.locator('#engraving').inputValue(), engraving);
+  }
+  await uth.locator('#engraving').fill('Meine UTH50\n50,0 km | 2.100 hm');
+  await uth.locator('#uthRoute').selectOption('UTH5');
+  await uth.waitForFunction(() => document.getElementById('uthRouteStatus').textContent.includes('UTH5 ist'));
+  assert.equal(await uth.locator('#engraving').inputValue(), 'UTH5 2027\n4,7 km | 120 hm');
+  await uth.locator('#uthRoute').selectOption('UTH50');
+  await uth.waitForFunction(() => document.getElementById('uthRouteStatus').textContent.includes('UTH50 ist'));
+  assert.equal(await uth.locator('#engraving').inputValue(), 'Meine UTH50\n50,0 km | 2.100 hm');
+  assert.match(await uth.locator('#configurationSummary').innerText(), /Meine UTH50/);
+  await uth.locator('#product').selectOption('compact');
+  await uth.locator('#wallMount').selectOption('yes');
+  await uth.locator('#checkoutCode').fill('UTH');
+  assert.match(await uth.locator('#checkoutSummary').innerText(), /41,50/);
+  await uth.locator('#checkoutName').fill('Test Checkout');
+  await uth.locator('#checkoutEmail').fill('checkout@example.invalid');
+  await uth.locator('#checkoutAcceptance').check();
+  await uth.locator('#submitCheckout').click();
+  await uth.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Test checkout'));
+  assert.equal(uthSubmission.get('eventRoute'), 'UTH50');
+  assert.equal(uthSubmission.get('discountCode'), 'UTH');
+  assert.equal(uthSubmission.get('gpxFile').name, 'UTH50.gpx');
+  for (const width of [320, 390, 768, 1365]) {
+    await uth.setViewportSize({ width, height: 844 });
+    assert.ok(await uth.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `UTH page fits ${width}px`);
+  }
+  const uthNoJsContext = await browser.newContext({ javaScriptEnabled: false });
+  const uthNoJs = await uthNoJsContext.newPage();
+  await uthNoJs.goto(url + '/uth');
+  assert.equal(await uthNoJs.locator('h1').isVisible(), true);
+  assert.match(await uthNoJs.locator('#processProductionInfo').innerText(), /24. April/);
+  assert.match(await uthNoJs.locator('noscript').innerText(), /JavaScript/);
+  await uthNoJsContext.close();
 
   const variants = await context.newPage();
   variants.on('pageerror', error => errors.push(error.message));
-  await variants.route('**/shop-status', request => request.fulfill({
+  await variants.route('**/shop-status**', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
   }));
   await variants.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/webp', body: webp }));
@@ -559,7 +640,7 @@ try {
   const multi = await context.newPage();
   console.log('Browser checks: multi-file checkout and inquiry');
   multi.on('pageerror', error => errors.push(error.message));
-  await multi.route('**/shop-status', request => request.fulfill({
+  await multi.route('**/shop-status**', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
   }));
   await multi.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/webp', body: webp }));
@@ -675,7 +756,7 @@ try {
 
   const liveShop = await context.newPage();
   liveShop.on('pageerror', error => errors.push(error.message));
-  await liveShop.route('**/shop-status', request => request.fulfill({
+  await liveShop.route('**/shop-status**', request => request.fulfill({
     status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":false,"mode":"live"}',
   }));
   await liveShop.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/webp', body: webp }));

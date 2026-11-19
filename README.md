@@ -7,6 +7,22 @@ Datei und kein exaktes Fertigungsbild.
 
 ## Funktionen
 
+- `/uth` begleitet die Zusammenarbeit mit UP THE HILL 2027: Die vier
+  bereitgestellten Strecken UTH5, UTH10, UTH25 und UTH50 können im bestehenden
+  Konfigurator als bestellbare Route ausgewählt werden. Die editierbare Gravur
+  wird je Strecke mit Jahr, offizieller Distanz und Höhenmetern vorbelegt;
+  individuelle Änderungen bleiben beim Wechsel zwischen Strecken erhalten.
+  Bis zum 16. April 2027
+  um 12:00 Uhr deutscher Zeit bestätigte Zahlungen berechtigen zur Abholung
+  am 24. April am Peak Memory Stand in Albstadt; spätere Bestätigungen führen
+  zum Versand innerhalb Deutschlands. Stripe erfasst deshalb auch für
+  Abholbestellungen eine deutsche Lieferadresse als Versand-Fallback. Die
+  Finisher-Medaillen-Gravur am 24. April kostet 8 EUR ohne Anmeldung.
+- Der Rabattcode `UTH` gilt im regulären Shop und auf `/uth` bei einem bis
+  einschließlich 1. Mai 2027 gestarteten Checkout: 10 % auf das Produkt, nicht
+  auf die optionale Wandaufhängung. Der Server prüft Code, Zeitpunkt, Preis
+  und Abhol-/Versandangebot; Änderungen an der Frist erfordern eine erneute
+  Bestätigung. Siehe [CHECKOUT.md](./CHECKOUT.md#uth-2027).
 - Zwei Eingaben im Konfigurator: **GPX-Route** (Standard) oder **Kartenausschnitt**
   ohne Route, auswählbar über Bildkarten mit Tastaturbedienung.
   Bei der Karte verschiebst und zoomst du OpenStreetMap unter einem
@@ -41,11 +57,11 @@ Datei und kein exaktes Fertigungsbild.
   auch ohne JavaScript. Anbieter-Hilfelinks bei Änderungen der Export-Menüs prüfen.
   „Beispielroute testen“ verwendet die bereitgestellte Marathon-Strecke des
   Allgäu Panorama Marathons aus `src/client/sample.gpx`, beim Build lokal gebündelt.
-- Vollständiger Konfigurator direkt nach dem Hero,
-  ausschließlich auf der Startseite. Frühere `/configurator`- und
+- Vollständiger Konfigurator direkt nach dem Hero auf der Startseite sowie
+  mit Streckenauswahl auf `/uth`. Frühere `/configurator`- und
   `/configurator.html`-Links leiten zu `/#konfigurator` weiter. Der Build übernimmt die gemeinsame
-  Oberfläche aus dieser Datei in den Platzhalter von `index.html`; keine zweite
-  Kopie pflegen. Konfigurator-CSS ist auf `.configurator` begrenzt.
+  Oberfläche aus dieser Datei in die Platzhalter von `index.html` und `uth.html`;
+  keine zweite Kopie pflegen. Konfigurator-CSS ist auf `.configurator` begrenzt.
   Auf dem Smartphone folgen Route, Produktauswahl, Personalisierung und Live-Vorschau
   untereinander; am Desktop bleiben die Einstellungen links neben der Vorschau.
 - Produktauswahl als Schritt 2: Eiche-Holzsockel mit Gravur (Standard, 11 × 13,5 × 2 cm, 50 EUR),

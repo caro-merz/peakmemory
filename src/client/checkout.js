@@ -1,4 +1,5 @@
 import { configurationPrice, formatPrice } from '../shared/product.js';
+import { offerFor, UTH_PICKUP_CUTOFF } from '../shared/uth.js';
 
 const get = id => document.getElementById(id);
 
@@ -6,38 +7,68 @@ export function initializeCheckout({ state, capture, setBusy }) {
   let enabled = false, mode = 'test', testMode = true, submitting = false, draft = null;
   const form = get('checkoutForm');
   const status = get('checkoutStatus');
+  const uthPage = document.documentElement.hasAttribute('data-uth');
+  let serverTime = null, timeReceived = 0;
+  const currentTime = () => serverTime === null ? Math.floor(Date.now() / 1000)
+    : Math.floor(serverTime + (performance.now() - timeReceived) / 1000);
   let previousSelection;
-  const priceLabel = () => formatPrice(configurationPrice({
+  const priceConfiguration = () => ({
     version: 5, product: get('product').value,
     wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
-  }));
+  });
+  const currentOffer = () => offerFor(priceConfiguration(), get('checkoutCode').value, currentTime());
+  const priceLabel = () => {
+    try { return formatPrice(currentOffer().amount / 100); }
+    catch { return formatPrice(configurationPrice(priceConfiguration())); }
+  };
   const buttonLabel = () => `${testMode ? 'Zur Testzahlung bei Stripe' : 'Zahlungspflichtig bestellen'} · ${priceLabel()}`;
   const hasSelection = current => current.source === 'area' ? !!current.area : !!current.file;
   function update() {
     const current = state();
-    const selection = JSON.stringify([current.source, current.area, current.files.map(file => [file.name, file.size, file.lastModified]), current.summary, current.preview]);
+    const selection = JSON.stringify([current.source, current.area, current.files.map(file => [file.name, file.size, file.lastModified]), current.summary, current.preview, get('checkoutCode').value, current.eventRoute,
+      uthPage && currentTime() <= UTH_PICKUP_CUTOFF, priceLabel()]);
     if (previousSelection !== selection) get('checkoutAcceptance').checked = false;
     previousSelection = selection;
     get('checkoutFields').disabled = submitting || current.busy;
     get('submitCheckout').disabled = !enabled || submitting || current.busy || !hasSelection(current)
-      || current.sample || current.preview !== 'ready' || !current.valid;
+      || current.sample || (uthPage && !current.eventRoute) || current.preview !== 'ready' || !current.valid;
+    let offerText = '';
+    try {
+      const offer = currentOffer();
+      if (offer.discount) offerText = `UTH-Rabatt: ${formatPrice(offer.discount / 100)}. Gesamtpreis: ${formatPrice(offer.amount / 100)}. Der Rabatt gilt nicht für die Wandaufhängung.`;
+    } catch (error) { offerText = error.message; }
+    get('checkoutOffer').textContent = offerText;
+    const fulfillment = uthPage && currentTime() <= UTH_PICKUP_CUTOFF
+      ? 'Abholung am 24. April in Albstadt bei bestätigter Zahlung bis 16. April 2027, 12 Uhr. Bei späterer Bestätigung Versand.'
+      : 'Versand innerhalb Deutschlands.';
+    if (uthPage) {
+      get('checkoutIntro').textContent = 'Stripe erfasst Zahlung und eine deutsche Lieferadresse. Bei Abholung dient die Adresse als Versand-Fallback bei später Zahlung.';
+      get('orderDeliveryLabel').textContent = 'Abholung / Versand';
+      get('orderDeliveryTime').textContent = fulfillment;
+    }
     get('checkoutSummary').textContent = hasSelection(current)
-      ? `${current.source === 'area' ? 'Landschaft ohne Route' : current.files.map(file => file.name).join('\n')}\n${current.summary}\nGesamt: ${priceLabel()} inkl. Versand innerhalb Deutschlands`
+      ? `${current.source === 'area' ? 'Landschaft ohne Route' : current.files.map(file => file.name).join('\n')}\n${current.summary}\nGesamt: ${priceLabel()}\n${fulfillment}`
       : current.source === 'area' ? 'Bestätige zuerst deinen Kartenausschnitt.' : 'Lade zuerst deine eigene GPX-Datei hoch.';
     if (!submitting) get('submitCheckout').textContent = buttonLabel();
   }
+  get('checkoutCode').addEventListener('input', update);
   function fail(message) {
     status.textContent = message;
     status.className = 'error';
   }
   form.addEventListener('submit', async event => {
     event.preventDefault();
+    update();
     if (submitting || !form.reportValidity()) return;
     const current = state();
-    if (!enabled || current.busy || !hasSelection(current) || current.sample || current.preview !== 'ready' || !current.valid) {
+    if (!enabled || current.busy || !hasSelection(current) || current.sample || (uthPage && !current.eventRoute) || current.preview !== 'ready' || !current.valid) {
       fail('Für den Checkout brauchst du eine eigene GPX-Datei oder einen bestätigten Kartenausschnitt und eine verfügbare 3D-Vorschau.');
       return;
     }
+    let offer;
+    try { offer = currentOffer(); }
+    catch (error) { fail(error.message); return; }
+    const quotedFulfillment = current.eventRoute && currentTime() <= UTH_PICKUP_CUTOFF ? 'pickup' : 'shipping';
     submitting = true;
     setBusy(true);
     get('checkoutFields').disabled = true;
@@ -46,7 +77,7 @@ export function initializeCheckout({ state, capture, setBusy }) {
     update();
     try {
       const name = get('checkoutName').value.trim(), email = get('checkoutEmail').value.trim();
-      const signature = JSON.stringify([current.configuration, name, email]);
+      const signature = JSON.stringify([current.configuration, name, email, current.eventRoute, get('checkoutCode').value, offer.amount, quotedFulfillment]);
       if (!draft || draft.file !== current.file || draft.signature !== signature) {
         const body = new FormData();
         body.set('name', name);
@@ -54,6 +85,12 @@ export function initializeCheckout({ state, capture, setBusy }) {
         if (current.files.length === 1) body.set('gpxFile', current.files[0]);
         else for (const file of current.files) body.append('gpxFiles', file);
         body.set('configuration', JSON.stringify(current.configuration));
+        if (current.eventRoute) body.set('eventRoute', current.eventRoute);
+        if (get('checkoutCode').value.trim()) body.set('discountCode', get('checkoutCode').value.trim());
+        if (current.eventRoute || get('checkoutCode').value.trim()) {
+          body.set('quotedAmount', String(offer.amount));
+          if (current.eventRoute) body.set('quotedFulfillment', quotedFulfillment);
+        }
         body.set('previewImage', await capture(), 'peakmemory-vorschau.png');
         body.set('submissionKey', crypto.randomUUID());
         body.set('acceptance', 'true');
@@ -87,12 +124,13 @@ export function initializeCheckout({ state, capture, setBusy }) {
   });
   async function loadAvailability() {
     try {
-      const response = await fetch('/shop-status', { signal: AbortSignal.timeout(10000), cache: 'no-store' });
+      const response = await fetch('/shop-status?time=1', { signal: AbortSignal.timeout(10000), cache: 'no-store' });
       if (!response.ok) throw new Error('Der Shop-Status konnte nicht geladen werden.');
       const result = await response.json();
       if (typeof result.enabled !== 'boolean' || !['test', 'live'].includes(result.mode)
         || result.testMode !== (result.mode === 'test')) throw new Error('Ungültiger Shop-Status.');
       enabled = result.enabled;
+      if (Number.isSafeInteger(result.serverTime)) { serverTime = result.serverTime; timeReceived = performance.now(); }
       mode = result.mode;
       testMode = result.testMode;
       form.hidden = !enabled;
@@ -105,12 +143,14 @@ export function initializeCheckout({ state, capture, setBusy }) {
           : 'Der Direktkauf ist noch nicht aktiviert. Du kannst dein Relief weiterhin unverbindlich anfragen.';
       get('testNotice').hidden = !testMode;
       get('checkoutAvailability').hidden = enabled && !testMode;
-      get('processPaymentInfo').textContent = testMode
-        ? 'Der Direktkauf ist ausschließlich im Stripe-Testmodus geöffnet. Testzahlungen lösen keine echte Bestellung aus.'
-        : 'Du bezahlst den angezeigten Gesamtpreis inklusive Versand innerhalb Deutschlands über Stripe. Für Holzsockel ist eine Wandaufhängung für 1 € zusätzlich wählbar. Die Lieferzeit beträgt 5–10 Werktage nach bestätigter Zahlung.';
-      get('processProductionInfo').textContent = testMode
-        ? 'Testzahlungen lösen keine Produktion oder Lieferung aus. Bei echten Bestellungen beginnt die Fertigung nach bestätigter Zahlung; die Lieferung erfolgt in 5–10 Werktagen.'
-        : 'Nach bestätigter Zahlung fertigen wir dein Unikat und liefern innerhalb Deutschlands in 5–10 Werktagen.';
+      if (!uthPage) {
+        get('processPaymentInfo').textContent = testMode
+          ? 'Der Direktkauf ist ausschließlich im Stripe-Testmodus geöffnet. Testzahlungen lösen keine echte Bestellung aus.'
+          : 'Du bezahlst den angezeigten Gesamtpreis inklusive Versand innerhalb Deutschlands über Stripe. Für Holzsockel ist eine Wandaufhängung für 1 € zusätzlich wählbar. Die Lieferzeit beträgt 5–10 Werktage nach bestätigter Zahlung.';
+        get('processProductionInfo').textContent = testMode
+          ? 'Testzahlungen lösen keine Produktion oder Lieferung aus. Bei echten Bestellungen beginnt die Fertigung nach bestätigter Zahlung; die Lieferung erfolgt in 5–10 Werktagen.'
+          : 'Nach bestätigter Zahlung fertigen wir dein Unikat und liefern innerhalb Deutschlands in 5–10 Werktagen.';
+      }
       get('submitCheckout').textContent = buttonLabel();
       update();
     } catch (error) {
@@ -166,7 +206,11 @@ async function showPaymentReturn() {
         const message = document.createElement('span');
         message.textContent = testMode
           ? 'Dies ist keine echte Bestellung; es wird kein Produkt gefertigt.'
-          : 'Wir senden dir und Peak Memory eine Bestellbestätigung.';
+          : data.fulfillment === 'pickup'
+            ? 'Dein Relief liegt am 24. April 2027 am Peak Memory Stand in Albstadt zur Abholung bereit. Du erhältst eine Bestätigung per E-Mail.'
+            : data.fulfillment === 'shipping'
+              ? 'Dein Relief wird an deine Lieferadresse versandt. Du erhältst eine Bestätigung per E-Mail.'
+              : 'Wir senden dir und Peak Memory eine Bestellbestätigung.';
         output.replaceChildren(heading, reference, message);
         output.className = 'success';
         output.scrollIntoView({ block: 'center' });

@@ -12,11 +12,13 @@ import { initializeCheckout } from './checkout.js';
 const get = id => document.getElementById(id);
 const fileInput = get('gpxFile'), dropzone = get('dropzone');
 const viewButtons = ['resetView'].map(get);
+const uthPage = document.documentElement.hasAttribute('data-uth');
 let file = null, route = null, sample = false, preview = 'unavailable', viewer = null;
 let generation = 0, controller = null, marginTimer = null, sending = false;
 let files = [], selectionRevision = 0, selecting = false;
 let checkout;
 let source = 'gpx', confirmedArea = null, candidateArea = null, mapError = '', areaPicker = null, mapLoading = null;
+let uthRoute = '', uthRevision = 0;
 const routeExample = get('engraving').value;
 const areaExample = 'Deine Landschaft';
 
@@ -101,6 +103,7 @@ function clearRoute(resetPicker = true) {
   selectionRevision += 1; selecting = false;
   invalidate();
   file = route = null; files = []; sample = false;
+  uthRoute = '';
   get('routeError').textContent = '';
   showFiles();
   if (resetPicker) fileInput.value = '';
@@ -184,6 +187,7 @@ function showFiles() {
 }
 async function selectFiles(selected, append = true, restoreFocus = false) {
   if (sending || !selected.length) return;
+  uthRoute = '';
   const current = ++selectionRevision;
   selecting = true;
   get('routeError').textContent = 'Deine GPX-Dateien werden geprüft …';
@@ -234,6 +238,49 @@ get('sample').addEventListener('click', async () => {
   get('fileName').textContent = 'Allgäu Panorama Marathon – Marathon (Beispielroute)';
   await renderPreview();
 });
+if (uthPage) {
+  const engravings = {
+    UTH50: 'UTH50 2027\n50,0 km | 2.100 hm',
+    UTH25: 'UTH25 2027\n25,9 km | 1.270 hm',
+    UTH10: 'UTH10 2027\n10,8 km | 310 hm',
+    UTH5: 'UTH5 2027\n4,7 km | 120 hm',
+  };
+  const savedEngravings = new Map();
+  let engravingRoute = '';
+  get('uthRouteControls').hidden = false;
+  get('sourceControls').hidden = true;
+  get('routeControls').hidden = true;
+  get('uthRoute').addEventListener('change', async () => {
+    const revision = ++uthRevision;
+    const selected = get('uthRoute').value;
+    const previousText = get('engraving').value;
+    if (engravingRoute) savedEngravings.set(engravingRoute, previousText);
+    const unassignedText = !engravingRoute && previousText !== routeExample ? previousText : null;
+    engravingRoute = selected;
+    clearRoute();
+    get('engraving').value = selected
+      ? savedEngravings.get(selected) ?? unassignedText ?? engravings[selected]
+      : routeExample;
+    get('engraving').dispatchEvent(new Event('input', { bubbles: true }));
+    if (!selected) { get('uthRouteStatus').textContent = ''; return; }
+    get('uthRouteStatus').textContent = 'Strecke wird geladen …';
+    try {
+      const response = await fetch(`/uth-routes/${selected}.gpx`);
+      if (!response.ok) throw new Error('Die Strecke konnte nicht geladen werden.');
+      const routeFile = new File([await response.blob()], `${selected}.gpx`, { type: 'application/gpx+xml' });
+      if (revision !== uthRevision) return;
+      await selectFiles([routeFile], false);
+      if (revision !== uthRevision) return;
+      if (files[0] !== routeFile) throw new Error(get('routeError').textContent || 'Die Strecke konnte nicht verarbeitet werden.');
+      uthRoute = selected;
+      get('uthRouteStatus').textContent = `${selected} ist für dein Relief ausgewählt.`;
+      checkout?.update();
+    } catch (error) {
+      if (revision !== uthRevision) return;
+      get('uthRouteStatus').textContent = `${error.message} Bitte wähle die Strecke erneut.`;
+    }
+  });
+}
 get('remove').addEventListener('click', clearRoute);
 get('retry').addEventListener('click', renderPreview);
 get('engraving').addEventListener('input', () => {
@@ -280,6 +327,7 @@ checkout = initializeCheckout({
     source, area: confirmedArea, file: source === 'gpx' ? file : null,
     files: source === 'gpx' ? files : [], sample: source === 'gpx' && sample,
     preview, busy: sending || selecting, valid: get('engraving').validity.valid,
+    eventRoute: uthRoute,
     configuration: get('engraving').validity.valid ? configuration() : null,
     summary: get('configurationSummary').textContent,
   }),
@@ -290,6 +338,7 @@ checkout = initializeCheckout({
   setBusy: busy => {
     sending = busy;
     for (const id of ['sourceControls', 'routeControls', 'productControls', 'selectionControls']) get(id).disabled = busy;
+    get('uthRouteControls').disabled = busy;
     areaPicker?.setBusy(busy);
     get('engraving').disabled = busy || !getProduct(get('product').value).engraving;
     for (const button of viewButtons) button.disabled = busy || preview !== 'ready';

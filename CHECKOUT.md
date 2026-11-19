@@ -1,5 +1,44 @@
 # Stripe Checkout
 
+## UTH 2027
+
+The `/uth` page uses the shared configurator and the four approved event GPX
+files in `src/uth/`. They retain their OpenStreetMap copyright notice and route
+geometry; personal author and Strava route links are removed. Replacing a route
+requires updating its SHA-256 in `src/shared/uth.js` and re-running the route
+and browser tests. `src/uth/*.gpx` is marked `-text` in `.gitattributes` so
+checkout line-ending conversion cannot change the approved bytes. Confirm
+distribution rights and any attribution requirements before release.
+
+The server validates the selected event route against the exact GPX bytes.
+An event payment confirmed by the signed Stripe payment event at or before
+16 April 2027, 12:00 Europe/Berlin is for pickup at the Peak Memory booth on
+24 April 2027. Later payments ship to the German address collected by Stripe,
+including payments from a pickup-intended session that completed late. Buyer
+and workshop emails identify the actual fulfillment; the live production alert
+also identifies the event and pickup or shipping. The signed Stripe event's
+creation timestamp is stored as the confirmation timestamp; delivery time of
+the webhook does not change it. Stripe sessions can remain open across the
+deadline, so checkout explicitly warns about the shipping fallback.
+
+Code `UTH` can be applied to event and regular checkout sessions created before
+2 May 2027, 00:00 Europe/Berlin. It deducts 10% from the product price in cents;
+the optional 100-cent wall mount remains undiscounted. A session created before
+expiry keeps its quoted price for retries and payment. The server verifies the
+displayed price and event fulfillment at creation, stores the offer snapshot,
+and verifies Stripe against that snapshot. Existing non-event orders retain
+their original amount and fulfillment behavior.
+
+**Before deploying**, apply pending D1 migrations in order to both test and
+live databases, including `0004_uth.sql`, then deploy the updated code. The new
+checkout reads the added columns for all orders, so deploying it before the
+migration breaks checkout. Migrating does not enable checkout or deploy code.
+Confirm the event terms, fallback address/privacy disclosure, GPX rights, and
+the live Stripe payment methods with the owner and appropriate legal review.
+Do not make a live payment as a smoke test. These steps require explicit
+deployment authorization; no remote migration or deploy is performed by this
+change.
+
 ## Terrain-only map areas
 
 Configuration version 6 explicitly selects `source: "gpx"` or `source: "area"`.

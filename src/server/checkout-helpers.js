@@ -2,6 +2,7 @@ import { MAX_GPX_SIZE } from '../shared/gpx.js';
 import { readGpxCollection } from '../shared/gpx-collection.js';
 import { parseConfiguration } from '../shared/configuration.js';
 import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
+import { UTH_ROUTES } from '../shared/uth.js';
 
 export const MAX_CHECKOUT_SIZE = MAX_GPX_SIZE + MAX_PREVIEW_SIZE + 64 * 1024;
 export const MAX_WEBHOOK_SIZE = 256 * 1024;
@@ -139,7 +140,7 @@ export async function validateCheckout(request) {
   } catch { throw new CheckoutError('Ungültiges Formular.'); }
   for (const key of new Set(form.keys())) {
     if (key !== 'gpxFiles' && form.getAll(key).length !== 1) throw new CheckoutError('Doppelte Formularfelder.');
-    if (!['name', 'email', 'configuration', 'gpxFile', 'gpxFiles', 'previewImage', 'submissionKey', 'acceptance', 'price', 'currency'].includes(key)) {
+    if (!['name', 'email', 'configuration', 'gpxFile', 'gpxFiles', 'previewImage', 'submissionKey', 'acceptance', 'price', 'currency', 'eventRoute', 'discountCode', 'quotedAmount', 'quotedFulfillment'].includes(key)) {
       throw new CheckoutError('Unbekanntes Formularfeld.');
     }
   }
@@ -167,6 +168,18 @@ export async function validateCheckout(request) {
   }
   const collection = isArea ? null : await readGpxCollection(form.has('gpxFiles') ? form.getAll('gpxFiles') : [form.get('gpxFile')]);
   const sources = collection?.sources ?? [], gpx = collection?.gpx ?? null;
+  const eventRoute = form.has('eventRoute') ? text('eventRoute') : '';
+  const discountCode = form.has('discountCode') ? text('discountCode').trim().toUpperCase() : '';
+  const quotedAmount = form.has('quotedAmount') ? text('quotedAmount') : '';
+  const quotedFulfillment = form.has('quotedFulfillment') ? text('quotedFulfillment') : '';
+  if (discountCode.length > 32) throw new CheckoutError('Ungültiger Rabattcode.');
+  if ((eventRoute || discountCode) && (!/^\d{1,8}$/.test(quotedAmount)
+    || (eventRoute && !['pickup', 'shipping'].includes(quotedFulfillment))
+    || (!eventRoute && quotedFulfillment))) throw new CheckoutError('Das angezeigte Angebot fehlt oder ist ungültig.');
+  if (eventRoute && (!Object.hasOwn(UTH_ROUTES, eventRoute) || sources.length !== 1
+    || await sha256(sources[0].bytes) !== UTH_ROUTES[eventRoute])) {
+    throw new CheckoutError('Die UTH-Strecke stimmt nicht mit der ausgewählten Originalstrecke überein.');
+  }
   const image = form.get('previewImage');
   if (!image || typeof image.arrayBuffer !== 'function' || image.type !== 'image/png'
     || !image.size || image.size > MAX_PREVIEW_SIZE) throw new CheckoutError('PNG-Vorschau erforderlich (maximal 1 MB).');
@@ -181,10 +194,12 @@ export async function validateCheckout(request) {
   // Keep the legacy single-file digest stable so in-flight requests remain retryable.
   const sourceIdentity = isArea ? ['map-area-v1', configuration.area]
     : sources.length === 1 ? [sources[0].name, sources[0].type] : ['gpx-collection-v1', sourceDigests];
-  const digest = await sha256(JSON.stringify([name, email, rawConfiguration, ...sourceIdentity,
-    image.name, image.type, 'true', ignoredPrice, ignoredCurrency, isArea ? null : await sha256(gpx), await sha256(preview)]));
+  const digestParts = [name, email, rawConfiguration, ...sourceIdentity,
+    image.name, image.type, 'true', ignoredPrice, ignoredCurrency, isArea ? null : await sha256(gpx), await sha256(preview)];
+  if (eventRoute || discountCode) digestParts.push('uth-offer-v1', eventRoute, discountCode, quotedAmount, quotedFulfillment);
+  const digest = await sha256(JSON.stringify(digestParts));
   return { name: name.trim(), email, key: key.toLowerCase(), configuration: JSON.stringify(configuration),
-    filename, digest, sources, gpx, preview };
+    filename, digest, sources, gpx, preview, eventRoute, discountCode, quotedAmount, quotedFulfillment };
 }
 export async function remote(url, options) {
   const controller = new AbortController();

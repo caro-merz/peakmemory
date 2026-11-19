@@ -21,7 +21,7 @@ try {
     contentType: 'application/json',
     body: '{"available":true,"configured":true,"connected":true}',
   }));
-  await context.route('**/shop-status', route => route.fulfill({
+  await context.route('**/shop-status**', route => route.fulfill({
     contentType: 'application/json', body: '{"enabled":false,"testMode":true,"mode":"test"}',
   }));
   const port = server.address().port;

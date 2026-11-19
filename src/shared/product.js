@@ -22,7 +22,8 @@ export function getProduct(id) {
 }
 
 export function formatPrice(priceEur) {
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(priceEur);
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR',
+    minimumFractionDigits: Number.isInteger(priceEur) ? 0 : 2, maximumFractionDigits: 2 }).format(priceEur);
 }
 
 export const WALL_MOUNT_PRICE_EUR = 1;

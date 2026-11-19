@@ -4,9 +4,11 @@ import {
 import { getProduct, configurationPrice } from '../shared/product.js';
 import { parseConfiguration } from '../shared/configuration.js';
 import { orderEmail } from './order-email.js';
+import { offerFor, uthFulfillment, UTH_PICKUP_CUTOFF } from '../shared/uth.js';
 
 const orderProduct = order => getProduct(parseConfiguration(order.configuration).product);
-const orderAmount = order => configurationPrice(parseConfiguration(order.configuration)) * 100;
+const orderOffer = order => order.offer ? JSON.parse(order.offer) : null;
+const orderAmount = order => orderOffer(order)?.amount ?? configurationPrice(parseConfiguration(order.configuration)) * 100;
 const attachmentName = name => name.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 200);
 const originalArtifacts = order => order.gpx_manifest ? JSON.parse(order.gpx_manifest) : [];
 export const STRIPE_API_VERSION = '2026-09-30.endive';
@@ -48,16 +50,21 @@ export function handleShopStatus(request, env) {
   const testing = modeEnvironment(env, 'test'), live = modeEnvironment(env, 'live');
   const testEnabled = testing.CHECKOUT_ENABLED === 'true' && configured(testing);
   const liveEnabled = live.CHECKOUT_ENABLED === 'true' && configured(live);
-  if (testEnabled && liveEnabled) return Promise.resolve(json({ enabled: false, testMode: true, mode: 'test' }));
+  const timed = value => new URL(request.url).searchParams.get('time') === '1' ? { ...value, serverTime: now() } : value;
+  if (testEnabled && liveEnabled) return Promise.resolve(json(timed({ enabled: false, testMode: true, mode: 'test' })));
   if (live.CHECKOUT_ENABLED === 'true') {
-    return Promise.resolve(json({ enabled: liveEnabled, testMode: false, mode: 'live' }));
+    return Promise.resolve(json(timed({ enabled: liveEnabled, testMode: false, mode: 'live' })));
   }
-  return Promise.resolve(json({ enabled: testEnabled, testMode: true, mode: 'test' }));
+  return Promise.resolve(json(timed({ enabled: testEnabled, testMode: true, mode: 'test' })));
 }
 function parameters(order) {
   const live = order.mode === 'live';
   const product = orderProduct(order);
   const configuration = parseConfiguration(order.configuration);
+  const offer = orderOffer(order);
+  const event = !!offer?.route;
+  const pickup = event && order.created_at <= UTH_PICKUP_CUTOFF;
+  const destination = event ? '/uth' : '/';
   const hardware = product.id !== 'frame' && configuration.version >= 4
     ? ` Wandaufhängung: ${configuration.wallMount ? 'ja (+1 EUR)' : 'nein'}. Vier transparente Schutzfüße inklusive.` : '';
   const suffix = Array.from(crypto.getRandomValues(new Uint8Array(8)), value => String.fromCharCode(97 + value % 26)).join('');
@@ -67,18 +74,18 @@ function parameters(order) {
     'adaptive_pricing[enabled]': 'false',
     client_reference_id: order.id, 'metadata[order_id]': order.id,
     [`metadata[${live ? 'live_order' : 'test_only'}]`]: 'true',
-    success_url: `${order.origin}/?checkout=success&mode=${order.mode}&order=${order.id}&token=${order.status_token}`,
-    cancel_url: `${order.origin}/?checkout=cancelled`,
+    success_url: `${order.origin}${destination}?checkout=success&mode=${order.mode}&order=${order.id}&token=${order.status_token}`,
+    cancel_url: `${order.origin}${destination}?checkout=cancelled`,
     expires_at: String(order.created_at + 86400),
     'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'eur',
     'line_items[0][price_data][unit_amount]': String(orderAmount(order)),
     'line_items[0][price_data][product_data][name]': `Peak Memory · ${product.name}${live ? '' : ' (TEST)'}`,
-    'line_items[0][price_data][product_data][description]': `${product.description} ${product.dimensions}.${hardware} ${orderAmount(order) / 100} EUR inkl. Versand Deutschland. Kein Umsatzsteuerausweis gemäß §19 UStG. Lieferung 5–10 Werktage nach Zahlung. Illustrative Vorschau; keine weitere Produktionsfreigabe.${live ? '' : ' TEST: keine echte Fertigung.'}`,
+    'line_items[0][price_data][product_data][description]': `${product.description} ${product.dimensions}.${hardware} ${orderAmount(order) / 100} EUR${offer?.discount ? ' nach UTH-Rabatt' : ''} inkl. Versand Deutschland. Kein Umsatzsteuerausweis gemäß §19 UStG. ${pickup ? 'Abholung am 24. April in Albstadt bei bestätigter Zahlung bis 16. April 2027, 12 Uhr. Bei späterer Zahlung Versand.' : 'Lieferung 5–10 Werktage nach Zahlung.'} Illustrative Vorschau; keine weitere Produktionsfreigabe.${live ? '' : ' TEST: keine echte Fertigung.'}`,
     'shipping_address_collection[allowed_countries][0]': 'DE',
     'shipping_options[0][shipping_rate_data][type]': 'fixed_amount',
     'shipping_options[0][shipping_rate_data][fixed_amount][amount]': '0',
     'shipping_options[0][shipping_rate_data][fixed_amount][currency]': 'eur',
-    'shipping_options[0][shipping_rate_data][display_name]': 'Versand Deutschland inklusive',
+    'shipping_options[0][shipping_rate_data][display_name]': pickup ? 'Abholung in Albstadt; Adresse für Versand bei später Zahlung' : 'Versand Deutschland inklusive',
     'custom_text[submit][message]': live
       ? 'Individuell nach deiner Route oder deinem Kartenausschnitt gefertigt: kein gesetzliches Widerrufsrecht (§ 312g Abs. 2 Nr. 1 BGB). Mängelrechte bleiben bestehen. Vertragsschluss bei erfolgreicher Zahlungsbestätigung. Deine Auswahl ist final; Vorschau illustrativ.'
       : 'Nur Testzahlung – keine echte Bestellung. Illustrative Vorschau; im späteren Verkauf keine zusätzliche Produktionsfreigabe.',
@@ -126,16 +133,28 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
     try { data = await validateCheckout(request); }
     catch (error) { throw error instanceof CheckoutError ? error : new CheckoutError(error.message); }
     const id = crypto.randomUUID(), secret = token(), timestamp = now();
+    const previous = data.eventRoute || data.discountCode
+      ? await first(env, 'SELECT * FROM checkout_orders WHERE submission_key=?', data.key) : null;
+    if (previous && previous.payload_digest !== data.digest) throw new CheckoutError('Schlüssel gehört zu einer anderen Auswahl.', 409);
+    let offer = previous?.offer || null;
+    if (!previous && (data.eventRoute || data.discountCode)) {
+      try { offer = JSON.stringify(offerFor(JSON.parse(data.configuration), data.discountCode, timestamp, data.eventRoute)); }
+      catch (error) { throw new CheckoutError(error.message); }
+      if (Number(data.quotedAmount) !== JSON.parse(offer).amount || (data.eventRoute
+        && data.quotedFulfillment !== uthFulfillment(data.eventRoute, timestamp))) {
+        throw new CheckoutError('Das Angebot hat sich geändert. Bitte lade die Seite neu und prüfe Preis und Abholung erneut.', 409);
+      }
+    }
     const sessionParams = parameters({ id, status_token: secret, created_at: timestamp, mode,
-      origin: trustedOrigin(env), email: data.email, configuration: data.configuration }).toString();
+      origin: trustedOrigin(env), email: data.email, configuration: data.configuration, offer }).toString();
     await run(env, `INSERT INTO checkout_orders
-      (id,submission_key,payload_digest,status_token,created_at,updated_at,origin,name,email,configuration,filename,acceptance,gpx_key,preview_key,session_params,whatsapp_sent,gpx_manifest)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,0,?) ON CONFLICT(submission_key) DO NOTHING`,
+      (id,submission_key,payload_digest,status_token,created_at,updated_at,origin,name,email,configuration,filename,acceptance,gpx_key,preview_key,session_params,whatsapp_sent,gpx_manifest,offer)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,0,?,?) ON CONFLICT(submission_key) DO NOTHING`,
     id, data.key, data.digest, secret, timestamp, timestamp, trustedOrigin(env), data.name, data.email,
     data.configuration, data.filename, data.gpx ? `orders/${id}/${data.sources.length > 1 ? 'combined' : 'original'}.gpx` : '',
     `orders/${id}/preview.png`, sessionParams, data.sources.length > 1 ? JSON.stringify(data.sources.map((source, index) => ({
       name: source.name, type: source.type, key: `orders/${id}/original-${index + 1}.gpx`,
-    }))) : null);
+    }))) : null, offer);
     let order = await first(env, 'SELECT * FROM checkout_orders WHERE submission_key=?', data.key);
     if (!order || order.payload_digest !== data.digest) throw new CheckoutError('Schlüssel gehört zu einer anderen Auswahl.', 409);
     order.mode = mode;
@@ -178,9 +197,10 @@ export function handleOrderStatus(request, sourceEnv, routeMode) {
     const id = query.get('order'), secret = query.get('token');
     if (query.getAll('order').length !== 1 || query.getAll('token').length !== 1
       || !UUID.test(id || '') || !/^[a-f0-9]{64}$/.test(secret || '')) throw new CheckoutError('Bestellung nicht gefunden.', 404);
-    const order = await first(env, `SELECT id,status FROM checkout_orders WHERE id=? AND status_token=? AND stage NOT IN ('deleting','purged')`, id, secret);
+    const order = await first(env, `SELECT id,status,offer,fulfillment FROM checkout_orders WHERE id=? AND status_token=? AND stage NOT IN ('deleting','purged')`, id, secret);
     if (!order) throw new CheckoutError('Bestellung nicht gefunden.', 404);
-    return json({ orderId: order.id, status: order.status });
+    return json({ orderId: order.id, status: order.status,
+      ...(order.offer && JSON.parse(order.offer).route && order.status === 'paid' ? { fulfillment: order.fulfillment } : {}) });
   });
 }
 const eventTypes = new Set(['checkout.session.completed', 'checkout.session.async_payment_succeeded',
@@ -220,6 +240,11 @@ export function handleStripeWebhook(request, sourceEnv, mode = 'test') {
     if (!order || !['ready', 'session'].includes(order.stage)
       || (order.session_id && order.session_id !== session.id)) throw new CheckoutError('Unbekannte Checkout-Zuordnung.');
     if (session.amount_total !== orderAmount(order)) throw new CheckoutError('Ungültiger Betrag für das bestellte Produkt.');
+    const offer = orderOffer(order);
+    if (paid && offer?.route && (!Number.isSafeInteger(event.created) || event.created <= 0 || event.created > now() + 300)) {
+      throw new CheckoutError('Zeitpunkt der Zahlungsbestätigung fehlt oder ist ungültig.');
+    }
+    const fulfillment = paid && offer?.route ? uthFulfillment(offer.route, event.created) : null;
     const prior = await first(env, 'SELECT digest FROM checkout_events WHERE id=?', event.id);
     if (prior && prior.digest !== digest) throw new CheckoutError('Ereignis widerspricht gespeichertem Ereignis.', 409);
     const status = paid ? 'paid' : event.type === 'checkout.session.expired' ? 'expired'
@@ -229,11 +254,12 @@ export function handleStripeWebhook(request, sourceEnv, mode = 'test') {
       statement(env, `INSERT INTO checkout_events(id,digest,order_id,type,created_at) VALUES(?,?,?,?,?)
         ON CONFLICT(id) DO NOTHING`, event.id, digest, id, event.type, now()),
       statement(env, `UPDATE checkout_orders SET session_id=?,status=?,shipping=CASE WHEN ?='paid' THEN COALESCE(shipping,?) ELSE shipping END,
+        fulfillment=CASE WHEN ?='paid' THEN COALESCE(fulfillment,?) ELSE fulfillment END,
         paid_at=CASE WHEN ?='paid' THEN COALESCE(paid_at,?) ELSE paid_at END, updated_at=?
         WHERE id=? AND stage IN ('ready','session') AND (session_id IS NULL OR session_id=?)
         AND (status='pending' OR ?='paid') AND EXISTS(SELECT 1 FROM checkout_events WHERE id=? AND digest=?)`,
       session.id, status, status, paid ? JSON.stringify({ shipping, customer: session.customer_details || {} }) : null,
-      status, now(), now(), id, session.id, status, event.id, digest),
+      status, fulfillment, status, offer?.route && paid ? event.created : now(), now(), id, session.id, status, event.id, digest),
     ]));
     const receipt = await first(env, 'SELECT digest FROM checkout_events WHERE id=?', event.id);
     if (receipt?.digest !== digest) throw new CheckoutError('Ereignis widerspricht gespeichertem Ereignis.', 409);
@@ -318,6 +344,7 @@ async function sendProductionAlert(env, order) {
     throw new CheckoutError('WhatsApp-Benachrichtigung nicht konfiguriert; Zahlung gespeichert.', 503);
   }
   const product = orderProduct(order);
+  const event = orderOffer(order);
   const delivery = await remote(`https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -333,7 +360,7 @@ async function sendProductionAlert(env, order) {
           type: 'body',
           parameters: [
             { type: 'text', text: order.id },
-            { type: 'text', text: product.name },
+            { type: 'text', text: event?.route ? `${product.name} - ${event.route} - ${order.fulfillment === 'pickup' ? 'Abholung Albstadt' : 'Versand'}` : product.name },
             { type: 'text', text: order.name },
           ],
         }],

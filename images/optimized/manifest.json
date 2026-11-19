@@ -59,6 +59,24 @@
       }
     ]
   },
+  "images/UTH_Hero.png": {
+    "width": 768,
+    "height": 768,
+    "variants": [
+      {
+        "src": "images/optimized/UTH_Hero-480.webp?v=b13e3e975b8a624b",
+        "width": 480,
+        "height": 480,
+        "bytes": 27802
+      },
+      {
+        "src": "images/optimized/UTH_Hero-768.webp?v=34152cb6c59c5a76",
+        "width": 768,
+        "height": 768,
+        "bytes": 49936
+      }
+    ]
+  },
   "images/compact.jpeg": {
     "width": 3024,
     "height": 2426,

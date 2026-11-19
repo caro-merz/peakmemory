@@ -11,6 +11,7 @@ const homepageImages = [
   'Kartenausschnitt.png',
   'classic.jpeg',
   'main.png',
+  'UTH_Hero.png',
   'compact.jpeg',
   'custom.jpeg',
   'rahmen.jpeg',
@@ -48,7 +49,7 @@ for (const filename of homepageImages) {
     throw new Error(`Could not determine image dimensions: ${sourcePath}`);
   }
 
-  const widths = filename === 'main.png' ? [480, 960, 1440] : [480, 960];
+  const widths = filename === 'main.png' ? [480, 960, 1440] : filename === 'UTH_Hero.png' ? [480, 768] : [480, 960];
   const stem = filename === 'main.png' ? 'main-png' : path.parse(filename).name;
   const variants = [];
   for (const width of widths) {

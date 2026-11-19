@@ -28,7 +28,7 @@ try {
     referrers.push(route.request().headers().referer);
     await route.fulfill(mapFailure ? { status: 503, body: 'unavailable' } : { contentType: 'image/png', body: mapTile });
   });
-  await page.route('**/shop-status', route => route.fulfill({ json: { enabled: true, mode: 'test', testMode: true } }));
+  await page.route('**/shop-status**', route => route.fulfill({ json: { enabled: true, mode: 'test', testMode: true } }));
   await page.route('**/terrain/**', route => route.fulfill(terrainFailure
     ? { status: 502, body: 'unavailable' } : { contentType: 'image/webp', body: terrain }));
   async function multipart(request) {

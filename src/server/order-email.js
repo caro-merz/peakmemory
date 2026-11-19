@@ -1,5 +1,5 @@
 import { PURCHASE_INFORMATION, PURCHASE_INFORMATION_TEXT } from '../shared/purchase.js';
-import { getProduct, configurationPrice } from '../shared/product.js';
+import { getProduct, configurationPrice, formatPrice } from '../shared/product.js';
 import { describeArea } from '../shared/area.js';
 
 const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
@@ -12,6 +12,9 @@ export function orderEmail(order, details, kind) {
   const configuration = JSON.parse(order.configuration);
   const isArea = configuration.source === 'area';
   const product = getProduct(configuration.product);
+  const offer = order.offer ? JSON.parse(order.offer) : null;
+  const event = !!offer?.route;
+  const pickup = event && order.fulfillment === 'pickup';
   const shipping = details.shipping;
   const address = shipping.address;
   const title = live ? owner ? 'Neue bezahlte Bestellung' : 'Dein Erinnerungsstück ist bestellt.'
@@ -24,7 +27,9 @@ export function orderEmail(order, details, kind) {
     ['Bestellreferenz', order.id],
     ['Produkt', `${product.name} · 1 Stück`],
     ['Relief / Ausführung', `10 × 10 cm / ${product.dimensions}`],
-    ['Gesamt', `${configurationPrice(configuration)} EUR · ${live ? 'bezahlt, Versand Deutschland inklusive' : 'simulierte Zahlung'}`],
+    ...(event ? [['UTH-Strecke', offer.route]] : []),
+    ...(offer?.discount ? [['Rabatt', `UTH: -${formatPrice(offer.discount / 100)}`]] : []),
+    ['Gesamt', `${offer ? formatPrice(offer.amount / 100) : `${configurationPrice(configuration)} EUR`} · ${live ? 'bezahlt' : 'simulierte Zahlung'}`],
     ...(configuration.version >= 4 && product.id !== 'frame' ? [
       ['Wandaufhängung', configuration.wallMount ? 'Ja · 1 EUR Aufpreis enthalten' : 'Nein'],
       ['Schutzfüße', '4 transparente Schutzfüße inklusive'],
@@ -33,13 +38,17 @@ export function orderEmail(order, details, kind) {
     ...(isArea ? [['Gelände', describeArea(configuration.area)]]
       : [['Geländerand', `${Math.round(configuration.margin * 100)} %`]]),
     ['Höhenüberhöhung', `${configuration.elevationScale}×`],
-    ['Lieferadresse', [shipping.name, address.line1, address.line2,
+    [pickup ? 'Adresse für Versand bei später Zahlung' : 'Lieferadresse', [shipping.name, address.line1, address.line2,
       `${address.postal_code} ${address.city}`, address.state, address.country].filter(Boolean).join('\n')],
     ...(owner ? [['Name / E-Mail', `${order.name}\n${order.email}`],
       ...(!isArea ? [['GPX-Datei', order.filename]] : []), ['Stripe Checkout', order.session_id]] : []),
   ];
   const next = live
-    ? 'Nach bestätigter Zahlung beginnt die Fertigung ohne weitere persönliche Produktionsfreigabe. Lieferung innerhalb Deutschlands in 5–10 Werktagen.'
+    ? pickup
+      ? 'Nach bestätigter Zahlung fertigen wir dein Relief. Du kannst es am 24. April 2027 am Peak Memory Stand in Albstadt abholen.'
+      : event && order.created_at <= 1807869600
+        ? 'Deine Zahlung wurde nach der Abholfrist bestätigt. Dein Relief wird daher an die angegebene Adresse innerhalb Deutschlands versandt, statt am Stand bereitgelegt. Die Lieferung erfolgt in 5–10 Werktagen nach bestätigter Zahlung.'
+        : 'Nach bestätigter Zahlung beginnt die Fertigung ohne weitere persönliche Produktionsfreigabe. Lieferung innerhalb Deutschlands in 5–10 Werktagen.'
     : 'Keine Produktion und keine Lieferung. Diese E-Mail dient nur zur Prüfung des Bestellablaufs; keine manuelle Produktionsfreigabe ist erforderlich (im späteren echten Verkauf).';
   const note = 'Kein Umsatzsteuerausweis gemäß §19 UStG. Die Online-Vorschau ist illustrativ, keine exakte Fertigungsvorlage.';
   const attachments = owner ? isArea
@@ -48,12 +57,22 @@ export function orderEmail(order, details, kind) {
     ? 'Alle Original-GPX-Dateien, die kombinierte GPX, Vorschaubild und Konfiguration findest du in den Anhängen.'
     : 'Original-GPX, Vorschaubild und Konfiguration findest du in den drei Anhängen.' : '';
   const subject = `Peak Memory${live ? '' : ' TEST'} · ${title} · ${order.id}`;
+  const purchase = event ? PURCHASE_INFORMATION.map(section => {
+    if (section.title === 'Zahlung, Fertigung und Lieferung') return { ...section,
+      text: `${next} Das Relief wird individuell nach deiner bestätigten Konfiguration gefertigt.` };
+    if (section.title === 'Bestellablauf und Vertragsschluss') return { ...section,
+      text: section.text.replace('Du lädst deine eigene GPX-Datei hoch oder wählst und bestätigst ein Quadrat auf der Karte für eine Landschaft ohne Route.', 'Du wählst deine UTH-Strecke.') };
+    if (section.title === 'Vertragssprache und Bestellbestätigung') return { ...section,
+      text: section.text.replace('Versandinformationen', 'Abhol- bzw. Versandinformationen') };
+    return section;
+  }) : PURCHASE_INFORMATION;
+  const purchaseText = event ? purchase.map(section => `${section.title}\n${section.text}`).join('\n\n') : PURCHASE_INFORMATION_TEXT;
   const text = [
     title, introduction, '', ...rows.map(([label, value]) => `${label}: ${value}`),
     '', next, note, attachments,
     'Fragen? Antworte an peak.memory@web.de oder rufe uns unter 0162 2701613 an.',
     'Peak Memory GbR · Poststr. 29 · 71229 Leonberg',
-    ...(live ? ['', PURCHASE_INFORMATION_TEXT] : []),
+    ...(live ? ['', purchaseText] : []),
   ].filter(value => value !== '').join('\n\n');
   const html = `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
 <body style="margin:0;padding:24px 12px;background:#f0efe9;color:#1a1a1a;font-family:Arial,sans-serif">
@@ -70,7 +89,7 @@ ${attachments ? `<p style="line-height:1.6">${escapeHtml(attachments)}</p>` : ''
 <p style="font-size:12px;color:#555;line-height:1.6">${escapeHtml(note)}</p>
 <p style="line-height:1.6">Fragen zu deiner Bestellung? Schreib uns an <a href="mailto:peak.memory@web.de" style="color:#2d5016">peak.memory@web.de</a> oder ruf uns unter 0162 2701613 an.</p>
 <p style="font-size:12px;color:#555">Peak Memory GbR · Poststr. 29 · 71229 Leonberg<br>Carolin Merz und Alexander Weimer</p>
-${live ? `<hr style="border:0;border-top:1px solid #e8e8e4;margin:28px 0"><h2 style="font-size:18px">Kaufhinweise &amp; Widerruf</h2>${PURCHASE_INFORMATION.map(section => `<h3 style="font-size:14px">${escapeHtml(section.title)}</h3><p style="font-size:12px;color:#555;line-height:1.6">${escapeHtml(section.text)}</p>`).join('')}` : ''}
+${live ? `<hr style="border:0;border-top:1px solid #e8e8e4;margin:28px 0"><h2 style="font-size:18px">Kaufhinweise &amp; Widerruf</h2>${purchase.map(section => `<h3 style="font-size:14px">${escapeHtml(section.title)}</h3><p style="font-size:12px;color:#555;line-height:1.6">${escapeHtml(section.text)}</p>`).join('')}` : ''}
 </td></tr></table></body></html>`;
   return { subject, text, html };
 }

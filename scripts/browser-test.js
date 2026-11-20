@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import sharp from 'sharp';
 import { startDevServer } from './dev.js';
 
-async function terrainWebp() {
+async function terrainWebp(multiplier = 0.125) {
   const size = 512, pixels = Buffer.alloc(size * size * 3);
   for (let y = 0; y < size; y += 1) for (let x = 0; x < size; x += 1) {
     const offset = (y * size + x) * 3;
-    pixels[offset] = 128; pixels[offset + 1] = 100 + Math.floor((x + y) / 8);
+    const height = 100 + Math.floor((x + y) * multiplier);
+    pixels[offset] = 128 + Math.floor(height / 256); pixels[offset + 1] = height % 256;
   }
   return sharp(pixels, { raw: { width: size, height: size, channels: 3 } })
     .webp({ lossless: true }).toBuffer();
@@ -174,14 +175,22 @@ try {
   await upload('<gpx version="1.1"><trk><trkseg><trkpt lat="48.2" lon="9.1"/><trkpt lat="48.203" lon="9.103"/></trkseg></trk></gpx>');
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
   await page.locator('#product').selectOption('frame');
-  await page.locator('#elevationScale').fill('8');
+  await page.locator('#elevationScale').focus();
+  await page.keyboard.press('End');
   assert.equal(await page.locator('#heightCapped').isVisible(), true);
-  assert.match(await page.locator('#configurationSummary').innerText(), /Reliefhöhe max\. 16 mm/);
+  assert.match(await page.locator('#configurationSummary').innerText(), /Reliefhöhe ca\./);
   await page.locator('[data-lang-toggle="en"]').click();
-  assert.match(await page.locator('#heightCapped').innerText(), /reduced/);
-  assert.match(await page.locator('#configurationSummary').innerText(), /Maximum relief height 16 mm/);
+  assert.match(await page.locator('#heightCapped').innerText(), /limits/);
+  assert.match(await page.locator('#configurationSummary').innerText(), /Approx\. relief height/);
   await page.locator('[data-lang-toggle="de"]').click();
   await page.locator('#product').selectOption('base');
+  await page.locator('#elevationScale').fill('1');
+  const lowHeight = parseFloat((await page.locator('#heightPrice').innerText()).match(/ca\. ([\d,]+)/)[1].replace(',', '.'));
+  await page.locator('#elevationScale').fill('8');
+  const heightInfo = await page.locator('#heightPrice').innerText();
+  const highHeight = parseFloat(heightInfo.match(/ca\. ([\d,]+)/)[1].replace(',', '.'));
+  assert.ok(highHeight > lowHeight, 'Relief height changes with exaggeration');
+  assert.match(heightInfo, highHeight > 78 ? /\+7 € Höhenaufschlag/ : highHeight > 28 ? /\+5 € Höhenaufschlag/ : /Standardpreis/);
   await page.locator('#remove').click();
   await upload(personal);
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
@@ -461,7 +470,7 @@ try {
     assert.equal(body.get('name'), 'Test Checkout');
     assert.equal(body.get('email'), 'checkout@example.invalid');
     assert.equal(await body.get('gpxFile').text(), personal);
-    assert.equal(JSON.parse(body.get('configuration')).version, 8);
+    assert.equal(JSON.parse(body.get('configuration')).version, 9);
     assert.equal(body.get('previewImage').type, 'image/png');
     assert.equal(body.has('price'), false);
     assert.equal(body.has('discountCode'), false);
@@ -510,19 +519,12 @@ try {
   assert.match(await shop.locator('#submitCheckout').innerText(), /56.*€/);
   assert.match(await shop.locator('#checkoutSummary').innerText(), /Gesamt: 56/);
   await shop.locator('#wallMount').selectOption('no');
-  for (const [height, price] of [['78', '60'], ['128', '62']]) {
-    await shop.locator('#checkoutAcceptance').check();
-    await shop.locator('#heightLimit').selectOption(height);
-    assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false);
-    assert.match(await shop.locator('#checkoutSummary').innerText(), new RegExp(`Reliefhöhe max\\. ${height} mm`));
-    assert.match(await shop.locator('#submitCheckout').innerText(), new RegExp(`${price}.*€`));
-  }
+  assert.equal(await shop.locator('#heightLimit').count(), 0);
+  assert.match(await shop.locator('#heightPrice').innerText(), /Reliefhöhe: ca\./);
   await shop.locator('#product').selectOption('frame');
-  assert.equal(await shop.locator('#heightLimitControls').isHidden(), true);
-  assert.match(await shop.locator('#checkoutSummary').innerText(), /Reliefhöhe max\. 16 mm/);
+  assert.match(await shop.locator('#checkoutSummary').innerText(), /Reliefhöhe ca\./);
   assert.match(await shop.locator('#submitCheckout').innerText(), /65.*€/);
   await shop.locator('#product').selectOption('base');
-  await shop.locator('#heightLimit').selectOption('28');
   await shop.locator('#checkoutAcceptance').check();
   await shop.locator('#engraving').fill('Finale Gravur');
   assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false, 'Changes require rechecking final selection');
@@ -625,9 +627,8 @@ try {
   assert.match(await uth.locator('#configurationSummary').innerText(), /Meine UTH50/);
   await uth.locator('#product').selectOption('compact');
   await uth.locator('#wallMount').selectOption('yes');
-  await uth.locator('#heightLimit').selectOption('78');
   await uth.locator('#checkoutCode').fill('UTH');
-  assert.match(await uth.locator('#checkoutSummary').innerText(), /51 €/);
+  assert.match(await uth.locator('#checkoutSummary').innerText(), /46 €/);
   await uth.locator('#checkoutName').fill('Test Checkout');
   await uth.locator('#checkoutEmail').fill('checkout@example.invalid');
   await uth.locator('#checkoutAcceptance').check();
@@ -635,8 +636,8 @@ try {
   await uth.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Test checkout'));
   assert.equal(uthSubmission.get('eventRoute'), 'UTH50');
   assert.equal(uthSubmission.get('discountCode'), 'UTH');
-  assert.equal(uthSubmission.get('quotedAmount'), '5100');
-  assert.equal(JSON.parse(uthSubmission.get('configuration')).heightLimitMm, 78);
+  assert.equal(uthSubmission.get('quotedAmount'), '4600');
+  assert.equal(JSON.parse(uthSubmission.get('configuration')).heightLimitMm, 28);
   assert.equal(uthSubmission.get('gpxFile').name, 'UTH50.gpx');
   for (const width of [320, 390, 768, 1365]) {
     await uth.setViewportSize({ width, height: 844 });
@@ -683,12 +684,101 @@ try {
     await variants.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Variant test captured'));
     assert.equal(variantSubmissions.at(-1).product, product);
     assert.equal(variantSubmissions.at(-1).engraving, product === 'compact' ? '' : 'Mein Text');
-    assert.equal(variantSubmissions.at(-1).version, 8);
+    assert.equal(variantSubmissions.at(-1).version, 9);
     assert.equal(variantSubmissions.at(-1).wallMount, product !== 'frame');
     assert.equal(await variants.locator('#selectionControls').isEnabled(), true);
   }
   assert.equal(variantSubmissions.length, 3);
   await variants.close();
+
+  const heightPage = await context.newPage();
+  await heightPage.route('**/shop-status**', request => request.fulfill({
+    status: 200, contentType: 'application/json', body: '{"enabled":true,"testMode":true,"mode":"test"}',
+  }));
+  let heightTile = await terrainWebp(0.30);
+  await heightPage.route('**/terrain/**', request => request.fulfill({ status: 200, contentType: 'image/webp', body: heightTile }));
+  const heightSubmissions = [];
+  await heightPage.route('**/checkout', async request => {
+    const body = await new Response(request.request().postDataBuffer(), {
+      headers: { 'Content-Type': request.request().headers()['content-type'] },
+    }).formData();
+    heightSubmissions.push(JSON.parse(body.get('configuration')));
+    await request.fulfill({ status: 503, json: { error: 'Height test captured' } });
+  });
+  await heightPage.goto(url + '/');
+  await heightPage.locator('#gpxFile').setInputFiles({
+    name: 'steep.gpx', mimeType: 'application/gpx+xml',
+    buffer: Buffer.from('<gpx version="1.1"><trk><trkseg><trkpt lat="48.2" lon="9.1"/><trkpt lat="48.203" lon="9.103"/></trkseg></trk></gpx>'),
+  });
+  await heightPage.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
+  assert.equal(await heightPage.locator('#elevationScale + .range-labels + #heightPrice').count(), 1);
+  assert.equal(await heightPage.locator('#selectionControls #heightPrice').count(), 0);
+  for (const [scale, price, info] of [['1', '55', /Standardpreis/], ['2', '60', /\+5 € Höhenaufschlag/], ['4.5', '62', /\+7 € Höhenaufschlag/]]) {
+    await heightPage.locator('#elevationScale').fill(scale);
+    assert.match(await heightPage.locator('#heightPrice').innerText(), info);
+    assert.match(await heightPage.locator('#submitCheckout').innerText(), new RegExp(`${price}.*€`));
+  }
+  heightTile = await terrainWebp(2);
+  await heightPage.locator('#margin').fill('20');
+  await heightPage.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
+  const heightSlider = heightPage.locator('#elevationScale');
+  assert.equal(Number(await heightSlider.inputValue()), Number(await heightSlider.getAttribute('max')),
+    'A steeper terrain selection clamps the current value');
+  await heightSlider.focus();
+  await heightPage.keyboard.press('End');
+  const woodMaximum = Number(await heightSlider.getAttribute('max'));
+  assert.ok(woodMaximum < 8);
+  assert.equal(Number(await heightSlider.inputValue()), woodMaximum);
+  assert.match(await heightPage.locator('#heightPrice').innerText(), /\+7 € Höhenaufschlag/);
+  const woodHeight = parseFloat((await heightPage.locator('#heightPrice').innerText()).match(/ca\. ([\d,]+)/)[1].replace(',', '.'));
+  assert.ok(woodHeight > 120 && woodHeight <= 128);
+  await heightPage.locator('#checkoutName').fill('Height test');
+  await heightPage.locator('#checkoutEmail').fill('height@example.invalid');
+  await heightPage.locator('#checkoutAcceptance').check();
+  await heightPage.locator('#product').selectOption('frame');
+  assert.equal(await heightPage.locator('#checkoutAcceptance').isChecked(), false);
+  const frameMaximum = Number(await heightSlider.getAttribute('max'));
+  assert.ok(frameMaximum < 1, 'Steep terrain permits an exaggeration below 1×');
+  assert.equal(Number(await heightSlider.inputValue()), frameMaximum);
+  assert.equal(await heightSlider.getAttribute('step'), '0.001');
+  assert.equal(await heightPage.locator('#elevationMaxLabel').innerText(), `${frameMaximum}×`);
+  const frameHeight = parseFloat((await heightPage.locator('#heightPrice').innerText()).match(/ca\. ([\d,]+)/)[1].replace(',', '.'));
+  assert.ok(frameHeight > 14 && frameHeight <= 16);
+  const finerScale = String(Math.floor(frameMaximum * 500) / 1000);
+  await heightSlider.fill(finerScale);
+  assert.equal(Number(await heightSlider.inputValue()), Number(finerScale));
+  await heightPage.locator('[data-lang-toggle="en"]').click();
+  assert.equal(await heightPage.locator('#elevationMinDescription').innerText(), 'Flatter');
+  await heightPage.locator('[data-lang-toggle="de"]').click();
+  await heightSlider.focus();
+  await heightPage.keyboard.press('End');
+  await heightPage.locator('#checkoutAcceptance').check();
+  await heightPage.locator('#submitCheckout').click();
+  await heightPage.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Height test captured'));
+  assert.equal(heightSubmissions[0].elevationScale, frameMaximum);
+  assert.equal(heightSubmissions[0].heightLimitMm, 16);
+  await heightPage.locator('#product').selectOption('base');
+  assert.equal(Number(await heightSlider.inputValue()), frameMaximum, 'Switching products does not restore an old scale');
+  assert.ok(Number(await heightSlider.getAttribute('max')) > frameMaximum);
+  await heightSlider.focus();
+  await heightPage.keyboard.press('End');
+  assert.equal(Number(await heightSlider.inputValue()), Number(await heightSlider.getAttribute('max')));
+  await heightPage.locator('#checkoutAcceptance').check();
+  await heightPage.locator('#submitCheckout').click();
+  await heightPage.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Height test captured'));
+  assert.equal(heightSubmissions.at(-1).elevationScale, Number(await heightSlider.inputValue()));
+  assert.equal(heightSubmissions.at(-1).heightLimitMm, 128);
+  heightTile = await terrainWebp(0);
+  const previouslyClamped = Number(await heightSlider.inputValue());
+  await heightPage.locator('#margin').fill('25');
+  await heightPage.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
+  assert.equal(Number(await heightSlider.getAttribute('max')), 8, 'Flat terrain permits the full range');
+  assert.equal(Number(await heightSlider.inputValue()), previouslyClamped);
+  await heightSlider.fill('2.34');
+  assert.equal(await heightSlider.inputValue(), '2.34');
+  assert.match(await heightPage.locator('#heightPrice').innerText(), /Standardpreis/);
+  assert.equal(await heightPage.locator('#heightCapped').isHidden(), true);
+  await heightPage.close();
 
   const multi = await context.newPage();
   console.log('Browser checks: multi-file checkout and inquiry');

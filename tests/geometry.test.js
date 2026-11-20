@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { terrainPlan, terrainGrid, sampleTiles, decodeHeight, surfaceHeight, routePaths, limitedElevationScale, GRID_SIZE, MAX_TILES, MAX_DRAW_POINTS, TERRAIN_TILE_SIZE } from '../src/shared/geometry.js';
+import { terrainPlan, terrainGrid, sampleTiles, decodeHeight, surfaceHeight, routePaths, limitedElevationScale, reliefHeightMm, reliefHeightTier, GRID_SIZE, MAX_TILES, MAX_DRAW_POINTS, TERRAIN_TILE_SIZE } from '../src/shared/geometry.js';
 
 const route = {segments: [[{lat:48.1,lon:9.1}, {lat:48.12,lon:9.14}]]};
 function fixture(plan) {
@@ -137,6 +137,17 @@ test('height caps include the relief base and route without changing terrain sha
     assert.ok(Math.abs(terrainHeightMm + routeAllowanceMm - limit) < 1e-8);
     assert.equal(limitedElevationScale(grid, scale / 2, limit), scale / 2);
   }
+});
+test('automatic height tiers switch only above 28 mm and 78 mm', () => {
+  for (const [height, tier] of [[0, 28], [28, 28], [28.00001, 78], [78, 78], [78.00001, 128], [128, 128]]) {
+    assert.equal(reliefHeightTier(height), tier);
+  }
+  const grid = fixture(terrainPlan(route, 0.1));
+  grid.plan.coordinates = [];
+  grid.heights.fill(grid.minimum);
+  assert.ok(Math.abs(reliefHeightMm(grid, 1) - 2.5) < 1e-10);
+  grid.heights[0] = grid.minimum + grid.plan.groundWidth * 0.255;
+  assert.ok(Math.abs(reliefHeightMm(grid, 1) - 28) < 1e-4);
 });
 test('large point sets and very long routes keep tile and route budgets', () => {
   const segments = [Array.from({length:100000}, (_, i) => ({lat:48 + (i%2)*0.01,lon:9 + (i%3)*0.01}))];

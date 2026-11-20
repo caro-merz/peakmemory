@@ -62,7 +62,9 @@ export function orderEmail(order, details, kind, { productionViews = false } = {
     ? PURCHASE_INFORMATION.filter(section => section.title !== 'Reliefhöhe').map(section =>
       section.title === 'Wandaufhängung und Schutzfüße bei Holzsockeln'
         ? { ...section, text: section.text.replace('dann in der Standardhöhe', 'dann') } : section)
-    : PURCHASE_INFORMATION;
+    : configuration.version === 8 ? PURCHASE_INFORMATION.map(section => section.title === 'Reliefhöhe' ? {
+      ...section, text: 'Beim Rahmen ist die Höhe des Reliefs einschließlich Grundplatte und Route auf maximal 16 mm begrenzt. Für Holzsockel kannst du eine maximale Reliefhöhe von 28 mm (Standard), 78 mm (5 EUR Aufpreis) oder 128 mm (7 EUR Aufpreis) wählen. Der Holzsockel zählt nicht zur Reliefhöhe. Falls nötig, wird das Gelände für die gewählte Grenze flacher dargestellt und gefertigt. Der UTH-Rabatt gilt nicht für Höhenaufschläge.',
+    } : section) : PURCHASE_INFORMATION;
   const purchaseInformation = configuration.version < 7 ? applicablePurchaseInformation.map(section => {
     if (section.title === 'Produkt und Gesamtpreis') return { ...section,
       text: section.text.replace('mit Gravur auf Holz für 55 EUR', 'mit Gravur auf Holz für 50 EUR')
@@ -82,7 +84,7 @@ export function orderEmail(order, details, kind, { productionViews = false } = {
       text: section.text.replace('Versandinformationen', 'Abhol- bzw. Versandinformationen') };
     return section;
   }) : purchaseInformation;
-  const purchaseText = event || configuration.version < 8
+  const purchaseText = event || configuration.version < 9
     ? purchase.map(section => `${section.title}\n${section.text}`).join('\n\n') : PURCHASE_INFORMATION_TEXT;
   const text = [
     title, introduction, '', ...rows.map(([label, value]) => `${label}: ${value}`),

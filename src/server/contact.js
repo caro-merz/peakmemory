@@ -154,20 +154,23 @@ export async function handleContact(request, env) {
     `Name:    ${safeName}`, `E-Mail:  ${safeEmail}`, `Art:     ${safeType}`, '', 'Nachricht:', message.trim().slice(0, 4000),
   ];
   if (configuration) {
+    const heightUnknown = configuration.version >= 9 && configuration.preview !== 'ready' && configuration.product !== 'frame';
     lines.push('', `Konfiguration (Version ${configuration.version}):`,
       `Produkt: ${configuration.version >= 3 ? getProduct(configuration.product).name
         : configuration.product === 'base' ? 'Relief auf Eichenholzsockel' : 'Gerahmtes Relief'}`,
       `Gravur: ${configuration.engraving || '(keine)'}`,
       configuration.source === 'area' ? describeArea(configuration.area) : `Geländerand: ${Math.round(configuration.margin * 100)} %`,
       `Höhenüberhöhung: ${configuration.version >= 2 ? configuration.elevationScale : 1.5}×`,
-      ...(configuration.version >= 8 ? [`Reliefhöhe: maximal ${configuration.heightLimitMm} mm einschließlich Grundplatte und Route, ohne Sockel`] : []),
+      ...(configuration.version >= 8 ? [heightUnknown
+        ? 'Reliefhöhe: ohne Vorschau nicht berechnet; maximal 128 mm einschließlich Grundplatte und Route, ohne Sockel.'
+        : `Reliefhöhe: maximal ${configuration.heightLimitMm} mm einschließlich Grundplatte und Route, ohne Sockel`] : []),
       `Online-Vorschau: ${configuration.preview === 'ready' ? 'bereit (illustrativ)' : 'nicht verfügbar'}`,
       'Die endgültige Produktionsvorschau wird separat abgestimmt.');
     if (configuration.version >= 3) lines.push(`Ausführung: ${getProduct(configuration.product).dimensions}`);
     if (configuration.version >= 4 && configuration.product !== 'frame') lines.push(
       `Wandaufhängung: ${configuration.wallMount ? `ja (+${WALL_MOUNT_PRICE_EUR} EUR)` : 'nein'}`,
       'Schutzfüße: 4 transparente Schutzfüße inklusive');
-    if (configuration.version >= 2) lines.push(`Modellpreis: ${configurationPrice(configuration)} EUR inkl. Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.`,
+    if (configuration.version >= 2) lines.push(`Modellpreis: ${heightUnknown ? 'ab ' : ''}${configurationPrice(heightUnknown ? { ...configuration, heightLimitMm: 28 } : configuration)} EUR inkl. Versand innerhalb Deutschlands.${heightUnknown ? ' Ein Höhenaufschlag kann hinzukommen.' : ''} Kein Umsatzsteuerausweis gemäß §19 UStG.`,
       'Dies ist eine unverbindliche Anfrage, keine bezahlte Bestellung.');
     lines.push(previewAttachment ? 'Vorschaubild: als PNG angehängt (illustrative Online-Konfiguration).'
       : 'Vorschaubild: nicht angehängt.');

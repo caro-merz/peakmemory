@@ -78,12 +78,13 @@ Datei und kein exaktes Fertigungsbild.
   Freies Drehen per Maus oder Touch ermöglicht die Kontrolle der Unterseite.
   Die Option bleibt beim Wechsel zum Rahmen im Formular erhalten, wird aber
   weder gefertigt noch berechnet. Sie wird in Zusammenfassung und E-Mails genannt.
-- Höhenüberhöhung von 1× bis 8×, Standard 2×. Änderungen skalieren Gelände
-  und Route gemeinsam ohne erneuten Geländeabruf.
+- Höhenüberhöhung normalerweise von 1× bis 8× in Schritten von 0,01, Standard
+  2×. Bei steilem Gelände kann der Rahmen auch Werte unter 1× erfordern.
+  Änderungen skalieren Gelände und Route gemeinsam ohne erneuten Geländeabruf.
 - Die maximale Reliefhöhe (einschließlich Grundplatte und Route, ohne Sockel)
-  beträgt beim Rahmen 16 mm. Für Holzsockel sind 28 mm inklusive, 78 mm für
-  5 EUR Aufpreis oder 128 mm für 7 EUR Aufpreis wählbar. Falls nötig, wird die
-  Höhenüberhöhung in der Vorschau für die gewählte Grenze reduziert. Die Grenze
+  beträgt beim Rahmen 16 mm, bei Holzsockeln 128 mm. Über 28 mm berechnet sich
+  automatisch ein Aufpreis von 5 EUR, über 78 mm von 7 EUR. Falls nötig, wird
+  der Regler für die maximale Höhe begrenzt und der aktuelle Wert angepasst. Die Preisstufe
   wird für die Fertigung in der Konfiguration und den Bestell-E-Mails festgehalten.
 - Gravur mit maximal 3 Zeilen auf Holz bzw. 2 Zeilen auf dem Passepartout und insgesamt 120 Zeichen. Die Vorschau übernimmt
   die eingegebenen Zeilenumbrüche ohne automatischen Umbruch und zeigt die
@@ -347,14 +348,16 @@ schützt diese alternativen Zugänge nicht.
   dunkle Lasergravur ohne Hintergrundfläche, auch ohne persönlichen Gravurtext.
   Nach der Produktfoto-Referenz ist es ca. 2,2 cm breit und 1 cm hoch,
   vertikal mittig und mit 0,6 cm Abstand zum linken Rand; das Originalseitenverhältnis bleibt erhalten.
-- Höhen sind von 1× bis 8× einstellbar (Standard 2×). Material und
+- Höhen sind normalerweise von 1× bis 8× einstellbar (Standard 2×); bei
+  steilem Gelände sind kleinere Werte möglich. Material und
   endgültige Gravurposition sind exemplarisch; Preise werden nicht erfunden.
-- Neue Konfigurator-Anfragen verwenden Konfiguration Version 8 mit Pflichtfeldern
+- Neue Konfigurator-Anfragen verwenden Konfiguration Version 9 mit Pflichtfeldern
   `elevationScale`, `wallMount` (Boolean), `heightLimitMm` und Produkt `base`, `compact` oder `frame`.
   Der Rahmen erfordert `wallMount:false`. Rahmen-Konfigurationen bis Version 4
   behalten ihren bisherigen Preis von 55 EUR; Version 5 und 6 verwenden 60 EUR.
   Version 7 erhöht alle drei Produktpreise um 5 EUR; die Wandaufhängung kostet weiterhin 1 EUR.
-  Version 8 ergänzt die verpflichtende Reliefhöhen-Grenze. Alte Checkouts bleiben
+  Version 8 ergänzt die verpflichtende Reliefhöhen-Grenze; Version 9 bestimmt
+  die Preisstufe automatisch und prüft sie serverseitig anhand der Geländedaten. Alte Checkouts bleiben
   zu ihrem ursprünglichen Preis gültig; für neue muss die Seite aktuell sein.
   Version 3 bleibt für alle drei
   Varianten ohne diese Zusatzoption kompatibel.

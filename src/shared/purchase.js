@@ -9,7 +9,7 @@ export const PURCHASE_INFORMATION = [
   },
   {
     title: 'Reliefhöhe',
-    text: 'Beim Rahmen ist die Höhe des Reliefs einschließlich Grundplatte und Route auf maximal 16 mm begrenzt. Für Holzsockel kannst du eine maximale Reliefhöhe von 28 mm (Standard), 78 mm (5 EUR Aufpreis) oder 128 mm (7 EUR Aufpreis) wählen. Der Holzsockel zählt nicht zur Reliefhöhe. Falls nötig, wird das Gelände für die gewählte Grenze flacher dargestellt und gefertigt. Der UTH-Rabatt gilt nicht für Höhenaufschläge.',
+    text: 'Beim Rahmen ist die Höhe des Reliefs einschließlich Grundplatte und Route auf maximal 16 mm begrenzt. Bei Holzsockeln kostet ein Relief über 28 mm Höhe 5 EUR und über 78 mm Höhe 7 EUR mehr als der Standardpreis. Die maximale Reliefhöhe beträgt 128 mm. Der Holzsockel zählt nicht zur Reliefhöhe. Falls nötig, wird das Gelände für die maximale Höhe flacher dargestellt und gefertigt. Der UTH-Rabatt gilt nicht für Höhenaufschläge.',
   },
   {
     title: 'Wandaufhängung und Schutzfüße bei Holzsockeln',

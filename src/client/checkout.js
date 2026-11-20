@@ -15,11 +15,10 @@ export function initializeCheckout({ state, capture, captureViews, setBusy }) {
   const currentTime = () => serverTime === null ? Math.floor(Date.now() / 1000)
     : Math.floor(serverTime + (performance.now() - timeReceived) / 1000);
   let previousSelection;
-  const priceConfiguration = () => ({
-    version: 8, product: get('product').value,
-    heightLimitMm: get('product').value === 'frame' ? 16 : Number(get('heightLimit').value),
+  const priceConfiguration = () => state().configuration ?? {
+    version: 9, product: get('product').value, heightLimitMm: get('product').value === 'frame' ? 16 : 28,
     wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
-  });
+  };
   const currentOffer = () => offerFor(priceConfiguration(), discountCode(), currentTime());
   const priceLabel = () => {
     try { return formatPrice(currentOffer().amount / 100); }

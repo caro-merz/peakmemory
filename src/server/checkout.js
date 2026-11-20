@@ -6,6 +6,7 @@ import { parseConfiguration } from '../shared/configuration.js';
 import { areaBoundaryGpx } from '../shared/area-gpx.js';
 import { orderEmail } from './order-email.js';
 import { offerFor, uthFulfillment, UTH_PICKUP_CUTOFF } from '../shared/uth.js';
+import { verifiedHeightTier } from './terrain-height.js';
 
 const orderProduct = order => getProduct(parseConfiguration(order.configuration).product);
 const orderOffer = order => order.offer ? JSON.parse(order.offer) : null;
@@ -120,7 +121,7 @@ async function createSession(env, order) {
   if (!changed(updated)) throw new CheckoutError('Checkout-Zuordnung konnte nicht bestätigt werden.', 503);
   return { ...order, session_id: session.id, session_url: url.href };
 }
-export function handleCheckout(request, sourceEnv, mode = 'test') {
+export function handleCheckout(request, sourceEnv, mode = 'test', heightVerifier = verifiedHeightTier) {
   if (request.method !== 'POST') return Promise.resolve(json({ error: 'Methode nicht erlaubt.' }, 405, { Allow: 'POST' }));
   return endpoint(async () => {
     const env = modeEnvironment(sourceEnv, mode);
@@ -139,8 +140,12 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
     const id = crypto.randomUUID(), secret = token(), timestamp = now();
     const previous = await first(env, 'SELECT * FROM checkout_orders WHERE submission_key=?', data.key);
     if (previous && previous.payload_digest !== data.digest) throw new CheckoutError('Schlüssel gehört zu einer anderen Auswahl.', 409);
-    if (!previous && JSON.parse(data.configuration).version < 8) {
+    const configuration = JSON.parse(data.configuration);
+    if (!previous && configuration.version < 9) {
       throw new CheckoutError('Die Auswahlmöglichkeiten oder Preise haben sich geändert. Bitte lade die Seite neu und prüfe deine Auswahl erneut.', 409);
+    }
+    if (!previous && configuration.heightLimitMm !== await heightVerifier(configuration, data.route, request, env)) {
+      throw new CheckoutError('Die berechnete Reliefhöhe hat sich geändert. Bitte lade die Seite neu und prüfe den Preis.', 409);
     }
     if (!previous && data.discountCode && !data.eventRoute) {
       throw new CheckoutError('Der Rabattcode gilt nur für UTH-Bestellungen.', 400);

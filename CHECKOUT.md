@@ -262,11 +262,12 @@ bases are 11 × 13.5 × 2 cm / 11 × 11 × 2 cm; the frame exterior is 20 × 20 
 All prices include shipping, **Germany only**.
 Both oak bases include four transparent protective feet. Optional `wallMount:true`
 adds **1 EUR** (56 / 51 EUR totals); default is false. Frame does not accept this
-option. The frame relief is limited to 16 mm; wooden reliefs offer 28 mm included,
-78 mm for 5 EUR extra, or 128 mm for 7 EUR extra. Heights include the printed
-base and route, excluding the wood base. Version 8 stores the selected limit;
-the preview reduces elevation scaling when needed, and production must honor
-the recorded limit. Configuration v4 records the wall mount explicitly; older orders retain their original
+option. The frame relief is limited to 16 mm. Wood reliefs are limited to 128 mm;
+above 28 mm they cost 5 EUR extra, and above 78 mm they cost 7 EUR extra.
+Heights include the printed base and route, excluding the wood base. Version 9
+automatically determines the price tier from the preview height; checkout independently
+verifies it against terrain data. The preview reduces elevation scaling when needed,
+and production must honor the recorded limit. Configuration v4 records the wall mount explicitly; older orders retain their original
 prices and do not acquire paid hardware retroactively.
 No VAT is charged/displayed under **§19 UStG (Kleinunternehmer)**. Delivery wording
 is **5–10 working days after payment**. The captured preview is illustrative, not an exact

@@ -18,6 +18,26 @@ export function limitedElevationScale(grid, elevationScale, heightLimitMm) {
   return range > 0 ? Math.min(elevationScale, reliefHeight * grid.plan.groundWidth / range) : elevationScale;
 }
 
+export function reliefHeightMm(grid, elevationScale) {
+  let maximum = grid.minimum;
+  for (const height of grid.heights) maximum = Math.max(maximum, height);
+  let top = TERRAIN_SURFACE_Y + (maximum - grid.minimum) / grid.plan.groundWidth * elevationScale;
+  const scaledGrid = { ...grid, elevationScale };
+  for (const path of routePaths(scaledGrid)) for (let index = 0; index < path.length; index += 1) {
+    const point = path[index];
+    const previous = path[Math.max(0, index - 1)], next = path[Math.min(path.length - 1, index + 1)];
+    const horizontal = Math.hypot(next.x - previous.x, next.z - previous.z);
+    const length = Math.hypot(horizontal, next.y - previous.y);
+    const verticalRadius = length ? 0.0028 * Math.sqrt(3) / 2 * horizontal / length : 0;
+    top = Math.max(top, point.y + 0.003 + verticalRadius);
+  }
+  return (top - TERRAIN_BASE_Y) * 100;
+}
+
+export function reliefHeightTier(heightMm) {
+  return heightMm > 78 ? 128 : heightMm > 28 ? 78 : 28;
+}
+
 export function project({ lat, lon }) {
   const radians = lat * Math.PI / 180;
   return { x: ((lon + 180) / 360) % 1, y: (1 - Math.log(Math.tan(Math.PI / 4 + radians / 2)) / Math.PI) / 2 };

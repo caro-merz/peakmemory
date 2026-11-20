@@ -42,6 +42,18 @@ test('height tiers are validated and charged only for wood products', () => {
   assert.throws(() => parseConfiguration({ ...frame, heightLimitMm: 78 }), /Reliefhöhe/);
 });
 
+test('v9 supports small positive exaggerations without changing legacy validation', () => {
+  const frame = { version: 9, source: 'gpx', product: 'frame', wallMount: false, heightLimitMm: 16,
+    engraving: '', margin: 0.15, elevationScale: 1, preview: 'ready' };
+  for (const elevationScale of [0.000001, 0.001, 0.5, 1, 8]) {
+    assert.equal(parseConfiguration({ ...frame, elevationScale }).elevationScale, elevationScale);
+  }
+  for (const elevationScale of [0, 0.0000009, -1, 8.01]) {
+    assert.throws(() => parseConfiguration({ ...frame, elevationScale }), /Ungültige/);
+  }
+  assert.throws(() => parseConfiguration({ ...frame, version: 8, elevationScale: 0.5 }), /Ungültige/);
+});
+
 test('both wood variants always have four transparent corner feet and an optional sawtooth hanger beneath the base', () => {
   for (const product of ['base', 'compact']) for (const wallMount of [false, true]) {
     const layout = productLayout(product);

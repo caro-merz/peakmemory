@@ -59,7 +59,8 @@
     'Bis 128 mm · +7 €': 'Up to 128 mm · +€7',
     'Die Höhenbegrenzung umfasst das Relief einschließlich seiner Grundplatte und Route, aber nicht den Holzsockel. Wenn nötig, wird das Gelände flacher dargestellt und gefertigt.': 'The height limit includes the relief, its base plate and route, but not the wood base. If necessary, the terrain is displayed and made flatter.',
     'Im Rahmen beträgt die maximale Reliefhöhe einschließlich Grundplatte und Route 16 mm, damit das Relief unter das Glas passt.': 'For the frame, the maximum relief height including the base plate and route is 16 mm so it fits under the glass.',
-    'Die Höhe wurde für die gewählte Grenze reduziert.': 'The height has been reduced to fit the selected limit.',
+    'Die maximale Reliefhöhe begrenzt die Höhenüberhöhung.': 'The maximum relief height limits the elevation exaggeration.',
+    'Reliefhöhe einschließlich Grundplatte und Route, ohne Holzsockel: bis 28 mm ohne Aufpreis, über 28 mm +5 €, über 78 mm +7 €. Die maximale Höhe beträgt 128 mm.': 'Relief height including base plate and route, excluding wood base: up to 28 mm included, over 28 mm +€5, over 78 mm +€7. The maximum height is 128 mm.',
     'Nein': 'No',
     'Ja (+1 €)': 'Yes (+€1)',
     'Gezahnte Aufhängung auf der Rückseite.': 'Toothed hanger on the back.',
@@ -72,6 +73,8 @@
     'Höhenüberhöhung:': 'Elevation boost:',
     '1× · Natürliche Höhen': '1× · Natural elevation',
     '8× · Markantes Relief': '8× · Strong relief',
+    'Natürliche Höhen': 'Natural elevation',
+    'Flacher': 'Flatter',
     'So könnte deine Erinnerung aussehen.': 'This is how your keepsake could look.',
     'Noch keine Route': 'No route yet',
     'Deine Landschaft wartet auf dich.': 'Your landscape is waiting for you.',
@@ -309,7 +312,7 @@
     'Produkt und Gesamtpreis': 'Product and total price',
     'Wandaufhängung und Schutzfüße bei Holzsockeln': 'Wall mount and protective feet for wood bases',
     'Reliefhöhe': 'Relief height',
-    'Beim Rahmen ist die Höhe des Reliefs einschließlich Grundplatte und Route auf maximal 16 mm begrenzt. Für Holzsockel kannst du eine maximale Reliefhöhe von 28 mm (Standard), 78 mm (5 EUR Aufpreis) oder 128 mm (7 EUR Aufpreis) wählen. Der Holzsockel zählt nicht zur Reliefhöhe. Falls nötig, wird das Gelände für die gewählte Grenze flacher dargestellt und gefertigt. Der UTH-Rabatt gilt nicht für Höhenaufschläge.': 'For the frame, the relief height including the base plate and route is limited to 16 mm. For wood bases, choose a maximum relief height of 28 mm (standard), 78 mm (EUR 5 extra), or 128 mm (EUR 7 extra). The wood base is not included in the relief height. If necessary, the terrain is displayed and made flatter to fit the chosen limit. The UTH discount does not apply to height surcharges.',
+    'Beim Rahmen ist die Höhe des Reliefs einschließlich Grundplatte und Route auf maximal 16 mm begrenzt. Bei Holzsockeln kostet ein Relief über 28 mm Höhe 5 EUR und über 78 mm Höhe 7 EUR mehr als der Standardpreis. Die maximale Reliefhöhe beträgt 128 mm. Der Holzsockel zählt nicht zur Reliefhöhe. Falls nötig, wird das Gelände für die maximale Höhe flacher dargestellt und gefertigt. Der UTH-Rabatt gilt nicht für Höhenaufschläge.': 'For the frame, the relief height including the base plate and route is limited to 16 mm. On wood bases, reliefs over 28 mm cost EUR 5 extra, and those over 78 mm cost EUR 7 extra. The maximum relief height is 128 mm. The wood base is not included in the relief height. If necessary, the terrain is displayed and made flatter to fit the maximum height. The UTH discount does not apply to height surcharges.',
     'Bestellablauf und Vertragsschluss': 'Ordering process and conclusion of contract',
     'Zahlung, Fertigung und Lieferung': 'Payment, production, and delivery',
     'Kein gesetzliches Widerrufsrecht bei dieser Personalisierung': 'No statutory right of withdrawal for this personalized product',
@@ -819,7 +822,7 @@
             ['Außenmaß', 'overall'],
             [' · Rand ', ' · Margin '],
             [' · Höhen ', ' · Elevation '],
-            [' · Reliefhöhe max. ', ' · Maximum relief height '],
+            [' · Reliefhöhe ca. ', ' · Approx. relief height '],
             [' · Gravur: ', ' · Engraving: '],
             ['Gravur: keine', 'Engraving: none'],
             [' · Wandaufhängung: nein', ' · Wall mount: no'],
@@ -838,7 +841,7 @@
             ['overall', 'Außenmaß'],
             [' · Margin ', ' · Rand '],
             [' · Elevation ', ' · Höhen '],
-            [' · Maximum relief height ', ' · Reliefhöhe max. '],
+            [' · Approx. relief height ', ' · Reliefhöhe ca. '],
             [' · Engraving: ', ' · Gravur: '],
             ['Engraving: none', 'Gravur: keine'],
             [' · Wall mount: no', ' · Wandaufhängung: nein'],
@@ -848,6 +851,13 @@
             ['Total:', 'Gesamt:'],
             ['including shipping within Germany', 'inkl. Versand innerhalb Deutschlands']
           ];
+      let updated = value;
+      for (const [from, to] of fragments) updated = updated.split(from).join(to);
+      if (updated !== value) node.nodeValue = updated;
+    } else if (node.parentElement?.id === 'heightPrice') {
+      const fragments = lang === 'en'
+        ? [['Reliefhöhe: ca. ', 'Approx. relief height: '], ['Standardpreis', 'standard price'], ['Höhenaufschlag', 'height surcharge']]
+        : [['Approx. relief height: ', 'Reliefhöhe: ca. '], ['standard price', 'Standardpreis'], ['height surcharge', 'Höhenaufschlag']];
       let updated = value;
       for (const [from, to] of fragments) updated = updated.split(from).join(to);
       if (updated !== value) node.nodeValue = updated;

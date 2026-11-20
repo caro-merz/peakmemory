@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { File } from 'node:buffer';
+import sharp from 'sharp';
+import decode, { init as initDecoder } from '@jsquash/webp/decode.js';
 import worker from '../worker.js';
 import {
-  STRIPE_API_VERSION, STRIPE_WEBHOOK_API_VERSION, handleCheckout, handleOrderStatus, handleShopStatus,
+  STRIPE_API_VERSION, STRIPE_WEBHOOK_API_VERSION, handleCheckout as realHandleCheckout, handleOrderStatus, handleShopStatus,
   handleStripeWebhook, checkoutMaintenance,
 } from '../src/server/checkout.js';
 import { MAX_CHECKOUT_SIZE, MAX_WEBHOOK_SIZE, validateCheckout } from '../src/server/checkout-helpers.js';
@@ -14,6 +16,7 @@ import { readGpxCollection } from '../src/shared/gpx-collection.js';
 import { MAX_PREVIEW_SIZE } from '../src/shared/preview.js';
 import { PURCHASE_INFORMATION_TEXT } from '../src/shared/purchase.js';
 import { orderEmail } from '../src/server/order-email.js';
+import { verifiedHeightTier } from '../src/server/terrain-height.js';
 import { PRODUCTS, configurationPrice } from '../src/shared/product.js';
 import { UTH_PICKUP_CUTOFF, UTH_DISCOUNT_END, UTH_ROUTES, offerFor } from '../src/shared/uth.js';
 import { onRequest as pagesCheckout } from '../functions/checkout.js';
@@ -28,7 +31,8 @@ afterEach(() => {
   for (const database of databases.splice(0)) database.close();
 });
 const gpx = '<?xml version="1.0"?><gpx version="1.1"><trk><trkseg><trkpt lat="47" lon="11"/><trkpt lat="47.1" lon="11.1"/></trkseg></trk></gpx>';
-const config = { version: 8, source: 'gpx', product: 'base', wallMount: false, heightLimitMm: 28, engraving: 'Mein Gipfel', margin: 0.15, elevationScale: 1.5, preview: 'ready' };
+const handleCheckout = (request, env, mode) => realHandleCheckout(request, env, mode, async configuration => configuration.heightLimitMm);
+const config = { version: 9, source: 'gpx', product: 'base', wallMount: false, heightLimitMm: 28, engraving: 'Mein Gipfel', margin: 0.15, elevationScale: 1.5, preview: 'ready' };
 const legacyConfig = () => { const { heightLimitMm, ...legacy } = config; return { ...legacy, version: 6 }; };
 const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64');
 const productionViewFields = () => ({
@@ -52,6 +56,51 @@ test('height surcharges are not discounted by UTH', () => {
     route: '', code: 'UTH', full: 5600, discount: 500, amount: 5100,
   });
   assert.equal(offerFor({ ...compact, heightLimitMm: 128 }, 'UTH', UTH_DISCOUNT_END - 1).amount, 5300);
+});
+
+test('checkout rejects a reported height tier that differs from verified terrain', async () => {
+  const context = environment(), services = mockServices();
+  const response = await realHandleCheckout(checkout(), context.env, 'test', async () => 78);
+  assert.equal(response.status, 409);
+  assert.match((await response.json()).error, /Reliefhöhe/);
+  assert.equal(services.calls.length, 0);
+  assert.equal(context.db.prepare('SELECT count(*) AS n FROM checkout_orders').get().n, 0);
+});
+
+test('checkout stores a frame exaggeration below 1×', async () => {
+  const context = environment();
+  mockServices();
+  const frame = { ...config, product: 'frame', heightLimitMm: 16, elevationScale: 0.123 };
+  const response = await handleCheckout(checkout(key(), { configuration: JSON.stringify(frame) }), context.env);
+  assert.equal(response.status, 200, await response.clone().text());
+  const order = state(context, (await response.json()).orderId);
+  assert.equal(JSON.parse(order.configuration).elevationScale, 0.123);
+});
+
+test('checkout recomputes the height tier from lossless terrain tiles', async () => {
+  const wasm = await WebAssembly.compile(readFileSync(new URL('../node_modules/@jsquash/webp/codec/dec/webp_dec.wasm', import.meta.url)));
+  await initDecoder(wasm);
+  const tile = await sharp({ create: { width: 512, height: 512, channels: 3, background: { r: 128, g: 100, b: 0 } } })
+    .webp({ lossless: true }).toBuffer();
+  globalThis.fetch = async () => new Response(tile, { headers: { 'Content-Type': 'image/webp' } });
+  const area = { ...config, source: 'area', area: { left: 0.525, top: 0.35, size: 0.0004 } };
+  delete area.margin;
+  assert.equal(await verifiedHeightTier(area, null, req('/checkout'), {}, decode), 28);
+  assert.equal(await verifiedHeightTier({ ...area, product: 'frame', heightLimitMm: 16 }, null, req('/checkout'), {}, decode), 16);
+  const pixels = Buffer.alloc(512 * 512 * 3);
+  for (let y = 0; y < 512; y++) for (let x = 0; x < 512; x++) {
+    const height = 100 + Math.floor((x + y) * 0.30), offset = (y * 512 + x) * 3;
+    pixels[offset] = 128 + Math.floor(height / 256);
+    pixels[offset + 1] = height % 256;
+  }
+  const steep = await sharp(pixels, { raw: { width: 512, height: 512, channels: 3 } }).webp({ lossless: true }).toBuffer();
+  globalThis.fetch = async () => new Response(steep, { headers: { 'Content-Type': 'image/webp' } });
+  const route = parseGpx('<gpx version="1.1"><trk><trkseg><trkpt lat="48.2" lon="9.1"/><trkpt lat="48.203" lon="9.103"/></trkseg></trk></gpx>');
+  for (const [elevationScale, tier] of [[1, 28], [2, 78], [4.5, 128]]) {
+    assert.equal(await verifiedHeightTier({ ...config, elevationScale }, route, req('/checkout'), {}, decode), tier);
+  }
+  assert.equal(await verifiedHeightTier({ ...config, product: 'frame', heightLimitMm: 16, elevationScale: 0.123 },
+    route, req('/checkout'), {}, decode), 16);
 });
 
 for (const [heightLimitMm, amount] of [[78, 6000], [128, 6200]]) {
@@ -91,6 +140,8 @@ test('order emails escape personal content and distinguish test, live, buyer and
   const v7Live = orderEmail({ ...order, configuration: JSON.stringify({ ...legacyConfig(), version: 7 }), mode: 'live' }, details, 'buyer');
   assert.match(v7Live.text, /mit Gravur auf Holz für 55 EUR/);
   assert.doesNotMatch(v7Live.text, /Reliefhöhe/);
+  const v8Live = orderEmail({ ...order, configuration: JSON.stringify({ ...config, version: 8 }), mode: 'live' }, details, 'buyer');
+  assert.match(v8Live.text, /maximale Reliefhöhe von 28 mm .* wählen/);
   assert.match(live.html, /Kaufhinweise &amp; Widerruf/);
   assert.doesNotMatch(live.subject, /TEST/);
 });
@@ -272,7 +323,7 @@ test('UTH pickup uses signed payment time, handles late payment as shipping and 
   const context = configureLive(environment()), services = mockServices();
   const bytes = readFileSync(new URL('../src/uth/UTH25.gpx', import.meta.url));
   const file = new File([bytes], 'UTH25.gpx', { type: 'application/gpx+xml' });
-  const product = { version: 8, heightLimitMm: 28, source: 'gpx', product: 'compact', wallMount: true, engraving: '',
+  const product = { version: 9, heightLimitMm: 28, source: 'gpx', product: 'compact', wallMount: true, engraving: '',
     margin: 0.15, elevationScale: 2, preview: 'ready' };
   Date.now = () => (UTH_PICKUP_CUTOFF - 100) * 1000;
   const fields = { gpxFile: file, eventRoute: 'UTH25', discountCode: 'UTH', quotedAmount: '4600', quotedFulfillment: 'pickup', configuration: JSON.stringify(product) };
@@ -348,7 +399,7 @@ test('existing ordinary discounted orders can be retried after the UTH restricti
 });
 
 const areaConfiguration = {
-  version: 8, heightLimitMm: 28, source: 'area', area: { left: 0.525, top: 0.35, size: 0.0004 },
+  version: 9, heightLimitMm: 28, source: 'area', area: { left: 0.525, top: 0.35, size: 0.0004 },
   product: 'base', wallMount: false, engraving: 'Meine Landschaft', elevationScale: 2, preview: 'ready',
 };
 const areaCheckout = (submissionKey = key(), configuration = areaConfiguration) =>
@@ -639,7 +690,7 @@ for (const paid of [false, true]) test(`collection ${paid ? 'paid' : 'expired'} 
   assert.equal(context.objects.size, 0);
 });
 
-for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCTS)) for (const version of [8]) {
+for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCTS)) for (const version of [9]) {
   test(`${mode} ${product.id} v${version}: server price, verified payment and product-specific emails`, async () => {
     const context = environment();
     if (mode === 'live') configureLive(context);
@@ -845,9 +896,9 @@ test('same payload retries return exactly the same session; exact original-byte/
   assert.equal(context.db.prepare('SELECT count(*) AS n FROM checkout_orders').get().n, 1);
 });
 
-for (const [version, amount] of [[6, 5000], [7, 5500]]) test(`v${version} checkouts retry and pay at their original price, but new checkouts are rejected`, async () => {
+for (const [version, amount] of [[6, 5000], [7, 5500], [8, 5500]]) test(`v${version} checkouts retry and pay at their original price, but new checkouts are rejected`, async () => {
   const context = environment(), services = mockServices();
-  const legacy = { ...legacyConfig(), version };
+  const legacy = version === 8 ? { ...config, version } : { ...legacyConfig(), version };
   const fields = { configuration: JSON.stringify(legacy) };
   const fresh = await handleCheckout(checkout(key(), fields), context.env);
   assert.equal(fresh.status, 409);

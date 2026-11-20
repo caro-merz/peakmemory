@@ -249,6 +249,16 @@ test('configurator requests require a personal file even for unavailable preview
   }
 });
 
+test('inquiries without a preview do not claim a calculated wood height or final price', async () => {
+  const payloads = captureMail();
+  const config = { ...configuration, version: 9, source: 'gpx', product: 'base',
+    wallMount: false, heightLimitMm: 28, elevationScale: 2, preview: 'unavailable' };
+  assert.equal((await handleContact(formContact({ configuration: JSON.stringify(config) }, new File([gpx], 'personal.gpx')), env)).status, 200);
+  assert.match(payloads[0].text, /Reliefhöhe: ohne Vorschau nicht berechnet/);
+  assert.match(payloads[0].text, /Modellpreis: ab 55 EUR/);
+  assert.match(payloads[0].text, /Höhenaufschlag kann hinzukommen/);
+});
+
 test('configurator screenshot is attached as PNG alongside unchanged GPX', async () => {
   const payloads = captureMail();
   const image = new File([png()], 'arbitrary-name.png', { type: 'image/png' });

@@ -158,8 +158,8 @@ export async function validateCheckout(request) {
   let configuration;
   try { configuration = parseConfiguration(rawConfiguration); }
   catch (error) { throw new CheckoutError(error.message); }
-  if (![2, 3, 4, 5, 6, 7, 8].includes(configuration?.version) || configuration.preview !== 'ready') {
-    throw new CheckoutError('Konfiguration Version 2 bis 8 mit fertiger Vorschau erforderlich.');
+  if (![2, 3, 4, 5, 6, 7, 8, 9].includes(configuration?.version) || configuration.preview !== 'ready') {
+    throw new CheckoutError('Konfiguration Version 2 bis 9 mit fertiger Vorschau erforderlich.');
   }
   if (form.has('gpxFile') && form.has('gpxFiles')) throw new CheckoutError('GPX-Formularfelder dürfen nicht gemischt werden.');
   const isArea = configuration.source === 'area';
@@ -211,7 +211,7 @@ export async function validateCheckout(request) {
   if (eventRoute || discountCode) digestParts.push('uth-offer-v1', eventRoute, discountCode, quotedAmount, quotedFulfillment);
   const digest = await sha256(JSON.stringify(digestParts));
   return { name: name.trim(), email, key: key.toLowerCase(), configuration: JSON.stringify(configuration),
-    filename, digest, sources, gpx, preview, views, eventRoute, discountCode, quotedAmount, quotedFulfillment };
+    filename, digest, sources, gpx, route: collection?.route, preview, views, eventRoute, discountCode, quotedAmount, quotedFulfillment };
 }
 export async function remote(url, options) {
   const controller = new AbortController();

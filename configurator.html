@@ -101,17 +101,6 @@
             <option value="frame">Rahmen mit graviertem Passepartout</option>
           </select>
           <p id="productDescription" class="hint">10 × 10 cm Relief auf 11 × 13,5 × 2 cm Eiche-Holzsockel. Gravur direkt auf Holz.</p>
-          <div id="heightLimitControls">
-            <label for="heightLimit">Maximale Reliefhöhe (ohne Holzsockel)</label>
-            <select id="heightLimit" aria-describedby="heightLimitHint">
-              <option value="28">Bis 28 mm · Standard</option>
-              <option value="78">Bis 78 mm · +5 €</option>
-              <option value="128">Bis 128 mm · +7 €</option>
-            </select>
-          </div>
-          <p id="heightLimitHint" class="hint">Die Höhenbegrenzung umfasst das Relief einschließlich seiner Grundplatte und Route, aber nicht den Holzsockel. Wenn nötig, wird das Gelände flacher dargestellt und gefertigt.</p>
-          <p id="frameHeightHint" class="hint" hidden>Im Rahmen beträgt die maximale Reliefhöhe einschließlich Grundplatte und Route 16 mm, damit das Relief unter das Glas passt.</p>
-          <p id="heightCapped" class="hint" role="status" hidden>Die Höhe wurde für die gewählte Grenze reduziert.</p>
           <div id="wallMountControls">
             <label for="wallMount">Wandaufhängung</label>
             <select id="wallMount" aria-describedby="wallMountHint">
@@ -136,8 +125,12 @@
           <div class="range-labels"><span>Wenig Rand</span><span>Mehr Landschaft</span></div>
           </div>
           <label for="elevationScale">Höhenüberhöhung: <output id="elevationValue" for="elevationScale">2×</output></label>
-          <input id="elevationScale" type="range" min="1" max="8" step="0.5" value="2">
-          <div class="range-labels"><span>1× · Natürliche Höhen</span><span>8× · Markantes Relief</span></div>
+          <input id="elevationScale" type="range" min="1" max="8" step="0.01" value="2">
+          <div class="range-labels"><span><output id="elevationMinLabel">1×</output> · <span id="elevationMinDescription">Natürliche Höhen</span></span><span><output id="elevationMaxLabel">8×</output> · <span>Maximum</span></span></div>
+          <p id="heightPrice" class="hint" role="status" aria-live="polite"></p>
+          <p id="heightLimitHint" class="hint">Reliefhöhe einschließlich Grundplatte und Route, ohne Holzsockel: bis 28 mm ohne Aufpreis, über 28 mm +5 €, über 78 mm +7 €. Die maximale Höhe beträgt 128 mm.</p>
+          <p id="frameHeightHint" class="hint" hidden>Im Rahmen beträgt die maximale Reliefhöhe einschließlich Grundplatte und Route 16 mm, damit das Relief unter das Glas passt.</p>
+          <p id="heightCapped" class="hint" role="status" hidden>Die maximale Reliefhöhe begrenzt die Höhenüberhöhung.</p>
         </fieldset>
       </div>
       <section class="preview card" aria-labelledby="previewTitle">
@@ -197,6 +190,6 @@
   </main>
   <footer><span>Peak Memory · Handgefertigt in Baden-Württemberg</span><div><a href="/#kontakt">Kontakt &amp; Rechtliches</a><a href="/#datenschutz">Datenschutz</a><a href="assets/licenses.txt">Software-Lizenzen</a></div></footer>
   <script type="module" src="assets/configurator.js"></script>
-  <script defer src="assets/language-toggle.js?v=11"></script>
+  <script defer src="assets/language-toggle.js?v=13"></script>
 </body>
 </html>

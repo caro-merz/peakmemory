@@ -3,6 +3,7 @@ import {
 } from './checkout-helpers.js';
 import { getProduct, configurationPrice } from '../shared/product.js';
 import { parseConfiguration } from '../shared/configuration.js';
+import { areaBoundaryGpx } from '../shared/area-gpx.js';
 import { orderEmail } from './order-email.js';
 import { offerFor, uthFulfillment, UTH_PICKUP_CUTOFF } from '../shared/uth.js';
 
@@ -11,6 +12,8 @@ const orderOffer = order => order.offer ? JSON.parse(order.offer) : null;
 const orderAmount = order => orderOffer(order)?.amount ?? configurationPrice(parseConfiguration(order.configuration)) * 100;
 const attachmentName = name => name.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 200);
 const originalArtifacts = order => order.gpx_manifest ? JSON.parse(order.gpx_manifest) : [];
+const productionViewNames = ['oben', 'diagonal-1', 'diagonal-2'];
+const productionViewKey = (orderId, name) => `orders/${orderId}/ansicht-${name}.png`;
 export const STRIPE_API_VERSION = '2026-09-30.endive';
 export const STRIPE_WEBHOOK_API_VERSION = '2026-08-26.dahlia';
 export const STRIPE_LIVE_WEBHOOK_API_VERSION = '2026-08-26.dahlia';
@@ -175,6 +178,10 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
           await guarded(() => env.CHECKOUT_FILES.put(order.gpx_key, data.gpx, { httpMetadata: { contentType: 'application/gpx+xml' } }));
         }
         await guarded(() => env.CHECKOUT_FILES.put(order.preview_key, data.preview, { httpMetadata: { contentType: 'image/png' } }));
+        for (const view of data.views) {
+          await guarded(() => env.CHECKOUT_FILES.put(productionViewKey(id, view.name), view.bytes,
+            { httpMetadata: { contentType: 'image/png' } }));
+        }
         if (!changed(await run(env, `UPDATE checkout_orders SET stage='ready',updated_at=? WHERE id=? AND lease=? AND stage='staging'`,
           now(), order.id, lease))) throw new CheckoutError('Speicherung nicht bestätigt.', 503);
         order.stage = 'ready';
@@ -295,15 +302,28 @@ async function notify(env, order) {
     for (const kind of ['owner', 'buyer']) {
       if (order[`${kind}_sent`]) continue;
       if (!env.RESEND_API_KEY) throw new CheckoutError('E-Mail-Benachrichtigung nicht konfiguriert; Zahlung gespeichert.', 503);
-      let attachments;
+      let attachments, hasProductionViews = false;
       if (kind === 'owner') {
-        const isArea = parseConfiguration(order.configuration).source === 'area';
+        const configuration = parseConfiguration(order.configuration);
+        const isArea = configuration.source === 'area';
         const gpx = isArea ? null : await guarded(() => env.CHECKOUT_FILES.get(order.gpx_key));
         const preview = await guarded(() => env.CHECKOUT_FILES.get(order.preview_key));
         if ((!isArea && !gpx) || !preview) throw new CheckoutError('Bestellanhänge fehlen; Benachrichtigung wird wiederholt.', 503);
+        const views = await Promise.all(productionViewNames.map(async name => {
+          const view = await guarded(() => env.CHECKOUT_FILES.get(productionViewKey(order.id, name)));
+          return view ? { filename: `peakmemory-ansicht-${name}.png`, content_type: 'image/png',
+            content: base64(new Uint8Array(await guarded(() => view.arrayBuffer()))) } : null;
+        }));
+        if (views.some(Boolean) && views.some(view => !view)) {
+          throw new CheckoutError('Bestellanhänge fehlen; Benachrichtigung wird wiederholt.', 503);
+        }
+        hasProductionViews = views.some(Boolean);
         attachments = [
+          ...(isArea ? [{ filename: 'kartenausschnitt-grenze.gpx',
+            content: base64(new TextEncoder().encode(areaBoundaryGpx(configuration.area))), content_type: 'application/gpx+xml' }] : []),
           ...(!isArea ? [{ filename: attachmentName(order.filename), content: base64(new Uint8Array(await guarded(() => gpx.arrayBuffer()))) }] : []),
           { filename: 'peakmemory-vorschau.png', content_type: 'image/png', content: base64(new Uint8Array(await guarded(() => preview.arrayBuffer()))) },
+          ...views.filter(Boolean),
           { filename: 'konfiguration.json', content: base64(new TextEncoder().encode(order.configuration)), content_type: 'application/json' },
         ];
         const originals = [];
@@ -321,7 +341,8 @@ async function notify(env, order) {
         body: JSON.stringify({ from: 'kontakt@peak-memory.de',
           to: kind === 'owner' ? 'peak.memory@web.de' : order.email,
           reply_to: kind === 'owner' ? order.email : 'peak.memory@web.de',
-          ...orderEmail(order, details, kind), ...(attachments ? { attachments } : {}) }),
+          ...orderEmail(order, details, kind, { productionViews: hasProductionViews }),
+          ...(attachments ? { attachments } : {}) }),
       });
       if (typeof delivery.id !== 'string' || !delivery.id) throw new CheckoutError('E-Mail-Zustellung nicht bestätigt.', 502);
       if (!changed(await run(env, `UPDATE checkout_orders SET ${kind}_sent=1 WHERE id=? AND notify_lease=? AND stage!='deleting'`,
@@ -420,6 +441,7 @@ export async function checkoutMaintenance(sourceEnv, mode = 'test') {
     try {
       await guarded(() => env.CHECKOUT_FILES.delete([
         ...originalArtifacts(order).map(artifact => artifact.key), order.gpx_key, order.preview_key,
+        ...productionViewNames.map(name => productionViewKey(order.id, name)),
       ].filter(Boolean)));
       await guarded(() => env.CHECKOUT_DB.batch([
         statement(env, 'DELETE FROM checkout_events WHERE order_id=? AND EXISTS(SELECT 1 FROM checkout_orders WHERE id=? AND lease=?)',

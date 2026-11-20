@@ -6,7 +6,7 @@ const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 })[character]);
 
-export function orderEmail(order, details, kind) {
+export function orderEmail(order, details, kind, { productionViews = false } = {}) {
   const live = order.mode === 'live';
   const owner = kind === 'owner';
   const configuration = JSON.parse(order.configuration);
@@ -52,10 +52,10 @@ export function orderEmail(order, details, kind) {
     : 'Keine Produktion und keine Lieferung. Diese E-Mail dient nur zur Prüfung des Bestellablaufs; keine manuelle Produktionsfreigabe ist erforderlich (im späteren echten Verkauf).';
   const note = 'Kein Umsatzsteuerausweis gemäß §19 UStG. Die Online-Vorschau ist illustrativ, keine exakte Fertigungsvorlage.';
   const attachments = owner ? isArea
-    ? 'Ausschnittskoordinaten (Web Mercator, Nord oben) in der Konfiguration und das Vorschaubild findest du in den zwei Anhängen. Das Relief wird ohne Route gefertigt.'
+    ? `Die GPX-Datei markiert die Grenze des Kartenausschnitts. Konfiguration und Vorschaubild findest du ebenfalls in den Anhängen.${productionViews ? ' Dazu kommen Ansichten von oben und diagonal.' : ''} Das Relief wird ohne Route gefertigt.`
     : order.gpx_manifest
-    ? 'Alle Original-GPX-Dateien, die kombinierte GPX, Vorschaubild und Konfiguration findest du in den Anhängen.'
-    : 'Original-GPX, Vorschaubild und Konfiguration findest du in den drei Anhängen.' : '';
+    ? `Alle Original-GPX-Dateien, die kombinierte GPX, Vorschaubild${productionViews ? ' und Ansichten von oben und diagonal' : ''} sowie Konfiguration findest du in den Anhängen.`
+    : `Original-GPX, Vorschaubild${productionViews ? ' sowie Ansichten von oben und diagonal' : ''} und Konfiguration findest du in den Anhängen.` : '';
   const subject = `Peak Memory${live ? '' : ' TEST'} · ${title} · ${order.id}`;
   const purchase = event ? PURCHASE_INFORMATION.map(section => {
     if (section.title === 'Zahlung, Fertigung und Lieferung') return { ...section,

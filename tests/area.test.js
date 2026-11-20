@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseArea, areaWidth, geographicPoint, describeArea, EARTH_CIRCUMFERENCE } from '../src/shared/area.js';
 import { parseConfiguration } from '../src/shared/configuration.js';
-import { areaPlan, routePaths, MAX_TILES, project } from '../src/shared/geometry.js';
+import { areaPlan, routePaths, MAX_TILES, project, terrainPlan } from '../src/shared/geometry.js';
+import { parseGpx } from '../src/shared/gpx.js';
+import { areaBoundaryGpx } from '../src/shared/area-gpx.js';
 
 const area = { left: 0.525, top: 0.35, size: 0.0004 };
 const configuration = {
@@ -60,6 +62,15 @@ test('area plan matches the exact selected square with bounded tiles and no rout
   assert.deepEqual(plan.coordinates, []);
   assert.deepEqual(routePaths({ plan }), []);
   assert.match(describeArea(area), /ohne Route.*Nord oben.*Nordwest.*Südost/);
+});
+
+test('area boundary GPX is a closed square matching the selected map bounds', () => {
+  const parsed = parseGpx(areaBoundaryGpx(area));
+  assert.equal(parsed.segments.length, 1);
+  assert.equal(parsed.segments[0].length, 5);
+  assert.deepEqual(parsed.segments[0][0], parsed.segments[0][4]);
+  const plan = terrainPlan(parsed, 0);
+  for (const key of ['left', 'top', 'size']) assert.ok(Math.abs(plan[key] - area[key]) < 1e-14);
 });
 
 test('geographic coordinates round-trip and antimeridian selections wrap tile X only', () => {

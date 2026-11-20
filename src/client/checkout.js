@@ -3,7 +3,7 @@ import { offerFor, UTH_PICKUP_CUTOFF } from '../shared/uth.js';
 
 const get = id => document.getElementById(id);
 
-export function initializeCheckout({ state, capture, setBusy }) {
+export function initializeCheckout({ state, capture, captureViews, setBusy }) {
   let enabled = false, mode = 'test', testMode = true, submitting = false, draft = null;
   const form = get('checkoutForm');
   const status = get('checkoutStatus');
@@ -92,6 +92,9 @@ export function initializeCheckout({ state, capture, setBusy }) {
           if (current.eventRoute) body.set('quotedFulfillment', quotedFulfillment);
         }
         body.set('previewImage', await capture(), 'peakmemory-vorschau.png');
+        for (const { name, blob } of await captureViews()) {
+          body.set(`${name}Image`, blob, `peakmemory-ansicht-${name}.png`);
+        }
         body.set('submissionKey', crypto.randomUUID());
         body.set('acceptance', 'true');
         draft = { file: current.file, signature, body };

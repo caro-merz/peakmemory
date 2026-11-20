@@ -9,7 +9,7 @@ import {
   handleStripeWebhook, checkoutMaintenance,
 } from '../src/server/checkout.js';
 import { MAX_CHECKOUT_SIZE, MAX_WEBHOOK_SIZE } from '../src/server/checkout-helpers.js';
-import { MAX_GPX_SIZE } from '../src/shared/gpx.js';
+import { MAX_GPX_SIZE, parseGpx } from '../src/shared/gpx.js';
 import { readGpxCollection } from '../src/shared/gpx-collection.js';
 import { MAX_PREVIEW_SIZE } from '../src/shared/preview.js';
 import { PURCHASE_INFORMATION_TEXT } from '../src/shared/purchase.js';
@@ -30,6 +30,11 @@ afterEach(() => {
 const gpx = '<?xml version="1.0"?><gpx version="1.1"><trk><trkseg><trkpt lat="47" lon="11"/><trkpt lat="47.1" lon="11.1"/></trkseg></trk></gpx>';
 const config = { version: 2, product: 'base', engraving: 'Mein Gipfel', margin: 0.15, elevationScale: 1.5, preview: 'ready' };
 const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64');
+const productionViewFields = () => ({
+  obenImage: new File([image], 'oben.png', { type: 'image/png' }),
+  'diagonal-1Image': new File([image], 'diagonal-1.png', { type: 'image/png' }),
+  'diagonal-2Image': new File([image], 'diagonal-2.png', { type: 'image/png' }),
+});
 const origin = 'https://peak-memory.de';
 
 test('UTH product discount excludes the wall mount and expires at midnight Berlin time', () => {
@@ -173,8 +178,8 @@ function mockServices({ stripe, mail } = {}) {
   };
   return { sessions, calls, emails, whatsapp };
 }
-async function started(context, submissionKey = key()) {
-  const response = await handleCheckout(checkout(submissionKey), context.env);
+async function started(context, submissionKey = key(), fields = {}) {
+  const response = await handleCheckout(checkout(submissionKey, fields), context.env);
   assert.equal(response.status, 200, await response.clone().text());
   const data = await response.json();
   const order = context.db.prepare('SELECT * FROM checkout_orders WHERE id=?').get(data.orderId);
@@ -318,16 +323,22 @@ test('area checkout stores only preview, retains exact selection, retries idempo
   const event = eventFor(order);
   assert.equal((await handleStripeWebhook(await webhook(event), context.env)).status, 200);
   const owner = services.emails[0].payload;
-  assert.deepEqual(owner.attachments.map(attachment => attachment.filename), ['peakmemory-vorschau.png', 'konfiguration.json']);
-  assert.deepEqual(JSON.parse(Buffer.from(owner.attachments[1].content, 'base64')), areaConfiguration);
+  assert.deepEqual(owner.attachments.map(attachment => attachment.filename), [
+    'kartenausschnitt-grenze.gpx', 'peakmemory-vorschau.png', 'konfiguration.json',
+  ]);
+  const boundary = parseGpx(Buffer.from(owner.attachments[0].content, 'base64').toString());
+  assert.equal(boundary.segments[0].length, 5);
+  assert.deepEqual(JSON.parse(Buffer.from(owner.attachments[2].content, 'base64')), areaConfiguration);
   assert.match(owner.text, /ohne Route.*Nord oben/);
+  assert.doesNotMatch(owner.text, /Ansichten von oben/);
   assert.doesNotMatch(owner.text, /Geländerand|Original-GPX/);
   assert.match(services.emails[1].payload.html, /Nordwest/);
   assert.equal((await handleStripeWebhook(await webhook(event), context.env)).status, 200);
   assert.equal(services.emails.length, 2);
   const remove = context.env.CHECKOUT_FILES.delete;
   context.env.CHECKOUT_FILES.delete = async paths => {
-    assert.deepEqual(paths, [order.preview_key]);
+    assert.deepEqual(paths, [order.preview_key, 'orders/' + order.id + '/ansicht-oben.png',
+      'orders/' + order.id + '/ansicht-diagonal-1.png', 'orders/' + order.id + '/ansicht-diagonal-2.png']);
     return remove(paths);
   };
   Date.now = () => originalNow() + 91 * 86400000;
@@ -738,6 +749,9 @@ test('strict fields, GPX, v2 base ready configuration, PNG, affirmative boolean 
     { previewImage: undefined }, { previewImage: new File([image], 'a.png', { type: 'image/jpeg' }) },
     { previewImage: new File(['wrong'], 'a.png', { type: 'image/png' }) },
     { previewImage: new File([new Uint8Array(MAX_PREVIEW_SIZE + 1)], 'a.png', { type: 'image/png' }) },
+    { ...productionViewFields(), 'diagonal-2Image': undefined },
+    { ...productionViewFields(), obenImage: new File(['wrong'], 'oben.png', { type: 'image/png' }) },
+    { ...productionViewFields(), obenImage: new File([new Uint8Array(MAX_PREVIEW_SIZE + 1)], 'oben.png', { type: 'image/png' }) },
   ];
   for (const failure of failures) {
     assert.equal((await handleCheckout(checkout(key(), failure), context.env)).status, 400, Object.keys(failure).join());
@@ -883,7 +897,8 @@ test('paid events require exact amount/currency, DE shipping, zero tax/shipping 
 });
 
 test('verified paid transition is transactional and idempotent, notifications contain original attachments and stable Resend keys', async () => {
-  const context = environment(), services = mockServices(); const { order } = await started(context);
+  const context = environment(), services = mockServices();
+  const { order } = await started(context, key(), productionViewFields());
   const event = eventFor(order);
   const response = await handleStripeWebhook(await webhook(event), context.env);
   assert.equal(response.status, 200);
@@ -893,10 +908,17 @@ test('verified paid transition is transactional and idempotent, notifications co
   const owner = services.emails[0], buyer = services.emails[1];
   assert.equal(owner.payload.from, 'kontakt@peak-memory.de'); assert.equal(owner.payload.to, 'peak.memory@web.de');
   assert.equal(owner.payload.reply_to, 'ada@example.com'); assert.equal(buyer.payload.to, 'ada@example.com');
-  assert.equal(owner.payload.attachments.length, 3);
+  assert.equal(owner.payload.attachments.length, 6);
+  assert.match(owner.payload.text, /Ansichten von oben und diagonal/);
   assert.equal(Buffer.from(owner.payload.attachments[0].content, 'base64').toString(), gpx);
   assert.deepEqual(Buffer.from(owner.payload.attachments[1].content, 'base64'), image);
-  assert.deepEqual(JSON.parse(Buffer.from(owner.payload.attachments[2].content, 'base64').toString()), config);
+  assert.deepEqual(owner.payload.attachments.slice(2, 5).map(attachment => attachment.filename), [
+    'peakmemory-ansicht-oben.png', 'peakmemory-ansicht-diagonal-1.png', 'peakmemory-ansicht-diagonal-2.png',
+  ]);
+  for (const attachment of owner.payload.attachments.slice(2, 5)) {
+    assert.deepEqual(Buffer.from(attachment.content, 'base64'), image);
+  }
+  assert.deepEqual(JSON.parse(Buffer.from(owner.payload.attachments[5].content, 'base64').toString()), config);
   assert.match(owner.payload.text, /10115.*Berlin/); assert.match(owner.payload.text, /keine manuelle Produktionsfreigabe/);
   assert.equal(owner.options.headers['Idempotency-Key'], `checkout-${order.id}-owner`);
   assert.equal(buyer.options.headers['Idempotency-Key'], `checkout-${order.id}-buyer`);

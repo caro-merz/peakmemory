@@ -335,6 +335,10 @@ checkout = initializeCheckout({
     if (!viewer || preview !== 'ready') throw new Error('Die 3D-Vorschau ist nicht verfügbar. Bitte erneut laden.');
     return viewer.screenshot();
   },
+  captureViews: () => {
+    if (!viewer || preview !== 'ready') throw new Error('Die 3D-Vorschau ist nicht verfügbar. Bitte erneut laden.');
+    return viewer.productionScreenshots();
+  },
   setBusy: busy => {
     sending = busy;
     for (const id of ['sourceControls', 'routeControls', 'productControls', 'selectionControls']) get(id).disabled = busy;

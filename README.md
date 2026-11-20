@@ -38,6 +38,9 @@ Datei und kein exaktes Fertigungsbild.
   damit die OSM-Nutzungsrichtlinie einen Herkunftshinweis erhält.
   Für hohes Verkehrsaufkommen ist ein anderer Kartenanbieter zu prüfen.
   Produkte, Preise, Gravur, Höhenüberhöhung und Checkout gelten für beide Eingaben.
+  Bei einem Checkout werden zusätzlich Ansichten von oben und aus zwei diagonalen
+  Blickwinkeln erzeugt. Für Kartenausschnitte enthält die Produktions-E-Mail außerdem
+  eine GPX-Grenze des gewählten Quadrats, aber keine Route.
   Kartenbewegungen machen die Bestätigung und Bestellfreigabe ungültig.
   Ausgewählte GPX-Dateien bleiben beim Moduswechsel im Browser erhalten.
   Nach Neuladen müssen Dateien/Ausschnitt erneut gewählt werden.
@@ -368,14 +371,16 @@ nach einem Timeout vor erneutem Senden nachfragen, um Duplikate zu vermeiden.
 
 ## Öffentliche Höhendaten, Lizenzen und Datenschutz
 
-Der Browser liest GPX lokal. Erst das Absenden einer Anfrage oder der Checkout-Start überträgt
-Original-GPX, Kontaktdaten, Konfiguration und bei verfügbarer Vorschau das PNG-Bild an Cloudflare und über Resend an
-Peak Memory. Wenn die interne WhatsApp-Benachrichtigung aktiviert ist, gehen
+Der Browser liest GPX lokal. Beim Absenden einer Anfrage werden Original-GPX,
+Kontaktdaten, Konfiguration und bei verfügbarer Vorschau das PNG-Bild übertragen.
+Der Checkout überträgt zusätzlich drei PNG-Ansichten des Reliefs an Cloudflare.
+Bei Kartenausschnitten wird für die Bestell-E-Mail stattdessen eine GPX-Grenze
+aus der gespeicherten Auswahl erzeugt. Wenn die interne WhatsApp-Benachrichtigung aktiviert ist, gehen
 nach bestätigter Live-Zahlung nur Bestellreferenz, Produktname und Bestellname
 über Meta an die eigene Empfangsnummer; Testzahlungen lösen sie nicht aus.
 Es gibt keine Route-Konten, öffentlich teilbaren Routen oder
 persistente Speicherung der GPX-Datei im Browser. Für Checkout-Tests werden
-Original-GPX, Vorschau und Bestelldaten privat in Cloudflare R2/D1 gespeichert.
+Original-GPX, Vorschau, Ansichten und Bestelldaten privat in Cloudflare R2/D1 gespeichert.
 Stripe erhält keine GPX-Datei, sondern E-Mail-Adresse und Bestellreferenz.
 Testzahlungen werden ausschließlich durch verifizierte Webhooks bestätigt.
 Speicherfristen und Einrichtung sind in [CHECKOUT.md](./CHECKOUT.md) dokumentiert.

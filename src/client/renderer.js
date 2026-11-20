@@ -265,6 +265,44 @@ export async function createViewer(container, onUnavailable) {
       controls.update();
       render();
     },
+    async productionScreenshots() {
+      if (!model) throw new Error('Die 3D-Vorschau ist nicht verfügbar.');
+      pauseSpin();
+      const position = camera.position.clone();
+      const up = camera.up.clone();
+      const target = controls.target.clone();
+      clearTimeout(resumeTimer);
+      interacting = true;
+      const distance = position.distanceTo(target);
+      const diagonal = position.clone().sub(target);
+      const topDown = product === 'frame'
+        ? { offset: new THREE.Vector3(0, 0, distance), up: new THREE.Vector3(0, 1, 0) }
+        : { offset: new THREE.Vector3(0, distance, 0), up: new THREE.Vector3(0, 0, -1) };
+      const views = [
+        { name: 'oben', ...topDown },
+        { name: 'diagonal-1', offset: diagonal.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2), up },
+        { name: 'diagonal-2', offset: diagonal.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2), up },
+      ];
+      try {
+        const screenshots = [];
+        for (const view of views) {
+          camera.up.copy(view.up);
+          camera.position.copy(target).add(view.offset);
+          controls.target.copy(target);
+          controls.update();
+          render();
+          screenshots.push({ name: view.name, blob: await this.screenshot() });
+        }
+        return screenshots;
+      } finally {
+        camera.up.copy(up);
+        camera.position.copy(position);
+        controls.target.copy(target);
+        controls.update();
+        render();
+        resumeTimer = setTimeout(() => { interacting = false; startSpin(); }, 1000);
+      }
+    },
     async screenshot() {
       renderer.render(scene, camera);
       const canvas = document.createElement('canvas');

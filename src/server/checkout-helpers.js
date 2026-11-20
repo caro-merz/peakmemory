@@ -4,7 +4,7 @@ import { parseConfiguration } from '../shared/configuration.js';
 import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
 import { UTH_ROUTES } from '../shared/uth.js';
 
-export const MAX_CHECKOUT_SIZE = MAX_GPX_SIZE + MAX_PREVIEW_SIZE + 64 * 1024;
+export const MAX_CHECKOUT_SIZE = MAX_GPX_SIZE + 4 * MAX_PREVIEW_SIZE + 64 * 1024;
 export const MAX_WEBHOOK_SIZE = 256 * 1024;
 export const TIMEOUT_MS = 10000;
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -140,7 +140,7 @@ export async function validateCheckout(request) {
   } catch { throw new CheckoutError('Ungültiges Formular.'); }
   for (const key of new Set(form.keys())) {
     if (key !== 'gpxFiles' && form.getAll(key).length !== 1) throw new CheckoutError('Doppelte Formularfelder.');
-    if (!['name', 'email', 'configuration', 'gpxFile', 'gpxFiles', 'previewImage', 'submissionKey', 'acceptance', 'price', 'currency', 'eventRoute', 'discountCode', 'quotedAmount', 'quotedFulfillment'].includes(key)) {
+    if (!['name', 'email', 'configuration', 'gpxFile', 'gpxFiles', 'previewImage', 'obenImage', 'diagonal-1Image', 'diagonal-2Image', 'submissionKey', 'acceptance', 'price', 'currency', 'eventRoute', 'discountCode', 'quotedAmount', 'quotedFulfillment'].includes(key)) {
       throw new CheckoutError('Unbekanntes Formularfeld.');
     }
   }
@@ -185,6 +185,17 @@ export async function validateCheckout(request) {
     || !image.size || image.size > MAX_PREVIEW_SIZE) throw new CheckoutError('PNG-Vorschau erforderlich (maximal 1 MB).');
   const preview = new Uint8Array(await image.arrayBuffer());
   validatePng(preview);
+  const views = [];
+  for (const name of ['oben', 'diagonal-1', 'diagonal-2']) {
+    const view = form.get(`${name}Image`);
+    if (!view) continue;
+    if (typeof view.arrayBuffer !== 'function' || view.type !== 'image/png'
+      || !view.size || view.size > MAX_PREVIEW_SIZE) throw new CheckoutError('Ungültiger Screenshot (PNG, maximal 1 MB).');
+    const bytes = new Uint8Array(await view.arrayBuffer());
+    validatePng(bytes);
+    views.push({ name, bytes });
+  }
+  if (views.length && views.length !== 3) throw new CheckoutError('Alle drei Produktions-Screenshots sind erforderlich.');
   const filename = collection ? collection.filename.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 200) : '';
   // Hash the exact submitted fields and original bytes, not just normalized manufacturing settings.
   const ignoredPrice = form.has('price') ? text('price') : null;
@@ -195,11 +206,12 @@ export async function validateCheckout(request) {
   const sourceIdentity = isArea ? ['map-area-v1', configuration.area]
     : sources.length === 1 ? [sources[0].name, sources[0].type] : ['gpx-collection-v1', sourceDigests];
   const digestParts = [name, email, rawConfiguration, ...sourceIdentity,
-    image.name, image.type, 'true', ignoredPrice, ignoredCurrency, isArea ? null : await sha256(gpx), await sha256(preview)];
+    image.name, image.type, 'true', ignoredPrice, ignoredCurrency, isArea ? null : await sha256(gpx), await sha256(preview),
+    ...await Promise.all(views.map(async view => [view.name, await sha256(view.bytes)]))];
   if (eventRoute || discountCode) digestParts.push('uth-offer-v1', eventRoute, discountCode, quotedAmount, quotedFulfillment);
   const digest = await sha256(JSON.stringify(digestParts));
   return { name: name.trim(), email, key: key.toLowerCase(), configuration: JSON.stringify(configuration),
-    filename, digest, sources, gpx, preview, eventRoute, discountCode, quotedAmount, quotedFulfillment };
+    filename, digest, sources, gpx, preview, views, eventRoute, discountCode, quotedAmount, quotedFulfillment };
 }
 export async function remote(url, options) {
   const controller = new AbortController();

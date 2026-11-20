@@ -112,13 +112,30 @@ try {
   await page.locator('#checkoutName').fill('Test');
   await page.locator('#checkoutEmail').fill('test@example.com');
   await page.locator('#checkoutAcceptance').check();
+  const beforeCheckoutCapture = await page.locator('#viewer canvas').screenshot();
   await page.locator('#submitCheckout').click();
   await page.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('keine echte Zahlung'));
+  assert.ok((await page.locator('#viewer canvas').screenshot()).equals(beforeCheckoutCapture),
+    'production screenshots restore the interactive preview camera');
   assert.deepEqual(JSON.parse(checkouts[0].get('configuration')), initial);
   assert.equal(checkouts[0].has('gpxFile'), false);
   assert.equal(checkouts[0].has('gpxFiles'), false);
   assert.equal(checkouts[0].get('previewImage').type, 'image/png');
   assert.ok(checkouts[0].get('previewImage').size > 1000);
+  const screenshots = [];
+  for (const [field, filename] of [
+    ['obenImage', 'peakmemory-ansicht-oben.png'],
+    ['diagonal-1Image', 'peakmemory-ansicht-diagonal-1.png'],
+    ['diagonal-2Image', 'peakmemory-ansicht-diagonal-2.png'],
+  ]) {
+    const screenshot = checkouts[0].get(field);
+    assert.equal(screenshot.type, 'image/png');
+    assert.equal(screenshot.name, filename);
+    assert.ok(screenshot.size > 1000);
+    screenshots.push(Buffer.from(await screenshot.arrayBuffer()));
+  }
+  assert.equal(new Set(screenshots.map(bytes => bytes.toString('base64'))).size, 3,
+    'the top and two diagonal captures show distinct viewpoints');
   await page.locator('#areaMap').focus();
   await page.keyboard.press('ArrowRight');
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Ausschnitt bestätigen');

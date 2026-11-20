@@ -25,7 +25,7 @@ const areaExample = 'Deine Landschaft';
 function configuration() {
   if (source === 'area' && !confirmedArea) return null;
   return parseConfiguration({
-    version: 6, source, product: get('product').value,
+    version: 7, source, product: get('product').value,
     wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
     engraving: getProduct(get('product').value).engraving ? get('engraving').value : '',
     elevationScale: Number(get('elevationScale').value),
@@ -45,7 +45,7 @@ function summary() {
   get('wallMountControls').hidden = product.id === 'frame';
   get('wallMount').disabled = sending || product.id === 'frame';
   get('modelPrice').textContent = formatPrice(configurationPrice({
-    version: 5, product: product.id, wallMount: product.id !== 'frame' && get('wallMount').value === 'yes',
+    version: 7, product: product.id, wallMount: product.id !== 'frame' && get('wallMount').value === 'yes',
   }));
   get('orderProduct').textContent = product.name;
   get('orderSupport').textContent = product.support;

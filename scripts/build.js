@@ -96,18 +96,10 @@ builtHomepage = builtHomepage.replace(/<link rel="preload" as="image"[^>]*>/,
   `<link rel="preload" as="image" href="${heroImage.variants.at(-1).src}" imagesrcset="${srcset(heroImage)}" imagesizes="(max-width: 488px) calc(100vw - 48px), 440px" fetchpriority="high">`);
 await writeFile(path.join('dist', 'index.html'), builtHomepage);
 const uth = await readFile('uth.html', 'utf8');
-if (!placeholder.test(uth) || !uth.includes(purchasePlaceholder)) throw new Error('Missing UTH page placeholders');
+if (!placeholder.test(uth)) throw new Error('Missing UTH page configurator placeholder');
 const uthHeroImage = imageManifest['images/UTH_Hero.png'];
 if (!uthHeroImage) throw new Error('Missing optimized UTH hero image');
-const uthContent = content.replaceAll('href="/#kaufbedingungen"', 'href="/uth#kaufbedingungen"');
-const uthPurchase = PURCHASE_INFORMATION.map(section => {
-  if (section.title === 'Zahlung, Fertigung und Lieferung') return { ...section,
-    text: 'Nach bestätigter Zahlung fertigen wir dein Relief ohne weitere Produktionsfreigabe. Bei bis zum 16. April 2027 um 12 Uhr deutscher Zeit bestätigter Zahlung erfolgt die Abholung am 24. April am Peak Memory Stand in Albstadt. Bei später bestätigter Zahlung erfolgt der Versand innerhalb Deutschlands in 5–10 Werktagen.' };
-  if (section.title === 'Bestellablauf und Vertragsschluss') return { ...section,
-    text: section.text.replace('Du lädst deine eigene GPX-Datei hoch oder wählst und bestätigst ein Quadrat auf der Karte für eine Landschaft ohne Route.', 'Du wählst deine UTH-Strecke.') };
-  return section;
-}).map(section => `<h3>${escapeHtml(section.title)}</h3><p>${escapeHtml(section.text)}</p>`).join('\n');
-let builtUth = uth.replace(placeholder, () => uthContent).replace(purchasePlaceholder, () => uthPurchase);
+let builtUth = uth.replace(placeholder, () => content);
 builtUth = builtUth.replace(/<img\b[^>]*>/g, tag => {
   const source = tag.match(/\bsrc="\/([^"]+)"/)?.[1];
   const image = imageManifest[source];

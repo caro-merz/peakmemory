@@ -8,15 +8,18 @@ export function initializeCheckout({ state, capture, captureViews, setBusy }) {
   const form = get('checkoutForm');
   const status = get('checkoutStatus');
   const uthPage = document.documentElement.hasAttribute('data-uth');
+  get('checkoutDiscount').hidden = !uthPage;
+  get('checkoutCode').disabled = !uthPage;
+  const discountCode = () => uthPage ? get('checkoutCode').value : '';
   let serverTime = null, timeReceived = 0;
   const currentTime = () => serverTime === null ? Math.floor(Date.now() / 1000)
     : Math.floor(serverTime + (performance.now() - timeReceived) / 1000);
   let previousSelection;
   const priceConfiguration = () => ({
-    version: 5, product: get('product').value,
+    version: 7, product: get('product').value,
     wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
   });
-  const currentOffer = () => offerFor(priceConfiguration(), get('checkoutCode').value, currentTime());
+  const currentOffer = () => offerFor(priceConfiguration(), discountCode(), currentTime());
   const priceLabel = () => {
     try { return formatPrice(currentOffer().amount / 100); }
     catch { return formatPrice(configurationPrice(priceConfiguration())); }
@@ -25,7 +28,7 @@ export function initializeCheckout({ state, capture, captureViews, setBusy }) {
   const hasSelection = current => current.source === 'area' ? !!current.area : !!current.file;
   function update() {
     const current = state();
-    const selection = JSON.stringify([current.source, current.area, current.files.map(file => [file.name, file.size, file.lastModified]), current.summary, current.preview, get('checkoutCode').value, current.eventRoute,
+    const selection = JSON.stringify([current.source, current.area, current.files.map(file => [file.name, file.size, file.lastModified]), current.summary, current.preview, discountCode(), current.eventRoute,
       uthPage && currentTime() <= UTH_PICKUP_CUTOFF, priceLabel()]);
     if (previousSelection !== selection) get('checkoutAcceptance').checked = false;
     previousSelection = selection;
@@ -77,7 +80,7 @@ export function initializeCheckout({ state, capture, captureViews, setBusy }) {
     update();
     try {
       const name = get('checkoutName').value.trim(), email = get('checkoutEmail').value.trim();
-      const signature = JSON.stringify([current.configuration, name, email, current.eventRoute, get('checkoutCode').value, offer.amount, quotedFulfillment]);
+      const signature = JSON.stringify([current.configuration, name, email, current.eventRoute, discountCode(), offer.amount, quotedFulfillment]);
       if (!draft || draft.file !== current.file || draft.signature !== signature) {
         const body = new FormData();
         body.set('name', name);
@@ -86,8 +89,8 @@ export function initializeCheckout({ state, capture, captureViews, setBusy }) {
         else for (const file of current.files) body.append('gpxFiles', file);
         body.set('configuration', JSON.stringify(current.configuration));
         if (current.eventRoute) body.set('eventRoute', current.eventRoute);
-        if (get('checkoutCode').value.trim()) body.set('discountCode', get('checkoutCode').value.trim());
-        if (current.eventRoute || get('checkoutCode').value.trim()) {
+        if (discountCode().trim()) body.set('discountCode', discountCode().trim());
+        if (current.eventRoute || discountCode().trim()) {
           body.set('quotedAmount', String(offer.amount));
           if (current.eventRoute) body.set('quotedFulfillment', quotedFulfillment);
         }

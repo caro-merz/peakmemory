@@ -5,11 +5,11 @@ export const PURCHASE_INFORMATION = [
   },
   {
     title: 'Produkt und Gesamtpreis',
-    text: 'Der Direktkauf umfasst ein individuell nach deiner GPX-Route oder deinem bestätigten Kartenausschnitt ohne Route und Konfiguration gefertigtes 3D-Geländerelief (10 × 10 cm). Du wählst eine von drei Ausführungen: Eiche-Holzsockel (11 × 13,5 × 2 cm) mit Gravur auf Holz für 50 EUR; kompakter Eiche-Holzsockel (11 × 11 × 2 cm) ohne Gravur für 45 EUR; weißer Rahmen (20 × 20 cm Außenmaß) mit weißem, graviertem Passepartout für 60 EUR. Ein Stück pro Bestellung. Alle Gesamtpreise enthalten den Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß § 19 UStG. Holzmaserung, Rahmenprofil, Passepartout und Fertigungsdetails können von der illustrativen Online-Vorschau abweichen; die gesetzlichen Mängelrechte bleiben unberührt.',
+    text: 'Der Direktkauf umfasst ein individuell nach deiner GPX-Route oder deinem bestätigten Kartenausschnitt ohne Route und Konfiguration gefertigtes 3D-Geländerelief (10 × 10 cm). Du wählst eine von drei Ausführungen: Eiche-Holzsockel (11 × 13,5 × 2 cm) mit Gravur auf Holz für 55 EUR; kompakter Eiche-Holzsockel (11 × 11 × 2 cm) ohne Gravur für 50 EUR; weißer Rahmen (20 × 20 cm Außenmaß) mit weißem, graviertem Passepartout für 65 EUR. Ein Stück pro Bestellung. Alle Gesamtpreise enthalten den Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß § 19 UStG. Holzmaserung, Rahmenprofil, Passepartout und Fertigungsdetails können von der illustrativen Online-Vorschau abweichen; die gesetzlichen Mängelrechte bleiben unberührt.',
   },
   {
     title: 'Wandaufhängung und Schutzfüße bei Holzsockeln',
-    text: 'Beide Eiche-Holzsockel haben vier transparente Schutzfüße auf der Unterseite. Optional kannst du eine gezahnte Wandaufhängung auf der Rückseite für 1 EUR Aufpreis wählen (Standard: Nein). Der Gesamtpreis beträgt dann 51 EUR für den Holzsockel mit Gravur bzw. 46 EUR für den kompakten Holzsockel ohne Gravur, jeweils inklusive Versand innerhalb Deutschlands. Die Option gilt nicht für den Rahmen. Form und Position der Aufhängung und Schutzfüße in der Online-Vorschau sind illustrativ.',
+    text: 'Beide Eiche-Holzsockel haben vier transparente Schutzfüße auf der Unterseite. Optional kannst du eine gezahnte Wandaufhängung auf der Rückseite für 1 EUR Aufpreis wählen (Standard: Nein). Der Gesamtpreis beträgt dann 56 EUR für den Holzsockel mit Gravur bzw. 51 EUR für den kompakten Holzsockel ohne Gravur, jeweils inklusive Versand innerhalb Deutschlands. Die Option gilt nicht für den Rahmen. Form und Position der Aufhängung und Schutzfüße in der Online-Vorschau sind illustrativ.',
   },
   {
     title: 'Bestellablauf und Vertragsschluss',

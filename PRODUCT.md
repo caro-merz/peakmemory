@@ -23,7 +23,7 @@ Your own route in your own landscape, previewed live in 3D before you order, and
 - In person at race expos (Bike Marathon Albstadt, Allgäu Panorama Marathon).
 
 ## Capabilities and Constraints
-- Products: oak base with engraving (11 × 13.5 × 2 cm, 50 EUR), compact oak base without engraving (11 × 11 × 2 cm, 45 EUR), white frame with engraved white passe-partout (20 × 20 cm, 60 EUR). The relief is 10 × 10 cm in every variant. Optional wall mount on wooden bases (+1 EUR). Prices include shipping within Germany. No VAT shown per §19 UStG. Delivery takes 5–10 working days after confirmed payment.
+- Products: oak base with engraving (11 × 13.5 × 2 cm, 55 EUR), compact oak base without engraving (11 × 11 × 2 cm, 50 EUR), white frame with engraved white passe-partout (20 × 20 cm, 65 EUR). The relief is 10 × 10 cm in every variant. Optional wall mount on wooden bases (+1 EUR). Prices include shipping within Germany. No VAT shown per §19 UStG. Delivery takes 5–10 working days after confirmed payment.
 - Engraving: up to 3 lines on wood, up to 2 lines on the passe-partout, 120 characters in total. Engraving font is Quicksand Book.
 - Vertical exaggeration from 1× to 8×. Adjustable terrain margin.
 - Map areas: approximately 300 m to 150 km across, north-up Web Mercator squares. No route or additional margin. Map tiles load directly from OpenStreetMap only after choosing map mode; elevation tiles continue through the existing Cloudflare terrain endpoint. Precise area coordinates are retained with the order configuration.

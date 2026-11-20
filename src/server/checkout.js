@@ -1,7 +1,7 @@
 import {
   CheckoutError, UUID, json, guarded, configured, trustedOrigin, validateCheckout, remote, verifyEvent, base64, modeEnvironment,
 } from './checkout-helpers.js';
-import { getProduct, configurationPrice } from '../shared/product.js';
+import { getProduct, configurationPrice, WALL_MOUNT_PRICE_EUR } from '../shared/product.js';
 import { parseConfiguration } from '../shared/configuration.js';
 import { areaBoundaryGpx } from '../shared/area-gpx.js';
 import { orderEmail } from './order-email.js';
@@ -69,7 +69,7 @@ function parameters(order) {
   const pickup = event && order.created_at <= UTH_PICKUP_CUTOFF;
   const destination = event ? '/uth' : '/';
   const hardware = product.id !== 'frame' && configuration.version >= 4
-    ? ` Wandaufhängung: ${configuration.wallMount ? 'ja (+1 EUR)' : 'nein'}. Vier transparente Schutzfüße inklusive.` : '';
+    ? ` Wandaufhängung: ${configuration.wallMount ? `ja (+${WALL_MOUNT_PRICE_EUR} EUR)` : 'nein'}. Vier transparente Schutzfüße inklusive.` : '';
   const suffix = Array.from(crypto.getRandomValues(new Uint8Array(8)), value => String.fromCharCode(97 + value % 26)).join('');
   return new URLSearchParams({
     mode: 'payment', submit_type: 'pay', ui_mode: 'hosted_page', customer_email: order.email,
@@ -136,9 +136,14 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
     try { data = await validateCheckout(request); }
     catch (error) { throw error instanceof CheckoutError ? error : new CheckoutError(error.message); }
     const id = crypto.randomUUID(), secret = token(), timestamp = now();
-    const previous = data.eventRoute || data.discountCode
-      ? await first(env, 'SELECT * FROM checkout_orders WHERE submission_key=?', data.key) : null;
+    const previous = await first(env, 'SELECT * FROM checkout_orders WHERE submission_key=?', data.key);
     if (previous && previous.payload_digest !== data.digest) throw new CheckoutError('Schlüssel gehört zu einer anderen Auswahl.', 409);
+    if (!previous && JSON.parse(data.configuration).version < 7) {
+      throw new CheckoutError('Die Preise haben sich geändert. Bitte lade die Seite neu und prüfe deine Auswahl erneut.', 409);
+    }
+    if (!previous && data.discountCode && !data.eventRoute) {
+      throw new CheckoutError('Der Rabattcode gilt nur für UTH-Bestellungen.', 400);
+    }
     let offer = previous?.offer || null;
     if (!previous && (data.eventRoute || data.discountCode)) {
       try { offer = JSON.stringify(offerFor(JSON.parse(data.configuration), data.discountCode, timestamp, data.eventRoute)); }

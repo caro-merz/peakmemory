@@ -2,7 +2,7 @@ import { MAX_GPX_SIZE } from '../shared/gpx.js';
 import { readGpxCollection } from '../shared/gpx-collection.js';
 import { parseConfiguration } from '../shared/configuration.js';
 import { MAX_PREVIEW_SIZE, MAX_PREVIEW_DIMENSION } from '../shared/preview.js';
-import { getProduct, configurationPrice } from '../shared/product.js';
+import { getProduct, configurationPrice, WALL_MOUNT_PRICE_EUR } from '../shared/product.js';
 import { describeArea } from '../shared/area.js';
 
 export const CONTACT_TIMEOUT_MS = 10000;
@@ -164,7 +164,7 @@ export async function handleContact(request, env) {
       'Die endgültige Produktionsvorschau wird separat abgestimmt.');
     if (configuration.version >= 3) lines.push(`Ausführung: ${getProduct(configuration.product).dimensions}`);
     if (configuration.version >= 4 && configuration.product !== 'frame') lines.push(
-      `Wandaufhängung: ${configuration.wallMount ? 'ja (+1 EUR)' : 'nein'}`,
+      `Wandaufhängung: ${configuration.wallMount ? `ja (+${WALL_MOUNT_PRICE_EUR} EUR)` : 'nein'}`,
       'Schutzfüße: 4 transparente Schutzfüße inklusive');
     if (configuration.version >= 2) lines.push(`Modellpreis: ${configurationPrice(configuration)} EUR inkl. Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.`,
       'Dies ist eine unverbindliche Anfrage, keine bezahlte Bestellung.');

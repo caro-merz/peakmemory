@@ -1,16 +1,16 @@
 export const PRODUCTS = Object.freeze({
   base: Object.freeze({
-    id: 'base', name: 'Eiche-Holzsockel mit Gravur', priceEur: 50, engraving: true, engravingMaxLines: 3,
+    id: 'base', name: 'Eiche-Holzsockel mit Gravur', priceEur: 55, engraving: true, engravingMaxLines: 3,
     dimensions: '11 × 13,5 × 2 cm', support: 'Eiche-Holzsockel',
     description: '10 × 10 cm Relief auf Eiche, mit Lasergravur auf Holz.',
   }),
   compact: Object.freeze({
-    id: 'compact', name: 'Eiche-Holzsockel ohne Gravur', priceEur: 45, engraving: false, engravingMaxLines: 0,
+    id: 'compact', name: 'Eiche-Holzsockel ohne Gravur', priceEur: 50, engraving: false, engravingMaxLines: 0,
     dimensions: '11 × 11 × 2 cm', support: 'Eiche-Holzsockel',
     description: '10 × 10 cm Relief auf kompaktem Eiche-Holzsockel, ohne Gravur.',
   }),
   frame: Object.freeze({
-    id: 'frame', name: 'Weißer Rahmen mit graviertem Passepartout', priceEur: 60, engraving: true, engravingMaxLines: 2,
+    id: 'frame', name: 'Weißer Rahmen mit graviertem Passepartout', priceEur: 65, engraving: true, engravingMaxLines: 2,
     dimensions: '20 × 20 cm Außenmaß', support: 'Weißer Rahmen / weißes Passepartout',
     description: '10 × 10 cm Relief im weißen Rahmen mit Gravur auf weißem Passepartout.',
   }),
@@ -30,7 +30,9 @@ export const WALL_MOUNT_PRICE_EUR = 1;
 
 export function configurationPrice(configuration) {
   const product = getProduct(configuration.product);
-  const price = product.id === 'frame' && configuration.version < 5 ? 55 : product.priceEur;
+  const price = configuration.version < 7
+    ? product.priceEur - (product.id === 'frame' && configuration.version < 5 ? 10 : 5)
+    : product.priceEur;
   return price + (configuration.version >= 4 && configuration.wallMount === true
     && product.id !== 'frame' ? WALL_MOUNT_PRICE_EUR : 0);
 }

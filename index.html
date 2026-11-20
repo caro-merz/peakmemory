@@ -905,6 +905,11 @@
     .custom-formats-images img { display: block; width: 100%; height: auto; border-radius: 8px; }
     .event-images { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; padding: 0 1.5rem 1.5rem; align-items: start; }
     .event-images img { display: block; width: 100%; height: auto; border-radius: 8px; }
+    .news-card--upcoming .news-card-body { flex: 0 0 auto; }
+    .news-card--upcoming .news-card-body p { flex: 0; margin-bottom: 1rem; }
+    .news-card--upcoming .news-card-body a { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+    .news-card--upcoming .event-images { grid-template-columns: 1fr; }
+    .news-card--upcoming .event-images span { color: var(--text-light); font-size: .8rem; }
     .news-card-meta {
       font-size: 0.8rem;
       color: var(--text-light);
@@ -1656,7 +1661,7 @@
         </div>
         <p class="hero-secondary">Alternativ <a href="https://www.etsy.com/shop/peakmemory/?etsrc=sdt" target="_blank" rel="noopener noreferrer">auf Etsy bestellen</a> · <a href="https://www.instagram.com/peak.memory" target="_blank" rel="noopener noreferrer">Einblicke auf Instagram</a></p>
         <div class="shop-facts" aria-label="Über Peak Memory">
-          <span class="shop-fact">Reliefs auf Eiche oder im Rahmen · ab 45 € inkl. Versand in Deutschland</span>
+          <span class="shop-fact">Reliefs auf Eiche oder im Rahmen · ab 50 € inkl. Versand in Deutschland</span>
           <span class="shop-fact">Handgefertigt in Baden-Württemberg</span>
         </div>
       </div>
@@ -1688,7 +1693,7 @@
           <div class="product-info">
             <h3>Holzsockel mit Gravur</h3>
             <p>Deine GPX-Route als 10 × 10 cm Relief auf Eiche-Holzsockel (11 × 13,5 × 2 cm). Bis zu drei Zeilen Lasergravur direkt auf Holz.</p>
-            <p><strong>50 € inkl. Versand innerhalb Deutschlands</strong></p>
+            <p><strong>55 € inkl. Versand innerhalb Deutschlands</strong></p>
             <p>Vier transparente Schutzfüße inklusive. Wandaufhängung optional für 1 € Aufpreis.</p>
             <div class="product-actions">
               <a class="product-link" href="#konfigurator" data-configurator-product="base">Jetzt gestalten</a>
@@ -1704,7 +1709,7 @@
           <div class="product-info">
             <h3>Holzsockel ohne Gravur</h3>
             <p>Deine GPX-Route als 10 × 10 cm Relief auf kompaktem Eiche-Holzsockel (11 × 11 × 2 cm). Ohne Gravur, mit Fokus auf deine Landschaft.</p>
-            <p><strong>45 € inkl. Versand innerhalb Deutschlands</strong></p>
+            <p><strong>50 € inkl. Versand innerhalb Deutschlands</strong></p>
             <p>Vier transparente Schutzfüße inklusive. Wandaufhängung optional für 1 € Aufpreis.</p>
             <div class="product-actions">
               <a class="product-link" href="#konfigurator" data-configurator-product="compact">Jetzt gestalten</a>
@@ -1721,7 +1726,7 @@
           <div class="product-info">
             <h3>Rahmen mit graviertem Passepartout</h3>
             <p>Dein 10 × 10 cm Relief im weißen Rahmen (20 × 20 cm Außenmaß) mit weißem Passepartout. Bis zu drei Zeilen Gravur auf dem Passepartout.</p>
-            <p><strong>60 € inkl. Versand innerhalb Deutschlands</strong></p>
+            <p><strong>65 € inkl. Versand innerhalb Deutschlands</strong></p>
             <div class="product-actions">
               <a class="product-link" href="#konfigurator" data-configurator-product="frame">Jetzt gestalten</a>
               <a class="product-link" href="https://www.etsy.com/de-en/listing/4505089817/personalized-3d-topography-in-a-frame?ref=shop_home_active_2" target="_blank" rel="noopener noreferrer">Auf Etsy ansehen</a>
@@ -1766,7 +1771,7 @@
             <div class="process-card" role="group" aria-roledescription="Schritt">
               <span class="process-step-number">4</span>
               <h3>Sicher bezahlen</h3>
-              <p id="processPaymentInfo">Bei aktiviertem Direktkauf bezahlst du den angezeigten Gesamtpreis inklusive Versand innerhalb Deutschlands über Stripe. Holzsockel kosten 45 € bzw. 50 €, optional mit Wandaufhängung für 1 € Aufpreis; der Rahmen kostet 60 €. Ob gerade echte Bestellungen möglich sind, zeigt der Konfigurator.</p>
+              <p id="processPaymentInfo">Bei aktiviertem Direktkauf bezahlst du den angezeigten Gesamtpreis inklusive Versand innerhalb Deutschlands über Stripe. Holzsockel kosten 50 € bzw. 55 €, optional mit Wandaufhängung für 1 € Aufpreis; der Rahmen kostet 65 €. Ob gerade echte Bestellungen möglich sind, zeigt der Konfigurator.</p>
             </div>
             <div class="process-card" role="group" aria-roledescription="Schritt">
               <span class="process-step-number">5</span>
@@ -1811,9 +1816,23 @@
   <section class="section" id="news" style="background: var(--bg-alt);">
     <div class="container">
       <h2 class="section-title fade-in">News &amp; Events</h2>
-      <p class="section-subtitle fade-in">Einblicke in vergangene Veranstaltungen und Begegnungen mit euch.</p>
+      <p class="section-subtitle fade-in">Einblicke in kommende und vergangene Veranstaltungen und Begegnungen mit euch.</p>
 
       <div class="news-grid">
+
+        <div class="news-card news-card--upcoming fade-in">
+          <div class="news-card-body">
+            <span class="news-tag">Ausblick</span>
+            <div class="news-card-meta">24. April 2027 &middot; Albstadt</div>
+            <h3>UP THE HILL</h3>
+            <p>Wir sind beim UP THE HILL in Albstadt dabei! Gestalte deine Laufstrecke als persönliches Relief und besuche uns an unserem Stand.</p>
+            <a href="/uth">UTH-Erinnerung entdecken &rarr;</a>
+          </div>
+          <div class="event-images">
+            <img src="images/UTH_Hero.png" alt="Illustrative Darstellung eines UTH50-Geländereliefs" loading="lazy">
+            <span>Illustrative Darstellung</span>
+          </div>
+        </div>
 
         <div class="news-card fade-in">
           <div class="news-card-body">

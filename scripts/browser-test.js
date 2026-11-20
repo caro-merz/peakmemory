@@ -75,7 +75,7 @@ try {
   console.log('Browser checks: loading configurator');
   await page.goto(url + '/configurator.html');
   assert.equal(page.url(), url + '/#konfigurator');
-  assert.equal(await page.locator('#modelPrice').innerText(), '50 €');
+  assert.equal(await page.locator('#modelPrice').innerText(), '55 €');
   assert.deepEqual(await page.locator('.settings legend').allTextContents(),
     ['1 Deine Route', '2 Deine Produktauswahl', '3 Deine Personalisierung']);
   assert.equal(await page.locator('#routeControls details').count(), 0);
@@ -123,7 +123,7 @@ try {
   await dragPreview(page, 0, -180);
   const bareBack = await canvas.screenshot();
   await page.locator('#wallMount').selectOption('yes');
-  assert.equal(await page.locator('#modelPrice').innerText(), '51 €');
+  assert.equal(await page.locator('#modelPrice').innerText(), '56 €');
   assert.match(await page.locator('#configurationSummary').innerText(), /Wandaufhängung: ja.*4 transparente Schutzfüße/);
   assert.ok(!(await canvas.screenshot()).equals(bareBack), 'Hanger becomes visible on the underside');
   await page.locator('#wallMount').selectOption('no');
@@ -131,7 +131,7 @@ try {
   await page.locator('#resetView').click();
   const requestsBeforeProducts = terrainRequests;
   await page.locator('#product').selectOption('compact');
-  assert.equal(await page.locator('#modelPrice').innerText(), '45 €');
+  assert.equal(await page.locator('#modelPrice').innerText(), '50 €');
   assert.equal(await page.locator('#engraving').isDisabled(), true);
   assert.equal(await page.locator('#engravingControls').isHidden(), true);
   assert.equal(await page.locator('#margin').isEnabled(), true);
@@ -139,10 +139,10 @@ try {
   assert.match(await page.locator('#configurationSummary').innerText(), /ohne Gravur.*11 × 11 × 2 cm.*Gravur: keine/);
   assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
   await page.locator('#wallMount').selectOption('yes');
-  assert.equal(await page.locator('#modelPrice').innerText(), '46 €');
+  assert.equal(await page.locator('#modelPrice').innerText(), '51 €');
   const compactImage = await page.locator('#viewer canvas').screenshot();
   await page.locator('#product').selectOption('frame');
-  assert.equal(await page.locator('#modelPrice').innerText(), '60 €');
+  assert.equal(await page.locator('#modelPrice').innerText(), '65 €');
   assert.equal(await page.locator('#wallMountControls').isHidden(), true);
   assert.doesNotMatch(await page.locator('#configurationSummary').innerText(), /Wandaufhängung/);
   assert.equal(await page.locator('#engraving').isEnabled(), true);
@@ -150,9 +150,9 @@ try {
   assert.match(await page.locator('#configurationSummary').innerText(), /Passepartout.*20 × 20 cm/);
   assert.ok(!(await page.locator('#viewer canvas').screenshot()).equals(compactImage));
   await page.locator('#product').selectOption('base');
-  assert.equal(await page.locator('#modelPrice').innerText(), '51 €');
+  assert.equal(await page.locator('#modelPrice').innerText(), '56 €');
   await page.locator('#wallMount').selectOption('no');
-  assert.equal(await page.locator('#modelPrice').innerText(), '50 €');
+  assert.equal(await page.locator('#modelPrice').innerText(), '55 €');
   assert.equal(await page.locator('#engraving').inputValue(), defaultEngraving);
   assert.equal(terrainRequests, requestsBeforeProducts);
   assert.equal(await page.locator('#elevationScale').inputValue(), '2');
@@ -437,9 +437,10 @@ try {
     assert.equal(body.get('name'), 'Test Checkout');
     assert.equal(body.get('email'), 'checkout@example.invalid');
     assert.equal(await body.get('gpxFile').text(), personal);
-    assert.equal(JSON.parse(body.get('configuration')).version, 6);
+    assert.equal(JSON.parse(body.get('configuration')).version, 7);
     assert.equal(body.get('previewImage').type, 'image/png');
     assert.equal(body.has('price'), false);
+    assert.equal(body.has('discountCode'), false);
     checkoutSubmissions.push(body);
     checkoutAttempt += 1;
     await request.fulfill({
@@ -454,6 +455,10 @@ try {
   }));
   await shop.goto(url + '/');
   await shop.locator('#checkoutForm').waitFor({ state: 'visible' });
+  assert.equal(await shop.locator('#news a[href="/uth"]').count(), 1);
+  assert.match(await shop.locator('#news').innerText(), /24\. April 2027/i);
+  assert.equal(await shop.locator('#checkoutDiscount').isHidden(), true);
+  assert.equal(await shop.locator('#checkoutCode').isDisabled(), true);
   await shop.setViewportSize({ width: 390, height: 844 });
   assert.ok(await shop.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Test checkout fits mobile width');
   assert.equal(await shop.locator('#submitCheckout').isDisabled(), true);
@@ -467,7 +472,7 @@ try {
   await shop.locator('#submitCheckout').click();
   assert.equal(checkoutAttempt, 0, 'Acceptance is required before creating checkout');
   await shop.locator('#checkoutAcceptance').check();
-  for (const [product, price] of [['compact', '45'], ['frame', '60'], ['base', '50']]) {
+  for (const [product, price] of [['compact', '50'], ['frame', '65'], ['base', '55']]) {
     await shop.locator('#product').selectOption(product);
     assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false, 'Product changes require final selection approval');
     assert.match(await shop.locator('#submitCheckout').innerText(), new RegExp(`${price}.*€`));
@@ -478,8 +483,8 @@ try {
   }
   await shop.locator('#wallMount').selectOption('yes');
   assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false);
-  assert.match(await shop.locator('#submitCheckout').innerText(), /51.*€/);
-  assert.match(await shop.locator('#checkoutSummary').innerText(), /Gesamt: 51/);
+  assert.match(await shop.locator('#submitCheckout').innerText(), /56.*€/);
+  assert.match(await shop.locator('#checkoutSummary').innerText(), /Gesamt: 56/);
   await shop.locator('#wallMount').selectOption('no');
   await shop.locator('#checkoutAcceptance').check();
   await shop.locator('#engraving').fill('Finale Gravur');
@@ -535,13 +540,18 @@ try {
   });
   assert.equal((await uth.goto(url + '/uth')).status(), 200);
   await uth.locator('#checkoutForm').waitFor({ state: 'visible' });
+  assert.equal(await uth.locator('#checkoutDiscount').isVisible(), true);
+  assert.equal(await uth.locator('#checkoutCode').isEnabled(), true);
   assert.equal(await uth.locator('#sourceControls').isVisible(), false);
   assert.equal(await uth.locator('h1').innerText(), 'Deine UTH-Strecke als Erinnerung');
   assert.equal(await uth.locator('.preview-note').isVisible(), false);
   assert.equal(await page.locator('.preview-note').isVisible(), true);
   assert.match(await uth.locator('.uth-hero img').getAttribute('src'), /UTH_Hero/);
   assert.ok(await uth.locator('.uth-hero img').evaluate(image => image.complete && image.naturalWidth > 0));
-  assert.doesNotMatch(await uth.locator('.uth-band').first().innerText(), /Die optionale Wandaufhängung ist ausgenommen/);
+  assert.match(await uth.locator('.uth-band').first().innerText(), /Die optionale Wandaufhängung ist ausgenommen/);
+  assert.match(await uth.locator('.uth-details').innerText(), /Medaille[\s\S]*für 5 €/);
+  assert.equal(await uth.locator('#kaufbedingungen').count(), 0);
+  assert.equal(await uth.locator('a[href="/#kaufbedingungen"]').count(), 2);
   let delayedRouteRequested;
   const delayedRoute = new Promise(resolve => { delayedRouteRequested = resolve; });
   await uth.route('**/uth-routes/UTH50.gpx', async request => {
@@ -579,7 +589,7 @@ try {
   await uth.locator('#product').selectOption('compact');
   await uth.locator('#wallMount').selectOption('yes');
   await uth.locator('#checkoutCode').fill('UTH');
-  assert.match(await uth.locator('#checkoutSummary').innerText(), /41,50/);
+  assert.match(await uth.locator('#checkoutSummary').innerText(), /46 €/);
   await uth.locator('#checkoutName').fill('Test Checkout');
   await uth.locator('#checkoutEmail').fill('checkout@example.invalid');
   await uth.locator('#checkoutAcceptance').check();
@@ -587,6 +597,7 @@ try {
   await uth.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Test checkout'));
   assert.equal(uthSubmission.get('eventRoute'), 'UTH50');
   assert.equal(uthSubmission.get('discountCode'), 'UTH');
+  assert.equal(uthSubmission.get('quotedAmount'), '4600');
   assert.equal(uthSubmission.get('gpxFile').name, 'UTH50.gpx');
   for (const width of [320, 390, 768, 1365]) {
     await uth.setViewportSize({ width, height: 844 });
@@ -599,6 +610,9 @@ try {
   assert.match(await uthNoJs.locator('#processProductionInfo').innerText(), /24. April/);
   assert.match(await uthNoJs.locator('noscript').innerText(), /JavaScript/);
   await uthNoJsContext.close();
+  await uth.locator('.uth-footer a[href="/#kaufbedingungen"]').click();
+  await uth.locator('#kaufbedingungenModal.open').waitFor({ state: 'visible' });
+  assert.match(await uth.locator('#kaufbedingungenModal').innerText(), /Wandaufhängung/);
 
   const variants = await context.newPage();
   variants.on('pageerror', error => errors.push(error.message));
@@ -630,7 +644,7 @@ try {
     await variants.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Variant test captured'));
     assert.equal(variantSubmissions.at(-1).product, product);
     assert.equal(variantSubmissions.at(-1).engraving, product === 'compact' ? '' : 'Mein Text');
-    assert.equal(variantSubmissions.at(-1).version, 6);
+    assert.equal(variantSubmissions.at(-1).version, 7);
     assert.equal(variantSubmissions.at(-1).wallMount, product !== 'frame');
     assert.equal(await variants.locator('#selectionControls').isEnabled(), true);
   }

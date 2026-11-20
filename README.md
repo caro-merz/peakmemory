@@ -17,8 +17,8 @@ Datei und kein exaktes Fertigungsbild.
   am 24. April am Peak Memory Stand in Albstadt; spätere Bestätigungen führen
   zum Versand innerhalb Deutschlands. Stripe erfasst deshalb auch für
   Abholbestellungen eine deutsche Lieferadresse als Versand-Fallback. Die
-  Finisher-Medaillen-Gravur am 24. April kostet 8 EUR ohne Anmeldung.
-- Der Rabattcode `UTH` gilt im regulären Shop und auf `/uth` bei einem bis
+  Finisher-Medaillen-Gravur am 24. April kostet 5 EUR ohne Anmeldung.
+- Der Rabattcode `UTH` gilt ausschließlich auf `/uth` bei einem bis
   einschließlich 1. Mai 2027 gestarteten Checkout: 10 % auf das Produkt, nicht
   auf die optionale Wandaufhängung. Der Server prüft Code, Zeitpunkt, Preis
   und Abhol-/Versandangebot; Änderungen an der Frist erfordern eine erneute
@@ -67,9 +67,9 @@ Datei und kein exaktes Fertigungsbild.
   keine zweite Kopie pflegen. Konfigurator-CSS ist auf `.configurator` begrenzt.
   Auf dem Smartphone folgen Route, Produktauswahl, Personalisierung und Live-Vorschau
   untereinander; am Desktop bleiben die Einstellungen links neben der Vorschau.
-- Produktauswahl als Schritt 2: Eiche-Holzsockel mit Gravur (Standard, 11 × 13,5 × 2 cm, 50 EUR),
-  Eiche-Holzsockel ohne Gravur (11 × 11 × 2 cm, 45 EUR) oder weißer Rahmen
-  mit weißem, graviertem Passepartout (20 × 20 cm Außenmaß, 60 EUR).
+- Produktauswahl als Schritt 2: Eiche-Holzsockel mit Gravur (Standard, 11 × 13,5 × 2 cm, 55 EUR),
+  Eiche-Holzsockel ohne Gravur (11 × 11 × 2 cm, 50 EUR) oder weißer Rahmen
+  mit weißem, graviertem Passepartout (20 × 20 cm Außenmaß, 65 EUR).
   Das Relief ist bei allen Varianten 10 × 10 cm groß. Vorschau, Preis,
   Anfrage, Stripe-Checkout und Bestell-E-Mails verwenden die gewählte Variante.
 - Beide Holzsockel haben vier transparente Schutzfüße. Die Wandaufhängung
@@ -116,7 +116,7 @@ Datei und kein exaktes Fertigungsbild.
   Details und sichere Aktivierung: [CHECKOUT.md](./CHECKOUT.md).
   Unverbindliche Anfragen bleiben als Fallback und für Sonderwünsche möglich.
   Etsy ist eine alternative Bestellmöglichkeit; Event-Serien ab 5 Stück.
-  Die Produkte im Konfigurator kosten 45, 50 bzw. 60 EUR inklusive Versand
+  Die Produkte im Konfigurator kosten 50, 55 bzw. 65 EUR inklusive Versand
   innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß §19 UStG.
   Lieferzeit: 5–10 Werktage nach bestätigter Zahlung bei echten Bestellungen.
   Die serverseitig festgelegten Produktpreise stehen in `src/shared/product.js` und werden
@@ -344,10 +344,12 @@ schützt diese alternativen Zugänge nicht.
   vertikal mittig und mit 0,6 cm Abstand zum linken Rand; das Originalseitenverhältnis bleibt erhalten.
 - Höhen sind von 1× bis 8× einstellbar (Standard 2×). Material und
   endgültige Gravurposition sind exemplarisch; Preise werden nicht erfunden.
-- Neue Konfigurator-Anfragen verwenden Konfiguration Version 5 mit Pflichtfeldern
+- Neue Konfigurator-Anfragen verwenden Konfiguration Version 7 mit Pflichtfeldern
   `elevationScale`, `wallMount` (Boolean) und Produkt `base`, `compact` oder `frame`.
   Der Rahmen erfordert `wallMount:false`. Rahmen-Konfigurationen bis Version 4
-  behalten ihren bisherigen Preis von 55 EUR; Version 5 verwendet 60 EUR.
+  behalten ihren bisherigen Preis von 55 EUR; Version 5 und 6 verwenden 60 EUR.
+  Version 7 erhöht alle drei Produktpreise um 5 EUR; die Wandaufhängung kostet weiterhin 1 EUR. Alte Checkouts bleiben
+  zu ihrem ursprünglichen Preis gültig; für neue muss die Seite aktuell sein.
   Version 3 bleibt für alle drei
   Varianten ohne diese Zusatzoption kompatibel.
   Version 2 bleibt für das bisherige Produkt `base` kompatibel, Version 1 für alte

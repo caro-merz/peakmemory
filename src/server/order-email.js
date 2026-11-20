@@ -1,5 +1,5 @@
 import { PURCHASE_INFORMATION, PURCHASE_INFORMATION_TEXT } from '../shared/purchase.js';
-import { getProduct, configurationPrice, formatPrice } from '../shared/product.js';
+import { getProduct, configurationPrice, formatPrice, WALL_MOUNT_PRICE_EUR } from '../shared/product.js';
 import { describeArea } from '../shared/area.js';
 
 const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
@@ -31,7 +31,7 @@ export function orderEmail(order, details, kind, { productionViews = false } = {
     ...(offer?.discount ? [['Rabatt', `UTH: -${formatPrice(offer.discount / 100)}`]] : []),
     ['Gesamt', `${offer ? formatPrice(offer.amount / 100) : `${configurationPrice(configuration)} EUR`} · ${live ? 'bezahlt' : 'simulierte Zahlung'}`],
     ...(configuration.version >= 4 && product.id !== 'frame' ? [
-      ['Wandaufhängung', configuration.wallMount ? 'Ja · 1 EUR Aufpreis enthalten' : 'Nein'],
+      ['Wandaufhängung', configuration.wallMount ? `Ja · ${WALL_MOUNT_PRICE_EUR} EUR Aufpreis enthalten` : 'Nein'],
       ['Schutzfüße', '4 transparente Schutzfüße inklusive'],
     ] : []),
     ['Gravur', configuration.engraving || 'Ohne Gravur'],
@@ -57,7 +57,17 @@ export function orderEmail(order, details, kind, { productionViews = false } = {
     ? `Alle Original-GPX-Dateien, die kombinierte GPX, Vorschaubild${productionViews ? ' und Ansichten von oben und diagonal' : ''} sowie Konfiguration findest du in den Anhängen.`
     : `Original-GPX, Vorschaubild${productionViews ? ' sowie Ansichten von oben und diagonal' : ''} und Konfiguration findest du in den Anhängen.` : '';
   const subject = `Peak Memory${live ? '' : ' TEST'} · ${title} · ${order.id}`;
-  const purchase = event ? PURCHASE_INFORMATION.map(section => {
+  const purchaseInformation = configuration.version < 7 ? PURCHASE_INFORMATION.map(section => {
+    if (section.title === 'Produkt und Gesamtpreis') return { ...section,
+      text: section.text.replace('mit Gravur auf Holz für 55 EUR', 'mit Gravur auf Holz für 50 EUR')
+        .replace('ohne Gravur für 50 EUR', 'ohne Gravur für 45 EUR')
+        .replace('Passepartout für 65 EUR', `Passepartout für ${configuration.version < 5 ? 55 : 60} EUR`) };
+    if (section.title === 'Wandaufhängung und Schutzfüße bei Holzsockeln') return { ...section,
+      text: section.text.replace('56 EUR für den Holzsockel', '51 EUR für den Holzsockel')
+        .replace('51 EUR für den kompakten', '46 EUR für den kompakten') };
+    return section;
+  }) : PURCHASE_INFORMATION;
+  const purchase = event ? purchaseInformation.map(section => {
     if (section.title === 'Zahlung, Fertigung und Lieferung') return { ...section,
       text: `${next} Das Relief wird individuell nach deiner bestätigten Konfiguration gefertigt.` };
     if (section.title === 'Bestellablauf und Vertragsschluss') return { ...section,
@@ -65,8 +75,9 @@ export function orderEmail(order, details, kind, { productionViews = false } = {
     if (section.title === 'Vertragssprache und Bestellbestätigung') return { ...section,
       text: section.text.replace('Versandinformationen', 'Abhol- bzw. Versandinformationen') };
     return section;
-  }) : PURCHASE_INFORMATION;
-  const purchaseText = event ? purchase.map(section => `${section.title}\n${section.text}`).join('\n\n') : PURCHASE_INFORMATION_TEXT;
+  }) : purchaseInformation;
+  const purchaseText = event || configuration.version < 7
+    ? purchase.map(section => `${section.title}\n${section.text}`).join('\n\n') : PURCHASE_INFORMATION_TEXT;
   const text = [
     title, introduction, '', ...rows.map(([label, value]) => `${label}: ${value}`),
     '', next, note, attachments,

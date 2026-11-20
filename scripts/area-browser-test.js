@@ -102,7 +102,7 @@ try {
   await page.waitForFunction(() => document.getElementById('contactStatus').textContent.includes('gesendet'));
   const initial = JSON.parse(inquiries[0].get('configuration'));
   assert.equal(initial.source, 'area');
-  assert.equal(initial.version, 6);
+  assert.equal(initial.version, 7);
   assert.equal(initial.area.size, square.width / (256 * 2 ** 11));
   for (const key of ['left', 'top', 'size']) assert.ok(Math.abs(initial.area[key] - expectedArea[key]) < 1e-10);
   assert.equal(inquiries[0].has('gpxFile'), false);

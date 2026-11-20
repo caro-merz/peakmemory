@@ -8,7 +8,7 @@ import {
   STRIPE_API_VERSION, STRIPE_WEBHOOK_API_VERSION, handleCheckout, handleOrderStatus, handleShopStatus,
   handleStripeWebhook, checkoutMaintenance,
 } from '../src/server/checkout.js';
-import { MAX_CHECKOUT_SIZE, MAX_WEBHOOK_SIZE } from '../src/server/checkout-helpers.js';
+import { MAX_CHECKOUT_SIZE, MAX_WEBHOOK_SIZE, validateCheckout } from '../src/server/checkout-helpers.js';
 import { MAX_GPX_SIZE, parseGpx } from '../src/shared/gpx.js';
 import { readGpxCollection } from '../src/shared/gpx-collection.js';
 import { MAX_PREVIEW_SIZE } from '../src/shared/preview.js';
@@ -28,7 +28,7 @@ afterEach(() => {
   for (const database of databases.splice(0)) database.close();
 });
 const gpx = '<?xml version="1.0"?><gpx version="1.1"><trk><trkseg><trkpt lat="47" lon="11"/><trkpt lat="47.1" lon="11.1"/></trkseg></trk></gpx>';
-const config = { version: 2, product: 'base', engraving: 'Mein Gipfel', margin: 0.15, elevationScale: 1.5, preview: 'ready' };
+const config = { version: 7, source: 'gpx', product: 'base', wallMount: false, engraving: 'Mein Gipfel', margin: 0.15, elevationScale: 1.5, preview: 'ready' };
 const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64');
 const productionViewFields = () => ({
   obenImage: new File([image], 'oben.png', { type: 'image/png' }),
@@ -38,9 +38,9 @@ const productionViewFields = () => ({
 const origin = 'https://peak-memory.de';
 
 test('UTH product discount excludes the wall mount and expires at midnight Berlin time', () => {
-  const compact = { version: 5, product: 'compact', wallMount: true };
+  const compact = { version: 7, product: 'compact', wallMount: true };
   assert.deepEqual(offerFor(compact, 'uth', UTH_DISCOUNT_END - 1), {
-    route: '', code: 'UTH', full: 4600, discount: 450, amount: 4150,
+    route: '', code: 'UTH', full: 5100, discount: 500, amount: 4600,
   });
   assert.throws(() => offerFor(compact, 'UTH', UTH_DISCOUNT_END), /abgelaufen/);
   assert.throws(() => offerFor(compact, 'invalid', UTH_DISCOUNT_END - 1), /ungültig/);
@@ -59,6 +59,12 @@ test('order emails escape personal content and distinguish test, live, buyer and
   assert.match(orderEmail(order, details, 'owner').html, /route\.gpx|cs_test_example/);
   const live = orderEmail({ ...order, mode: 'live' }, details, 'buyer');
   assert.ok(live.text.includes(PURCHASE_INFORMATION_TEXT));
+  const legacyLive = orderEmail({ ...order, configuration: JSON.stringify({ ...config, version: 6 }), mode: 'live' }, details, 'buyer');
+  assert.match(legacyLive.text, /mit Gravur auf Holz für 50 EUR/);
+  assert.match(legacyLive.text, /ohne Gravur für 45 EUR/);
+  assert.match(legacyLive.text, /Passepartout für 60 EUR/);
+  assert.match(legacyLive.text, /51 EUR für den Holzsockel/);
+  assert.match(legacyLive.text, /46 EUR für den kompakten/);
   assert.match(live.html, /Kaufhinweise &amp; Widerruf/);
   assert.doesNotMatch(live.subject, /TEST/);
 });
@@ -216,20 +222,20 @@ test('all official UTH files are accepted and altered or mismatched routes are r
   for (const route of Object.keys(UTH_ROUTES)) {
     const bytes = readFileSync(new URL(`../src/uth/${route}.gpx`, import.meta.url));
     const file = new File([bytes], `${route}.gpx`, { type: 'application/gpx+xml' });
-    const result = await handleCheckout(checkout(key(), { gpxFile: file, eventRoute: route, quotedAmount: '5000', quotedFulfillment: 'pickup' }), context.env);
+    const result = await handleCheckout(checkout(key(), { gpxFile: file, eventRoute: route, quotedAmount: '5500', quotedFulfillment: 'pickup' }), context.env);
     assert.equal(result.status, 200, await result.clone().text());
     const order = state(context, (await result.json()).orderId);
     assert.equal(JSON.parse(order.offer).route, route);
   }
   const incorrect = new File([gpx], 'UTH50.gpx', { type: 'application/gpx+xml' });
-  const response = await handleCheckout(checkout(key(), { gpxFile: incorrect, eventRoute: 'UTH50', quotedAmount: '5000', quotedFulfillment: 'pickup' }), context.env);
+  const response = await handleCheckout(checkout(key(), { gpxFile: incorrect, eventRoute: 'UTH50', quotedAmount: '5500', quotedFulfillment: 'pickup' }), context.env);
   assert.equal(response.status, 400);
   assert.match((await response.json()).error, /Originalstrecke/);
   assert.equal(services.calls.length, 4);
   const correct = new File([readFileSync(new URL('../src/uth/UTH5.gpx', import.meta.url))], 'UTH5.gpx', { type: 'application/gpx+xml' });
   Date.now = () => (UTH_PICKUP_CUTOFF + 1) * 1000;
   const staleQuote = await handleCheckout(checkout(key(), {
-    gpxFile: correct, eventRoute: 'UTH5', quotedAmount: '5000', quotedFulfillment: 'pickup',
+    gpxFile: correct, eventRoute: 'UTH5', quotedAmount: '5500', quotedFulfillment: 'pickup',
   }), context.env);
   assert.equal(staleQuote.status, 409);
   assert.match((await staleQuote.json()).error, /geändert/);
@@ -240,22 +246,22 @@ test('UTH pickup uses signed payment time, handles late payment as shipping and 
   const context = configureLive(environment()), services = mockServices();
   const bytes = readFileSync(new URL('../src/uth/UTH25.gpx', import.meta.url));
   const file = new File([bytes], 'UTH25.gpx', { type: 'application/gpx+xml' });
-  const product = { version: 5, product: 'compact', wallMount: true, engraving: '',
+  const product = { version: 7, source: 'gpx', product: 'compact', wallMount: true, engraving: '',
     margin: 0.15, elevationScale: 2, preview: 'ready' };
   Date.now = () => (UTH_PICKUP_CUTOFF - 100) * 1000;
-  const fields = { gpxFile: file, eventRoute: 'UTH25', discountCode: 'UTH', quotedAmount: '4150', quotedFulfillment: 'pickup', configuration: JSON.stringify(product) };
+  const fields = { gpxFile: file, eventRoute: 'UTH25', discountCode: 'UTH', quotedAmount: '4600', quotedFulfillment: 'pickup', configuration: JSON.stringify(product) };
   const submissionKey = key();
   const response = await handleCheckout(checkout(submissionKey, fields), context.env, 'live');
   assert.equal(response.status, 200, await response.clone().text());
   const data = await response.json(), order = state(context.live, data.orderId);
-  assert.equal(JSON.parse(order.offer).amount, 4150);
-  assert.equal(services.calls[0].params.get('line_items[0][price_data][unit_amount]'), '4150');
+  assert.equal(JSON.parse(order.offer).amount, 4600);
+  assert.equal(services.calls[0].params.get('line_items[0][price_data][unit_amount]'), '4600');
   assert.match(services.calls[0].params.get('success_url'), /\/uth\?/);
   Date.now = () => (UTH_PICKUP_CUTOFF + 60) * 1000;
-  const event = eventFor(order, { amount_total: 4150 }, 'checkout.session.completed', true);
+  const event = eventFor(order, { amount_total: 4600 }, 'checkout.session.completed', true);
   event.created = UTH_PICKUP_CUTOFF;
   const wrongAmount = { ...event, id: `evt_${key().replaceAll('-', '')}`,
-    data: { object: { ...event.data.object, amount_total: 4149 } } };
+    data: { object: { ...event.data.object, amount_total: 4599 } } };
   assert.equal((await handleStripeWebhook(await webhook(wrongAmount, { secret: 'whsec_livemock', mode: 'live' }), context.env, 'live')).status, 400);
   assert.equal((await handleStripeWebhook(await webhook(event, { secret: 'whsec_livemock', mode: 'live' }), context.env, 'live')).status, 200);
   assert.equal(state(context.live, order.id).fulfillment, 'pickup');
@@ -269,7 +275,7 @@ test('UTH pickup uses signed payment time, handles late payment as shipping and 
   assert.equal(lateResponse.status, 200, await lateResponse.clone().text());
   const late = state(context.live, (await lateResponse.json()).orderId);
   Date.now = () => (UTH_PICKUP_CUTOFF + 60) * 1000;
-  const lateEvent = eventFor(late, { amount_total: 4150 }, 'checkout.session.async_payment_succeeded', true);
+  const lateEvent = eventFor(late, { amount_total: 4600 }, 'checkout.session.async_payment_succeeded', true);
   lateEvent.created = UTH_PICKUP_CUTOFF + 1;
   assert.equal((await handleStripeWebhook(await webhook(lateEvent, { secret: 'whsec_livemock', mode: 'live' }), context.env, 'live')).status, 200);
   assert.equal(state(context.live, late.id).fulfillment, 'shipping');
@@ -280,21 +286,43 @@ test('UTH pickup uses signed payment time, handles late payment as shipping and 
   assert.equal((await retry.json()).orderId, order.id);
 });
 
-test('discount applies to ordinary checkout and rejects invalid or expired codes before creating Stripe sessions', async () => {
+test('discount codes are limited to UTH event checkout and expired codes are rejected', async () => {
   const context = environment(), services = mockServices();
   Date.now = () => (UTH_DISCOUNT_END - 1) * 1000;
-  const response = await handleCheckout(checkout(key(), { discountCode: 'UTH', quotedAmount: '4500' }), context.env);
-  assert.equal(response.status, 200, await response.clone().text());
-  assert.equal(services.calls[0].params.get('line_items[0][price_data][unit_amount]'), '4500');
+  const response = await handleCheckout(checkout(key(), { discountCode: 'UTH', quotedAmount: '4950' }), context.env);
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /nur für UTH/);
   Date.now = () => UTH_DISCOUNT_END * 1000;
-  const expired = await handleCheckout(checkout(key(), { discountCode: 'UTH', quotedAmount: '4500' }), context.env);
+  const file = new File([readFileSync(new URL('../src/uth/UTH5.gpx', import.meta.url))], 'UTH5.gpx', { type: 'application/gpx+xml' });
+  const expired = await handleCheckout(checkout(key(), { gpxFile: file, eventRoute: 'UTH5',
+    discountCode: 'UTH', quotedAmount: '4950', quotedFulfillment: 'shipping' }), context.env);
   assert.equal(expired.status, 400);
   assert.match((await expired.json()).error, /abgelaufen/);
+  assert.equal(services.calls.length, 0);
+});
+
+test('existing ordinary discounted orders can be retried after the UTH restriction and expiry', async () => {
+  const context = environment(), services = mockServices(), submissionKey = key();
+  const { order } = await started(context, submissionKey);
+  const legacy = { ...config, version: 6 };
+  const fields = { configuration: JSON.stringify(legacy), discountCode: 'UTH', quotedAmount: '4500' };
+  const data = await validateCheckout(checkout(submissionKey, fields));
+  const params = new URLSearchParams(order.session_params);
+  params.set('line_items[0][price_data][unit_amount]', '4500');
+  const offer = JSON.stringify(offerFor(legacy, 'UTH', UTH_DISCOUNT_END - 1));
+  context.db.prepare('UPDATE checkout_orders SET configuration=?, payload_digest=?, session_params=?, offer=? WHERE id=?')
+    .run(JSON.stringify(legacy), data.digest, params.toString(), offer, order.id);
+  Date.now = () => (UTH_DISCOUNT_END + 1) * 1000;
+  const retry = await handleCheckout(checkout(submissionKey, fields), context.env);
+  assert.equal(retry.status, 200, await retry.clone().text());
+  assert.equal((await retry.json()).orderId, order.id);
+  assert.equal((await handleStripeWebhook(await webhook(eventFor(state(context, order.id), { amount_total: 4500 })), context.env)).status, 200);
+  assert.match(services.emails[0].payload.text, /Gesamt: 45\s*€/);
   assert.equal(services.calls.length, 1);
 });
 
 const areaConfiguration = {
-  version: 6, source: 'area', area: { left: 0.525, top: 0.35, size: 0.0004 },
+  version: 7, source: 'area', area: { left: 0.525, top: 0.35, size: 0.0004 },
   product: 'base', wallMount: false, engraving: 'Meine Landschaft', elevationScale: 2, preview: 'ready',
 };
 const areaCheckout = (submissionKey = key(), configuration = areaConfiguration) =>
@@ -585,7 +613,7 @@ for (const paid of [false, true]) test(`collection ${paid ? 'paid' : 'expired'} 
   assert.equal(context.objects.size, 0);
 });
 
-for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCTS)) for (const version of [3, 5]) {
+for (const mode of ['test', 'live']) for (const product of Object.values(PRODUCTS)) for (const version of [7]) {
   test(`${mode} ${product.id} v${version}: server price, verified payment and product-specific emails`, async () => {
     const context = environment();
     if (mode === 'live') configureLive(context);
@@ -639,7 +667,7 @@ for (const mode of ['test', 'live']) for (const product of ['base', 'compact']) 
     if (mode === 'live') configureLive(context);
     const storage = mode === 'live' ? context.live : context;
     const services = mockServices();
-    const configuration = { ...config, version: 4, product, wallMount, engraving: product === 'compact' ? '' : 'Meine Tour' };
+    const configuration = { ...config, version: 7, product, wallMount, engraving: product === 'compact' ? '' : 'Meine Tour' };
     const expected = PRODUCTS[product].priceEur + (wallMount ? 1 : 0);
     const response = await handleCheckout(checkout(key(), { configuration: JSON.stringify(configuration), price: '1' }), context.env, mode);
     assert.equal(response.status, 200, await response.clone().text());
@@ -694,7 +722,7 @@ test('live/invalid keys, untrusted origins and incomplete config cannot enable c
   assert.equal((await handleCheckout(request, context.env)).status, 403);
 });
 
-test('server fixes 5000 EUR, DE-only free shipping and trusted hosted return URLs, persists originals before Stripe', async () => {
+test('server fixes 5500 cents, DE-only free shipping and trusted hosted return URLs, persists originals before Stripe', async () => {
   const context = environment();
   const services = mockServices({ stripe: (session) => {
     const order = state(context, session.client_reference_id);
@@ -708,7 +736,7 @@ test('server fixes 5000 EUR, DE-only free shipping and trusted hosted return URL
   const response = await handleCheckout(checkout(key(), { price: '1', currency: 'usd' }), context.env);
   assert.equal(response.status, 200);
   const data = await response.json(), params = services.calls[0].params;
-  assert.equal(params.get('line_items[0][price_data][unit_amount]'), '5000');
+  assert.equal(params.get('line_items[0][price_data][unit_amount]'), '5500');
   assert.equal(params.get('line_items[0][price_data][currency]'), 'eur');
   assert.equal(params.get('shipping_address_collection[allowed_countries][0]'), 'DE');
   assert.equal(params.get('shipping_options[0][shipping_rate_data][fixed_amount][amount]'), '0');
@@ -724,13 +752,13 @@ test('server fixes 5000 EUR, DE-only free shipping and trusted hosted return URL
   assert.equal(services.emails.length, 0);
 });
 
-test('strict fields, GPX, v2 base ready configuration, PNG, affirmative boolean and multipart are mandatory', async () => {
+test('strict fields, GPX, ready configuration, PNG, affirmative boolean and multipart are mandatory', async () => {
   const context = environment(); globalThis.fetch = () => assert.fail('Invalid input must never reach Stripe');
   const failures = [
     { name: '' }, { name: 'x\ninjection' }, { name: 'a'.repeat(201) }, { email: 'invalid' }, { email: 'x'.repeat(201) + '@x.de' },
     { submissionKey: 'predictable' }, { acceptance: 'false' }, { acceptance: '1' }, { acceptance: undefined },
     { configuration: '{}' }, { configuration: JSON.stringify({ ...config, version: 1 }) },
-    { configuration: JSON.stringify({ ...config, product: 'frame' }) },
+    { configuration: JSON.stringify({ ...config, product: 'frame', wallMount: true }) },
     { configuration: JSON.stringify({ ...config, version: 3, product: 'compact' }) },
     { configuration: JSON.stringify({ ...config, version: 3, product: 'unknown' }) },
     { configuration: JSON.stringify({ ...config, version: 3, elevationScale: undefined }) },
@@ -738,7 +766,7 @@ test('strict fields, GPX, v2 base ready configuration, PNG, affirmative boolean 
     { configuration: JSON.stringify({ ...config, version: 4, wallMount: 'true' }) },
     { configuration: JSON.stringify({ ...config, version: 4, wallMount: 1 }) },
     { configuration: JSON.stringify({ ...config, version: 4, product: 'frame', wallMount: true }) },
-    { configuration: JSON.stringify({ ...config, wallMount: true }) },
+    { configuration: JSON.stringify({ ...config, wallMount: 'true' }) },
     { configuration: JSON.stringify({ ...config, preview: 'unavailable' }) },
     { configuration: JSON.stringify({ ...config, elevationScale: 9 }) },
     { configuration: JSON.stringify({ ...config, margin: 0 }) },
@@ -789,6 +817,29 @@ test('same payload retries return exactly the same session; exact original-byte/
   ]) assert.equal((await handleCheckout(checkout(start.submissionKey, fields), context.env)).status, 409);
   assert.equal(services.calls.length, 1);
   assert.equal(context.db.prepare('SELECT count(*) AS n FROM checkout_orders').get().n, 1);
+});
+
+test('new checkouts reject old prices while previously created checkouts retry and pay at their original price', async () => {
+  const context = environment(), services = mockServices();
+  const legacy = { ...config, version: 6 };
+  const fields = { configuration: JSON.stringify(legacy) };
+  const fresh = await handleCheckout(checkout(key(), fields), context.env);
+  assert.equal(fresh.status, 409);
+  assert.match((await fresh.json()).error, /Preise haben sich geändert/);
+  const submissionKey = key();
+  const { order } = await started(context, submissionKey);
+  const data = await validateCheckout(checkout(submissionKey, fields));
+  const params = new URLSearchParams(order.session_params);
+  params.set('line_items[0][price_data][unit_amount]', '5000');
+  context.db.prepare('UPDATE checkout_orders SET configuration=?, payload_digest=?, session_params=? WHERE id=?')
+    .run(JSON.stringify(legacy), data.digest, params.toString(), order.id);
+  const retry = await handleCheckout(checkout(submissionKey, fields), context.env);
+  assert.equal(retry.status, 200);
+  assert.equal((await retry.json()).orderId, order.id);
+  const stored = state(context, order.id);
+  assert.equal((await handleStripeWebhook(await webhook(eventFor(stored)), context.env)).status, 200);
+  assert.match(services.emails[0].payload.text, /Gesamt: 50 EUR/);
+  assert.equal(services.calls.length, 1);
 });
 
 test('concurrent identical submissions acquire only one creation lease', async () => {
@@ -1185,7 +1236,7 @@ test('live checkout isolates storage and verifies live-mode webhook before sendi
   assert.ok(order);
   assert.equal(context.db.prepare('SELECT count(*) AS count FROM checkout_orders').get().count, 0);
   const params = services.calls[0].params;
-  assert.equal(params.get('line_items[0][price_data][unit_amount]'), '5000');
+  assert.equal(params.get('line_items[0][price_data][unit_amount]'), '5500');
   assert.equal(params.get('metadata[live_order]'), 'true');
   assert.equal(params.has('metadata[test_only]'), false);
   assert.match(params.get('line_items[0][price_data][product_data][name]'), /Peak Memory/);
@@ -1298,7 +1349,7 @@ test('a stale checkout read cannot reacquire a purged order or recreate abandone
       const read = statement.first;
       statement.first = async () => {
         const snapshot = await read();
-        context.db.prepare("UPDATE checkout_orders SET stage='purged' WHERE id=?").run(snapshot.id);
+        if (snapshot) context.db.prepare("UPDATE checkout_orders SET stage='purged' WHERE id=?").run(snapshot.id);
         return snapshot;
       };
     }

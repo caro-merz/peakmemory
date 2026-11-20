@@ -12,12 +12,13 @@ test('wall mount requires a v4 boolean, costs one euro only on wood and preserve
     const configuration = { version: 4, product, wallMount: false, engraving: '',
       margin: 0.15, elevationScale: 2, preview: 'ready' };
     assert.deepEqual(parseConfiguration(configuration), configuration);
-    assert.equal(configurationPrice(configuration), product === 'frame' ? 55 : PRODUCTS[product].priceEur);
-    assert.equal(configurationPrice({ ...configuration, version: 3 }), product === 'frame' ? 55 : PRODUCTS[product].priceEur);
+    const legacyPrice = product === 'frame' ? 55 : PRODUCTS[product].priceEur - 5;
+    assert.equal(configurationPrice(configuration), legacyPrice);
+    assert.equal(configurationPrice({ ...configuration, version: 3 }), legacyPrice);
     if (product === 'frame') {
       assert.throws(() => parseConfiguration({ ...configuration, wallMount: true }), /Wandaufhängung/);
     } else {
-      assert.equal(configurationPrice(parseConfiguration({ ...configuration, wallMount: true })), PRODUCTS[product].priceEur + 1);
+      assert.equal(configurationPrice(parseConfiguration({ ...configuration, wallMount: true })), legacyPrice + 1);
     }
     for (const wallMount of [undefined, null, 'true', 1]) {
       assert.throws(() => parseConfiguration({ ...configuration, wallMount }), /Wandaufhängung/);
@@ -56,7 +57,7 @@ test('both wood variants always have four transparent corner feet and an optiona
 });
 
 test('three variants have fixed prices and validated v3 engraving capabilities', () => {
-  assert.deepEqual(Object.values(PRODUCTS).map(product => product.priceEur), [50, 45, 60]);
+  assert.deepEqual(Object.values(PRODUCTS).map(product => product.priceEur), [55, 50, 65]);
   assert.throws(() => getProduct('unknown'), /Unbekanntes/);
   for (const product of Object.values(PRODUCTS)) {
     const configuration = { version: 3, product: product.id, engraving: product.engraving ? 'Tour\n2026' : '',
@@ -75,6 +76,9 @@ test('v5 frame price is 60 EUR and legacy configurations retain 55 EUR', () => {
   assert.equal(configurationPrice({ ...configuration, version: 4 }), 55);
   assert.equal(configurationPrice({ ...configuration, product: 'base', wallMount: true }), 51);
   assert.equal(configurationPrice({ ...configuration, product: 'compact', wallMount: true }), 46);
+  assert.equal(configurationPrice({ ...configuration, version: 7 }), 65);
+  assert.equal(configurationPrice({ ...configuration, version: 7, product: 'base', wallMount: true }), 56);
+  assert.equal(configurationPrice({ ...configuration, version: 7, product: 'compact', wallMount: true }), 51);
 });
 
 test('frame engraving allows two lines while engraved wood allows three', () => {

@@ -23,7 +23,7 @@ export function parseConfiguration(value) {
     throw new Error('Die Konfiguration ist kein gültiges JSON.');
   }
   if (!configuration || Array.isArray(configuration) || typeof configuration !== 'object'
-    || ![1, 2, 3, 4, 5, 6].includes(configuration.version)
+    || ![1, 2, 3, 4, 5, 6, 7].includes(configuration.version)
     || !(configuration.version >= 3 ? ['base', 'compact', 'frame'] : ['base', 'frame']).includes(configuration.product)
     || (configuration.version === 2 && (configuration.product !== 'base'
       || typeof configuration.elevationScale !== 'number' || !Number.isFinite(configuration.elevationScale)
@@ -31,7 +31,7 @@ export function parseConfiguration(value) {
     || (configuration.version >= 3 && (typeof configuration.elevationScale !== 'number'
       || !Number.isFinite(configuration.elevationScale)
       || configuration.elevationScale < 1 || configuration.elevationScale > 8))
-    || (!(configuration.version === 6 && configuration.source === 'area')
+    || (!(configuration.version >= 6 && configuration.source === 'area')
       && (typeof configuration.margin !== 'number' || !Number.isFinite(configuration.margin)
         || configuration.margin < 0.05 || configuration.margin > 0.5))
     || !['ready', 'unavailable'].includes(configuration.preview)) {
@@ -43,7 +43,7 @@ export function parseConfiguration(value) {
     throw new Error('Ungültige Auswahl der Wandaufhängung.');
   }
   const engraving = validateEngraving(configuration.engraving, configuration.product);
-  if (configuration.version === 6 && (!['gpx', 'area'].includes(configuration.source)
+  if (configuration.version >= 6 && (!['gpx', 'area'].includes(configuration.source)
     || (configuration.source === 'area' && Object.hasOwn(configuration, 'margin'))
     || (configuration.source === 'gpx' && Object.hasOwn(configuration, 'area')))) {
     throw new Error('Ungültige Geländequelle oder widersprüchliche Ausschnittseinstellungen.');
@@ -56,9 +56,9 @@ export function parseConfiguration(value) {
   }
   return {
     version: configuration.version, product: configuration.product, engraving,
-    ...(configuration.version === 6 && configuration.source === 'area'
+    ...(configuration.version >= 6 && configuration.source === 'area'
       ? { source: 'area', area: parseArea(configuration.area) }
-      : { margin: configuration.margin, ...(configuration.version === 6 ? { source: 'gpx' } : {}) }),
+      : { margin: configuration.margin, ...(configuration.version >= 6 ? { source: 'gpx' } : {}) }),
     preview: configuration.preview,
     ...(configuration.version >= 2 ? { elevationScale: configuration.elevationScale } : {}),
     ...(configuration.version >= 4 ? { wallMount: configuration.wallMount } : {}),

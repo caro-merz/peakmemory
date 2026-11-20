@@ -21,7 +21,7 @@ creation timestamp is stored as the confirmation timestamp; delivery time of
 the webhook does not change it. Stripe sessions can remain open across the
 deadline, so checkout explicitly warns about the shipping fallback.
 
-Code `UTH` can be applied to event and regular checkout sessions created before
+Code `UTH` can be applied to event checkout sessions created before
 2 May 2027, 00:00 Europe/Berlin. It deducts 10% from the product price in cents;
 the optional 100-cent wall mount remains undiscounted. A session created before
 expiry keeps its quoted price for retries and payment. The server verifies the
@@ -255,13 +255,13 @@ The subsequent temporary sandbox deployment
 `659256d0-f131-4f90-a832-1f672cda60e7` was verified: shop status reports
 `enabled:true`, `testMode:true`, `mode:"test"` and new live checkout returns 503.
 
-The configured variants are engraved oak base **50 EUR** (`base`, default),
-compact oak base without engraving **45 EUR** (`compact`) and white frame with
-engraved white passepartout **60 EUR** (`frame`). Each relief is 10 × 10 cm;
+The configured variants are engraved oak base **55 EUR** (`base`, default),
+compact oak base without engraving **50 EUR** (`compact`) and white frame with
+engraved white passepartout **65 EUR** (`frame`). Each relief is 10 × 10 cm;
 bases are 11 × 13.5 × 2 cm / 11 × 11 × 2 cm; the frame exterior is 20 × 20 cm.
 All prices include shipping, **Germany only**.
 Both oak bases include four transparent protective feet. Optional `wallMount:true`
-adds **1 EUR** (51 / 46 EUR totals); default is false. Frame does not accept this
+adds **1 EUR** (56 / 51 EUR totals); default is false. Frame does not accept this
 option. Configuration v4 records it explicitly; older orders retain their original
 prices and do not acquire paid hardware retroactively.
 No VAT is charged/displayed under **§19 UStG (Kleinunternehmer)**. Delivery wording
@@ -327,14 +327,11 @@ no-referrer`. No CORS access is enabled.
   * `gpxFile`: original `.gpx` bytes, nonempty, ≤5 MiB, valid bounded GPX
     (existing shared GPX validation), **or** repeated `gpxFiles` for 1–10
     originals under the aggregate limits described above; never both fields;
-  * `configuration`: JSON, ≤4096 characters, `version:5`, `product:"base"|"compact"|"frame"`,
+  * `configuration`: JSON, ≤4096 characters, `version:7`, `product:"base"|"compact"|"frame"`,
     `preview:"ready"`, validated `engraving`, `margin`, `elevationScale`;
     `wallMount` is a required boolean, false for frame.
-    `compact` requires an empty engraving. Legacy `version:2`, `product:"base"`
-    is still accepted for existing clients and stored orders.
-    Frame configurations through version 4 retain their 55 EUR price; version 5 uses 60 EUR.
-    Version 3 remains compatible without wall mount; older versions cannot
-    include a `wallMount` field.
+    `compact` requires an empty engraving. Previous versions remain accepted for
+    retries of existing orders, at their original prices; new orders require version 7.
   * `previewImage`: required PNG, ≤1 MiB, nonzero dimensions ≤2048×2048,
     supported IHDR format, complete bounded chunks with verified CRCs/IDAT/IEND;
   * `submissionKey`: randomly generated UUID v4, retained for all retries of
@@ -345,7 +342,7 @@ no-referrer`. No CORS access is enabled.
     identity. No other fields or duplicate fields (except `gpxFiles`) are accepted.
   → `{ "orderId":"<uuid>", "url":"https://checkout.stripe.com/…",
   "statusUrl":"https://<configured-origin>/order-status?order=<uuid>&token=<secret>" }`.
-  Stripe receives a server-defined 5000/4500/6000-cent EUR line item (plus 100 cents
+  Stripe receives a server-defined 5500/5000/6500-cent EUR line item (plus 100 cents
   for the explicitly chosen wood wall mount) based on the
   validated variant (never the supplied price), zero shipping, DE-only shipping
   collection, hosted UI and `submit_type=pay`. Original GPX files, combined GPX

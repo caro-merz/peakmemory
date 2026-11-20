@@ -15,7 +15,8 @@ export function offerFor(configuration, code, timestamp, route = '') {
     throw new Error('Der Rabattcode ist ungültig oder abgelaufen.');
   }
   const full = configurationPrice(configuration) * 100;
-  const base = configurationPrice({ ...configuration, wallMount: false }) * 100;
+  const base = configurationPrice({ ...configuration, wallMount: false,
+    ...(configuration.version >= 8 && configuration.product !== 'frame' ? { heightLimitMm: 28 } : {}) }) * 100;
   const discount = normalized ? Math.round(base * 0.1) : 0;
   return { route, code: normalized, full, discount, amount: full - discount };
 }

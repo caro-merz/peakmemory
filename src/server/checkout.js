@@ -70,6 +70,7 @@ function parameters(order) {
   const destination = event ? '/uth' : '/';
   const hardware = product.id !== 'frame' && configuration.version >= 4
     ? ` Wandaufhängung: ${configuration.wallMount ? `ja (+${WALL_MOUNT_PRICE_EUR} EUR)` : 'nein'}. Vier transparente Schutzfüße inklusive.` : '';
+  const height = configuration.version >= 8 ? ` Reliefhöhe maximal ${configuration.heightLimitMm} mm ohne Sockel.` : '';
   const suffix = Array.from(crypto.getRandomValues(new Uint8Array(8)), value => String.fromCharCode(97 + value % 26)).join('');
   return new URLSearchParams({
     mode: 'payment', submit_type: 'pay', ui_mode: 'hosted_page', customer_email: order.email,
@@ -83,7 +84,7 @@ function parameters(order) {
     'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'eur',
     'line_items[0][price_data][unit_amount]': String(orderAmount(order)),
     'line_items[0][price_data][product_data][name]': `Peak Memory · ${product.name}${live ? '' : ' (TEST)'}`,
-    'line_items[0][price_data][product_data][description]': `${product.description} ${product.dimensions}.${hardware} ${orderAmount(order) / 100} EUR${offer?.discount ? ' nach UTH-Rabatt' : ''} inkl. Versand Deutschland. Kein Umsatzsteuerausweis gemäß §19 UStG. ${pickup ? 'Abholung am 24. April in Albstadt bei bestätigter Zahlung bis 16. April 2027, 12 Uhr. Bei späterer Zahlung Versand.' : 'Lieferung 5–10 Werktage nach Zahlung.'} Illustrative Vorschau; keine weitere Produktionsfreigabe.${live ? '' : ' TEST: keine echte Fertigung.'}`,
+    'line_items[0][price_data][product_data][description]': `${product.description} ${product.dimensions}.${hardware}${height} ${orderAmount(order) / 100} EUR${offer?.discount ? ' nach UTH-Rabatt' : ''} inkl. Versand Deutschland. Kein Umsatzsteuerausweis gemäß §19 UStG. ${pickup ? 'Abholung am 24. April in Albstadt bei bestätigter Zahlung bis 16. April 2027, 12 Uhr. Bei späterer Zahlung Versand.' : 'Lieferung 5–10 Werktage nach Zahlung.'} Illustrative Vorschau; keine weitere Produktionsfreigabe.${live ? '' : ' TEST: keine echte Fertigung.'}`,
     'shipping_address_collection[allowed_countries][0]': 'DE',
     'shipping_options[0][shipping_rate_data][type]': 'fixed_amount',
     'shipping_options[0][shipping_rate_data][fixed_amount][amount]': '0',
@@ -138,8 +139,8 @@ export function handleCheckout(request, sourceEnv, mode = 'test') {
     const id = crypto.randomUUID(), secret = token(), timestamp = now();
     const previous = await first(env, 'SELECT * FROM checkout_orders WHERE submission_key=?', data.key);
     if (previous && previous.payload_digest !== data.digest) throw new CheckoutError('Schlüssel gehört zu einer anderen Auswahl.', 409);
-    if (!previous && JSON.parse(data.configuration).version < 7) {
-      throw new CheckoutError('Die Preise haben sich geändert. Bitte lade die Seite neu und prüfe deine Auswahl erneut.', 409);
+    if (!previous && JSON.parse(data.configuration).version < 8) {
+      throw new CheckoutError('Die Auswahlmöglichkeiten oder Preise haben sich geändert. Bitte lade die Seite neu und prüfe deine Auswahl erneut.', 409);
     }
     if (!previous && data.discountCode && !data.eventRoute) {
       throw new CheckoutError('Der Rabattcode gilt nur für UTH-Bestellungen.', 400);

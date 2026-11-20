@@ -160,6 +160,7 @@ export async function handleContact(request, env) {
       `Gravur: ${configuration.engraving || '(keine)'}`,
       configuration.source === 'area' ? describeArea(configuration.area) : `Geländerand: ${Math.round(configuration.margin * 100)} %`,
       `Höhenüberhöhung: ${configuration.version >= 2 ? configuration.elevationScale : 1.5}×`,
+      ...(configuration.version >= 8 ? [`Reliefhöhe: maximal ${configuration.heightLimitMm} mm einschließlich Grundplatte und Route, ohne Sockel`] : []),
       `Online-Vorschau: ${configuration.preview === 'ready' ? 'bereit (illustrativ)' : 'nicht verfügbar'}`,
       'Die endgültige Produktionsvorschau wird separat abgestimmt.');
     if (configuration.version >= 3) lines.push(`Ausführung: ${getProduct(configuration.product).dimensions}`);

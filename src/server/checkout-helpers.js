@@ -158,8 +158,8 @@ export async function validateCheckout(request) {
   let configuration;
   try { configuration = parseConfiguration(rawConfiguration); }
   catch (error) { throw new CheckoutError(error.message); }
-  if (![2, 3, 4, 5, 6, 7].includes(configuration?.version) || configuration.preview !== 'ready') {
-    throw new CheckoutError('Konfiguration Version 2 bis 7 mit fertiger Vorschau erforderlich.');
+  if (![2, 3, 4, 5, 6, 7, 8].includes(configuration?.version) || configuration.preview !== 'ready') {
+    throw new CheckoutError('Konfiguration Version 2 bis 8 mit fertiger Vorschau erforderlich.');
   }
   if (form.has('gpxFile') && form.has('gpxFiles')) throw new CheckoutError('GPX-Formularfelder dürfen nicht gemischt werden.');
   const isArea = configuration.source === 'area';

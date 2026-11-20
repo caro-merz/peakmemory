@@ -171,6 +171,18 @@ try {
   const personal = '<gpx version="1.1"><trk><trkseg><trkpt lat="48.2" lon="9.1"/><trkpt lat="48.23" lon="9.13"/></trkseg></trk></gpx>';
   console.log('Browser checks: local upload and error recovery');
   const upload = text => page.locator('#gpxFile').setInputFiles({name:'personal.gpx',mimeType:'application/gpx+xml',buffer:Buffer.from(text)});
+  await upload('<gpx version="1.1"><trk><trkseg><trkpt lat="48.2" lon="9.1"/><trkpt lat="48.203" lon="9.103"/></trkseg></trk></gpx>');
+  await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
+  await page.locator('#product').selectOption('frame');
+  await page.locator('#elevationScale').fill('8');
+  assert.equal(await page.locator('#heightCapped').isVisible(), true);
+  assert.match(await page.locator('#configurationSummary').innerText(), /Reliefhöhe max\. 16 mm/);
+  await page.locator('[data-lang-toggle="en"]').click();
+  assert.match(await page.locator('#heightCapped').innerText(), /reduced/);
+  assert.match(await page.locator('#configurationSummary').innerText(), /Maximum relief height 16 mm/);
+  await page.locator('[data-lang-toggle="de"]').click();
+  await page.locator('#product').selectOption('base');
+  await page.locator('#remove').click();
   await upload(personal);
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Deine Route');
   assert.equal(await page.locator('#routeFiles li span').innerText(), 'personal.gpx');
@@ -267,6 +279,18 @@ try {
   await page.goto(url + '/#kaufbedingungen');
   assert.equal(await page.locator('#kaufbedingungenModal').evaluate(element => element.classList.contains('open')), true);
   await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 1365, height: 950 });
+  for (const language of ['de', 'en', 'de']) {
+    await page.locator(`[data-lang-toggle="${language}"]`).click();
+    for (const dialog of ['kaufbedingungen', 'impressum', 'datenschutz']) {
+      await page.locator(`#${dialog}Link`).click();
+      const close = page.locator(`#${dialog}Close`);
+      assert.equal(await close.innerText(), '×');
+      assert.equal(await close.getAttribute('aria-label'), language === 'en' ? 'Close' : 'Schließen');
+      await close.click();
+      assert.equal(await page.locator(`#${dialog}Modal`).isVisible(), false);
+    }
+  }
   await page.setViewportSize({width:800,height:800});
   assert.ok(await page.locator('.navbar .container').evaluate(element => element.scrollWidth <= element.clientWidth));
   assert.equal(await page.locator('#hero + #konfigurator + #produkt').count(), 1);
@@ -437,7 +461,7 @@ try {
     assert.equal(body.get('name'), 'Test Checkout');
     assert.equal(body.get('email'), 'checkout@example.invalid');
     assert.equal(await body.get('gpxFile').text(), personal);
-    assert.equal(JSON.parse(body.get('configuration')).version, 7);
+    assert.equal(JSON.parse(body.get('configuration')).version, 8);
     assert.equal(body.get('previewImage').type, 'image/png');
     assert.equal(body.has('price'), false);
     assert.equal(body.has('discountCode'), false);
@@ -486,6 +510,19 @@ try {
   assert.match(await shop.locator('#submitCheckout').innerText(), /56.*€/);
   assert.match(await shop.locator('#checkoutSummary').innerText(), /Gesamt: 56/);
   await shop.locator('#wallMount').selectOption('no');
+  for (const [height, price] of [['78', '60'], ['128', '62']]) {
+    await shop.locator('#checkoutAcceptance').check();
+    await shop.locator('#heightLimit').selectOption(height);
+    assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false);
+    assert.match(await shop.locator('#checkoutSummary').innerText(), new RegExp(`Reliefhöhe max\\. ${height} mm`));
+    assert.match(await shop.locator('#submitCheckout').innerText(), new RegExp(`${price}.*€`));
+  }
+  await shop.locator('#product').selectOption('frame');
+  assert.equal(await shop.locator('#heightLimitControls').isHidden(), true);
+  assert.match(await shop.locator('#checkoutSummary').innerText(), /Reliefhöhe max\. 16 mm/);
+  assert.match(await shop.locator('#submitCheckout').innerText(), /65.*€/);
+  await shop.locator('#product').selectOption('base');
+  await shop.locator('#heightLimit').selectOption('28');
   await shop.locator('#checkoutAcceptance').check();
   await shop.locator('#engraving').fill('Finale Gravur');
   assert.equal(await shop.locator('#checkoutAcceptance').isChecked(), false, 'Changes require rechecking final selection');
@@ -548,7 +585,7 @@ try {
   assert.equal(await page.locator('.preview-note').isVisible(), true);
   assert.match(await uth.locator('.uth-hero img').getAttribute('src'), /UTH_Hero/);
   assert.ok(await uth.locator('.uth-hero img').evaluate(image => image.complete && image.naturalWidth > 0));
-  assert.match(await uth.locator('.uth-band').first().innerText(), /Die optionale Wandaufhängung ist ausgenommen/);
+  assert.match(await uth.locator('.uth-band').first().innerText(), /Höhenaufschläge und die optionale Wandaufhängung sind ausgenommen/);
   assert.match(await uth.locator('.uth-details').innerText(), /Medaille[\s\S]*für 5 €/);
   assert.equal(await uth.locator('#kaufbedingungen').count(), 0);
   assert.equal(await uth.locator('a[href="/#kaufbedingungen"]').count(), 2);
@@ -588,8 +625,9 @@ try {
   assert.match(await uth.locator('#configurationSummary').innerText(), /Meine UTH50/);
   await uth.locator('#product').selectOption('compact');
   await uth.locator('#wallMount').selectOption('yes');
+  await uth.locator('#heightLimit').selectOption('78');
   await uth.locator('#checkoutCode').fill('UTH');
-  assert.match(await uth.locator('#checkoutSummary').innerText(), /46 €/);
+  assert.match(await uth.locator('#checkoutSummary').innerText(), /51 €/);
   await uth.locator('#checkoutName').fill('Test Checkout');
   await uth.locator('#checkoutEmail').fill('checkout@example.invalid');
   await uth.locator('#checkoutAcceptance').check();
@@ -597,7 +635,8 @@ try {
   await uth.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Test checkout'));
   assert.equal(uthSubmission.get('eventRoute'), 'UTH50');
   assert.equal(uthSubmission.get('discountCode'), 'UTH');
-  assert.equal(uthSubmission.get('quotedAmount'), '4600');
+  assert.equal(uthSubmission.get('quotedAmount'), '5100');
+  assert.equal(JSON.parse(uthSubmission.get('configuration')).heightLimitMm, 78);
   assert.equal(uthSubmission.get('gpxFile').name, 'UTH50.gpx');
   for (const width of [320, 390, 768, 1365]) {
     await uth.setViewportSize({ width, height: 844 });
@@ -644,7 +683,7 @@ try {
     await variants.waitForFunction(() => document.getElementById('checkoutStatus').textContent.includes('Variant test captured'));
     assert.equal(variantSubmissions.at(-1).product, product);
     assert.equal(variantSubmissions.at(-1).engraving, product === 'compact' ? '' : 'Mein Text');
-    assert.equal(variantSubmissions.at(-1).version, 7);
+    assert.equal(variantSubmissions.at(-1).version, 8);
     assert.equal(variantSubmissions.at(-1).wallMount, product !== 'frame');
     assert.equal(await variants.locator('#selectionControls').isEnabled(), true);
   }

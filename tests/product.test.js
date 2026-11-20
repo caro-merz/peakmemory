@@ -26,6 +26,22 @@ test('wall mount requires a v4 boolean, costs one euro only on wood and preserve
   }
 });
 
+test('height tiers are validated and charged only for wood products', () => {
+  const wood = { version: 8, source: 'gpx', product: 'base', wallMount: false, heightLimitMm: 28,
+    engraving: '', margin: 0.15, elevationScale: 2, preview: 'ready' };
+  for (const [heightLimitMm, extra] of [[28, 0], [78, 5], [128, 7]]) {
+    const selected = parseConfiguration({ ...wood, heightLimitMm });
+    assert.equal(configurationPrice(selected), 55 + extra);
+    assert.equal(configurationPrice({ ...selected, wallMount: true }), 56 + extra);
+  }
+  for (const heightLimitMm of [undefined, 16, 29, '78', 129]) {
+    assert.throws(() => parseConfiguration({ ...wood, heightLimitMm }), /Reliefhöhe/);
+  }
+  const frame = { ...wood, product: 'frame', heightLimitMm: 16 };
+  assert.equal(configurationPrice(parseConfiguration(frame)), 65);
+  assert.throws(() => parseConfiguration({ ...frame, heightLimitMm: 78 }), /Reliefhöhe/);
+});
+
 test('both wood variants always have four transparent corner feet and an optional sawtooth hanger beneath the base', () => {
   for (const product of ['base', 'compact']) for (const wallMount of [false, true]) {
     const layout = productLayout(product);

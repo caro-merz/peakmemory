@@ -16,7 +16,8 @@ export function initializeCheckout({ state, capture, captureViews, setBusy }) {
     : Math.floor(serverTime + (performance.now() - timeReceived) / 1000);
   let previousSelection;
   const priceConfiguration = () => ({
-    version: 7, product: get('product').value,
+    version: 8, product: get('product').value,
+    heightLimitMm: get('product').value === 'frame' ? 16 : Number(get('heightLimit').value),
     wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
   });
   const currentOffer = () => offerFor(priceConfiguration(), discountCode(), currentTime());
@@ -38,7 +39,7 @@ export function initializeCheckout({ state, capture, captureViews, setBusy }) {
     let offerText = '';
     try {
       const offer = currentOffer();
-      if (offer.discount) offerText = `UTH-Rabatt: ${formatPrice(offer.discount / 100)}. Gesamtpreis: ${formatPrice(offer.amount / 100)}. Der Rabatt gilt nicht für die Wandaufhängung.`;
+      if (offer.discount) offerText = `UTH-Rabatt: ${formatPrice(offer.discount / 100)}. Gesamtpreis: ${formatPrice(offer.amount / 100)}. Der Rabatt gilt nicht für Höhenaufschläge oder die Wandaufhängung.`;
     } catch (error) { offerText = error.message; }
     get('checkoutOffer').textContent = offerText;
     const fulfillment = uthPage && currentTime() <= UTH_PICKUP_CUTOFF

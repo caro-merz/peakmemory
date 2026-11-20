@@ -20,7 +20,7 @@ Datei und kein exaktes Fertigungsbild.
   Finisher-Medaillen-Gravur am 24. April kostet 5 EUR ohne Anmeldung.
 - Der Rabattcode `UTH` gilt ausschließlich auf `/uth` bei einem bis
   einschließlich 1. Mai 2027 gestarteten Checkout: 10 % auf das Produkt, nicht
-  auf die optionale Wandaufhängung. Der Server prüft Code, Zeitpunkt, Preis
+  auf Höhenaufschläge oder die optionale Wandaufhängung. Der Server prüft Code, Zeitpunkt, Preis
   und Abhol-/Versandangebot; Änderungen an der Frist erfordern eine erneute
   Bestätigung. Siehe [CHECKOUT.md](./CHECKOUT.md#uth-2027).
 - Zwei Eingaben im Konfigurator: **GPX-Route** (Standard) oder **Kartenausschnitt**
@@ -80,6 +80,11 @@ Datei und kein exaktes Fertigungsbild.
   weder gefertigt noch berechnet. Sie wird in Zusammenfassung und E-Mails genannt.
 - Höhenüberhöhung von 1× bis 8×, Standard 2×. Änderungen skalieren Gelände
   und Route gemeinsam ohne erneuten Geländeabruf.
+- Die maximale Reliefhöhe (einschließlich Grundplatte und Route, ohne Sockel)
+  beträgt beim Rahmen 16 mm. Für Holzsockel sind 28 mm inklusive, 78 mm für
+  5 EUR Aufpreis oder 128 mm für 7 EUR Aufpreis wählbar. Falls nötig, wird die
+  Höhenüberhöhung in der Vorschau für die gewählte Grenze reduziert. Die Grenze
+  wird für die Fertigung in der Konfiguration und den Bestell-E-Mails festgehalten.
 - Gravur mit maximal 3 Zeilen auf Holz bzw. 2 Zeilen auf dem Passepartout und insgesamt 120 Zeichen. Die Vorschau übernimmt
   die eingegebenen Zeilenumbrüche ohne automatischen Umbruch und zeigt die
   Schrift direkt auf dem Holz bzw. auf dem weißen Passepartout, ohne separates Schild.
@@ -344,11 +349,12 @@ schützt diese alternativen Zugänge nicht.
   vertikal mittig und mit 0,6 cm Abstand zum linken Rand; das Originalseitenverhältnis bleibt erhalten.
 - Höhen sind von 1× bis 8× einstellbar (Standard 2×). Material und
   endgültige Gravurposition sind exemplarisch; Preise werden nicht erfunden.
-- Neue Konfigurator-Anfragen verwenden Konfiguration Version 7 mit Pflichtfeldern
-  `elevationScale`, `wallMount` (Boolean) und Produkt `base`, `compact` oder `frame`.
+- Neue Konfigurator-Anfragen verwenden Konfiguration Version 8 mit Pflichtfeldern
+  `elevationScale`, `wallMount` (Boolean), `heightLimitMm` und Produkt `base`, `compact` oder `frame`.
   Der Rahmen erfordert `wallMount:false`. Rahmen-Konfigurationen bis Version 4
   behalten ihren bisherigen Preis von 55 EUR; Version 5 und 6 verwenden 60 EUR.
-  Version 7 erhöht alle drei Produktpreise um 5 EUR; die Wandaufhängung kostet weiterhin 1 EUR. Alte Checkouts bleiben
+  Version 7 erhöht alle drei Produktpreise um 5 EUR; die Wandaufhängung kostet weiterhin 1 EUR.
+  Version 8 ergänzt die verpflichtende Reliefhöhen-Grenze. Alte Checkouts bleiben
   zu ihrem ursprünglichen Preis gültig; für neue muss die Seite aktuell sein.
   Version 3 bleibt für alle drei
   Varianten ohne diese Zusatzoption kompatibel.

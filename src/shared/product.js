@@ -27,13 +27,18 @@ export function formatPrice(priceEur) {
 }
 
 export const WALL_MOUNT_PRICE_EUR = 1;
+export const RELIEF_HEIGHT_LIMITS_MM = Object.freeze({ frame: 16, standard: 28, tall: 78, extraTall: 128 });
+const HEIGHT_SURCHARGE_EUR = Object.freeze({ 28: 0, 78: 5, 128: 7 });
 
 export function configurationPrice(configuration) {
   const product = getProduct(configuration.product);
   const price = configuration.version < 7
     ? product.priceEur - (product.id === 'frame' && configuration.version < 5 ? 10 : 5)
     : product.priceEur;
-  return price + (configuration.version >= 4 && configuration.wallMount === true
+  const heightSurcharge = configuration.version >= 8 && product.id !== 'frame'
+    ? HEIGHT_SURCHARGE_EUR[configuration.heightLimitMm] : 0;
+  if (heightSurcharge === undefined) throw new Error('Ungültige Reliefhöhe.');
+  return price + heightSurcharge + (configuration.version >= 4 && configuration.wallMount === true
     && product.id !== 'frame' ? WALL_MOUNT_PRICE_EUR : 0);
 }
 

@@ -23,7 +23,7 @@ deadline, so checkout explicitly warns about the shipping fallback.
 
 Code `UTH` can be applied to event checkout sessions created before
 2 May 2027, 00:00 Europe/Berlin. It deducts 10% from the product price in cents;
-the optional 100-cent wall mount remains undiscounted. A session created before
+height surcharges and the optional 100-cent wall mount remain undiscounted. A session created before
 expiry keeps its quoted price for retries and payment. The server verifies the
 displayed price and event fulfillment at creation, stores the offer snapshot,
 and verifies Stripe against that snapshot. Existing non-event orders retain
@@ -262,7 +262,11 @@ bases are 11 × 13.5 × 2 cm / 11 × 11 × 2 cm; the frame exterior is 20 × 20 
 All prices include shipping, **Germany only**.
 Both oak bases include four transparent protective feet. Optional `wallMount:true`
 adds **1 EUR** (56 / 51 EUR totals); default is false. Frame does not accept this
-option. Configuration v4 records it explicitly; older orders retain their original
+option. The frame relief is limited to 16 mm; wooden reliefs offer 28 mm included,
+78 mm for 5 EUR extra, or 128 mm for 7 EUR extra. Heights include the printed
+base and route, excluding the wood base. Version 8 stores the selected limit;
+the preview reduces elevation scaling when needed, and production must honor
+the recorded limit. Configuration v4 records the wall mount explicitly; older orders retain their original
 prices and do not acquire paid hardware retroactively.
 No VAT is charged/displayed under **§19 UStG (Kleinunternehmer)**. Delivery wording
 is **5–10 working days after payment**. The captured preview is illustrative, not an exact
@@ -343,7 +347,8 @@ no-referrer`. No CORS access is enabled.
   → `{ "orderId":"<uuid>", "url":"https://checkout.stripe.com/…",
   "statusUrl":"https://<configured-origin>/order-status?order=<uuid>&token=<secret>" }`.
   Stripe receives a server-defined 5500/5000/6500-cent EUR line item (plus 100 cents
-  for the explicitly chosen wood wall mount) based on the
+  for the explicitly chosen wood wall mount and 500 or 700 cents for a taller wood
+  relief) based on the
   validated variant (never the supplied price), zero shipping, DE-only shipping
   collection, hosted UI and `submit_type=pay`. Original GPX files, combined GPX
   for collections, PNG and validated

@@ -101,6 +101,17 @@
             <option value="frame">Rahmen mit graviertem Passepartout</option>
           </select>
           <p id="productDescription" class="hint">10 × 10 cm Relief auf 11 × 13,5 × 2 cm Eiche-Holzsockel. Gravur direkt auf Holz.</p>
+          <div id="heightLimitControls">
+            <label for="heightLimit">Maximale Reliefhöhe (ohne Holzsockel)</label>
+            <select id="heightLimit" aria-describedby="heightLimitHint">
+              <option value="28">Bis 28 mm · Standard</option>
+              <option value="78">Bis 78 mm · +5 €</option>
+              <option value="128">Bis 128 mm · +7 €</option>
+            </select>
+          </div>
+          <p id="heightLimitHint" class="hint">Die Höhenbegrenzung umfasst das Relief einschließlich seiner Grundplatte und Route, aber nicht den Holzsockel. Wenn nötig, wird das Gelände flacher dargestellt und gefertigt.</p>
+          <p id="frameHeightHint" class="hint" hidden>Im Rahmen beträgt die maximale Reliefhöhe einschließlich Grundplatte und Route 16 mm, damit das Relief unter das Glas passt.</p>
+          <p id="heightCapped" class="hint" role="status" hidden>Die Höhe wurde für die gewählte Grenze reduziert.</p>
           <div id="wallMountControls">
             <label for="wallMount">Wandaufhängung</label>
             <select id="wallMount" aria-describedby="wallMountHint">
@@ -139,7 +150,7 @@
           <button id="resetView" type="button" class="text-button" disabled>Ansicht zurücksetzen</button><button id="retry" type="button" class="secondary" hidden>Erneut laden</button>
         </div>
         <p id="configurationSummary" class="configuration-summary"></p>
-        <div class="preview-note"><strong>Illustrative Vorschau, kein exaktes Fertigungsbild.</strong><p>Beim Direktkauf gelten deine Routen oder dein Kartenausschnitt und Einstellungen als final. Die Fertigung beginnt nach bestätigter Zahlung, ohne zusätzliche Vorschau-Freigabe. Prüfe deshalb besonders deine Gravur.</p><details><summary>Maße &amp; Hinweise zur Vorschau</summary><p><span id="productDimensionsNote">10 × 10 cm Relief auf 11 × 13,5 × 2 cm Eiche-Holzsockel.</span> Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Höhen sind <span id="elevationNote">2-fach</span> skaliert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, natürliche Holzmaserung, Rahmenprofil, Passepartout, Gravur und Geländedetails können vom gefertigten Produkt abweichen. Beim Kauf werden alle Original-GPX-Dateien und bei mehreren Dateien zusätzlich eine kombinierte GPX übermittelt. Bei Kartenausschnitten werden stattdessen die genauen Ausschnittskoordinaten gespeichert. Für eine unverbindliche GPX-Anfrage lade deine Dateien im Kontaktformular erneut hoch; einen bestätigten Kartenausschnitt kannst du über „Zum Kontakt“ übernehmen.</p></details></div>
+        <div class="preview-note"><strong>Illustrative Vorschau, kein exaktes Fertigungsbild.</strong><p>Beim Direktkauf gelten deine Routen oder dein Kartenausschnitt und Einstellungen als final. Die Fertigung beginnt nach bestätigter Zahlung, ohne zusätzliche Vorschau-Freigabe. Prüfe deshalb besonders deine Gravur.</p><details><summary>Maße &amp; Hinweise zur Vorschau</summary><p><span id="productDimensionsNote">10 × 10 cm Relief auf 11 × 13,5 × 2 cm Eiche-Holzsockel.</span> Die Gelände-Vorschau nutzt öffentliche Höhendaten mit regional unterschiedlicher Auflösung. Die gewählte Höhenüberhöhung beträgt <span id="elevationNote">2-fach</span> und wird bei Bedarf für die maximale Reliefhöhe reduziert; lange oder komplexe Strecken werden nur für die Darstellung vereinfacht. Materialien, natürliche Holzmaserung, Rahmenprofil, Passepartout, Gravur und Geländedetails können vom gefertigten Produkt abweichen. Beim Kauf werden alle Original-GPX-Dateien und bei mehreren Dateien zusätzlich eine kombinierte GPX übermittelt. Bei Kartenausschnitten werden stattdessen die genauen Ausschnittskoordinaten gespeichert. Für eine unverbindliche GPX-Anfrage lade deine Dateien im Kontaktformular erneut hoch; einen bestätigten Kartenausschnitt kannst du über „Zum Kontakt“ übernehmen.</p></details></div>
         <details class="attribution"><summary>Geländedaten &amp; Quellen</summary>
           <p>Öffentliche Terrarium-Höhendaten von <a href="https://mapterhorn.com/" target="_blank" rel="noopener noreferrer">Mapterhorn</a>, bereitgestellt als 512 × 512 Pixel WebP-Kacheln. <a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener noreferrer">Datenquellen und Attribution</a> · <a href="https://mapterhorn.com/data-access" target="_blank" rel="noopener noreferrer">Technische Informationen</a>.</p>
         </details>
@@ -186,6 +197,6 @@
   </main>
   <footer><span>Peak Memory · Handgefertigt in Baden-Württemberg</span><div><a href="/#kontakt">Kontakt &amp; Rechtliches</a><a href="/#datenschutz">Datenschutz</a><a href="assets/licenses.txt">Software-Lizenzen</a></div></footer>
   <script type="module" src="assets/configurator.js"></script>
-  <script defer src="assets/language-toggle.js?v=10"></script>
+  <script defer src="assets/language-toggle.js?v=11"></script>
 </body>
 </html>

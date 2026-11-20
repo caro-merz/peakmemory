@@ -5,6 +5,18 @@ export const MAX_TILES = 16;
 export const MAX_DRAW_POINTS = 12000;
 export const DEFAULT_ELEVATION_SCALE = 2;
 export const TERRAIN_TILE_SIZE = 512;
+const TERRAIN_BASE_Y = 0.02;
+const TERRAIN_SURFACE_Y = 0.045;
+const ROUTE_HEIGHT_ALLOWANCE = 0.0088;
+
+export function limitedElevationScale(grid, elevationScale, heightLimitMm) {
+  let maximum = grid.minimum;
+  for (const height of grid.heights) maximum = Math.max(maximum, height);
+  const reliefHeight = heightLimitMm / 100 - (TERRAIN_SURFACE_Y - TERRAIN_BASE_Y)
+    - (grid.plan.coordinates.length ? ROUTE_HEIGHT_ALLOWANCE : 0);
+  const range = maximum - grid.minimum;
+  return range > 0 ? Math.min(elevationScale, reliefHeight * grid.plan.groundWidth / range) : elevationScale;
+}
 
 export function project({ lat, lon }) {
   const radians = lat * Math.PI / 180;

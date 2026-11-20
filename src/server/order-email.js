@@ -38,6 +38,7 @@ export function orderEmail(order, details, kind, { productionViews = false } = {
     ...(isArea ? [['Gelände', describeArea(configuration.area)]]
       : [['Geländerand', `${Math.round(configuration.margin * 100)} %`]]),
     ['Höhenüberhöhung', `${configuration.elevationScale}×`],
+    ...(configuration.version >= 8 ? [['Reliefhöhe', `Maximal ${configuration.heightLimitMm} mm einschließlich Grundplatte und Route, ohne Sockel`]] : []),
     [pickup ? 'Adresse für Versand bei später Zahlung' : 'Lieferadresse', [shipping.name, address.line1, address.line2,
       `${address.postal_code} ${address.city}`, address.state, address.country].filter(Boolean).join('\n')],
     ...(owner ? [['Name / E-Mail', `${order.name}\n${order.email}`],
@@ -57,7 +58,12 @@ export function orderEmail(order, details, kind, { productionViews = false } = {
     ? `Alle Original-GPX-Dateien, die kombinierte GPX, Vorschaubild${productionViews ? ' und Ansichten von oben und diagonal' : ''} sowie Konfiguration findest du in den Anhängen.`
     : `Original-GPX, Vorschaubild${productionViews ? ' sowie Ansichten von oben und diagonal' : ''} und Konfiguration findest du in den Anhängen.` : '';
   const subject = `Peak Memory${live ? '' : ' TEST'} · ${title} · ${order.id}`;
-  const purchaseInformation = configuration.version < 7 ? PURCHASE_INFORMATION.map(section => {
+  const applicablePurchaseInformation = configuration.version < 8
+    ? PURCHASE_INFORMATION.filter(section => section.title !== 'Reliefhöhe').map(section =>
+      section.title === 'Wandaufhängung und Schutzfüße bei Holzsockeln'
+        ? { ...section, text: section.text.replace('dann in der Standardhöhe', 'dann') } : section)
+    : PURCHASE_INFORMATION;
+  const purchaseInformation = configuration.version < 7 ? applicablePurchaseInformation.map(section => {
     if (section.title === 'Produkt und Gesamtpreis') return { ...section,
       text: section.text.replace('mit Gravur auf Holz für 55 EUR', 'mit Gravur auf Holz für 50 EUR')
         .replace('ohne Gravur für 50 EUR', 'ohne Gravur für 45 EUR')
@@ -66,7 +72,7 @@ export function orderEmail(order, details, kind, { productionViews = false } = {
       text: section.text.replace('56 EUR für den Holzsockel', '51 EUR für den Holzsockel')
         .replace('51 EUR für den kompakten', '46 EUR für den kompakten') };
     return section;
-  }) : PURCHASE_INFORMATION;
+  }) : applicablePurchaseInformation;
   const purchase = event ? purchaseInformation.map(section => {
     if (section.title === 'Zahlung, Fertigung und Lieferung') return { ...section,
       text: `${next} Das Relief wird individuell nach deiner bestätigten Konfiguration gefertigt.` };
@@ -76,7 +82,7 @@ export function orderEmail(order, details, kind, { productionViews = false } = {
       text: section.text.replace('Versandinformationen', 'Abhol- bzw. Versandinformationen') };
     return section;
   }) : purchaseInformation;
-  const purchaseText = event || configuration.version < 7
+  const purchaseText = event || configuration.version < 8
     ? purchase.map(section => `${section.title}\n${section.text}`).join('\n\n') : PURCHASE_INFORMATION_TEXT;
   const text = [
     title, introduction, '', ...rows.map(([label, value]) => `${label}: ${value}`),

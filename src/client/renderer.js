@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GRID_SIZE, surfaceHeight, routePaths } from '../shared/geometry.js';
+import { GRID_SIZE, surfaceHeight, routePaths, limitedElevationScale } from '../shared/geometry.js';
 import { drawEngraving, loadEngravingFont } from './engraving.js';
 import { getProduct, productLayout } from '../shared/product.js';
 import { loadLogoCanvas } from './logo.js';
@@ -227,9 +227,9 @@ export async function createViewer(container, onUnavailable) {
     if (changedProduct) reset();
     render();
   }
-  function show(nextGrid, elevationScale, engraving, resetView = true, nextProduct = product, nextWallMount = wallMount) {
+  function show(nextGrid, elevationScale, engraving, resetView = true, nextProduct = product, nextWallMount = wallMount, heightLimitMm) {
     clear();
-    grid = { ...nextGrid, elevationScale };
+    grid = { ...nextGrid, elevationScale: limitedElevationScale(nextGrid, elevationScale, heightLimitMm) };
     model = new THREE.Group();
     model.add(terrainMesh(grid));
     for (const path of routePaths(grid)) model.add(routeMesh(path));
@@ -246,6 +246,7 @@ export async function createViewer(container, onUnavailable) {
       camera.updateProjectionMatrix();
       render();
     }
+    return grid.elevationScale;
   }
   const lost = event => { event.preventDefault(); onUnavailable('Die 3D-Grafik ist nicht mehr verfügbar. Bitte lade die Vorschau erneut.'); };
   renderer.domElement.addEventListener('webglcontextlost', lost);
@@ -317,8 +318,8 @@ export async function createViewer(container, onUnavailable) {
       if (!blob || blob.size > MAX_PREVIEW_SIZE) throw new Error('Das Vorschaubild konnte nicht erstellt werden oder ist zu groß. Bitte verkleinere die Vorschau und versuche es erneut.');
       return blob;
     },
-    setElevationScale(elevationScale, engraving) {
-      if (grid) show(grid, elevationScale, engraving, false);
+    setHeightSettings(elevationScale, engraving, nextProduct, nextWallMount, heightLimitMm) {
+      if (grid) return show(grid, elevationScale, engraving, nextProduct !== product, nextProduct, nextWallMount, heightLimitMm);
     },
     rotate() {
       pauseSpin();

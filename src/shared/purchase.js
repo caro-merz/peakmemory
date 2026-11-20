@@ -8,8 +8,12 @@ export const PURCHASE_INFORMATION = [
     text: 'Der Direktkauf umfasst ein individuell nach deiner GPX-Route oder deinem bestätigten Kartenausschnitt ohne Route und Konfiguration gefertigtes 3D-Geländerelief (10 × 10 cm). Du wählst eine von drei Ausführungen: Eiche-Holzsockel (11 × 13,5 × 2 cm) mit Gravur auf Holz für 55 EUR; kompakter Eiche-Holzsockel (11 × 11 × 2 cm) ohne Gravur für 50 EUR; weißer Rahmen (20 × 20 cm Außenmaß) mit weißem, graviertem Passepartout für 65 EUR. Ein Stück pro Bestellung. Alle Gesamtpreise enthalten den Versand innerhalb Deutschlands. Kein Umsatzsteuerausweis gemäß § 19 UStG. Holzmaserung, Rahmenprofil, Passepartout und Fertigungsdetails können von der illustrativen Online-Vorschau abweichen; die gesetzlichen Mängelrechte bleiben unberührt.',
   },
   {
+    title: 'Reliefhöhe',
+    text: 'Beim Rahmen ist die Höhe des Reliefs einschließlich Grundplatte und Route auf maximal 16 mm begrenzt. Für Holzsockel kannst du eine maximale Reliefhöhe von 28 mm (Standard), 78 mm (5 EUR Aufpreis) oder 128 mm (7 EUR Aufpreis) wählen. Der Holzsockel zählt nicht zur Reliefhöhe. Falls nötig, wird das Gelände für die gewählte Grenze flacher dargestellt und gefertigt. Der UTH-Rabatt gilt nicht für Höhenaufschläge.',
+  },
+  {
     title: 'Wandaufhängung und Schutzfüße bei Holzsockeln',
-    text: 'Beide Eiche-Holzsockel haben vier transparente Schutzfüße auf der Unterseite. Optional kannst du eine gezahnte Wandaufhängung auf der Rückseite für 1 EUR Aufpreis wählen (Standard: Nein). Der Gesamtpreis beträgt dann 56 EUR für den Holzsockel mit Gravur bzw. 51 EUR für den kompakten Holzsockel ohne Gravur, jeweils inklusive Versand innerhalb Deutschlands. Die Option gilt nicht für den Rahmen. Form und Position der Aufhängung und Schutzfüße in der Online-Vorschau sind illustrativ.',
+    text: 'Beide Eiche-Holzsockel haben vier transparente Schutzfüße auf der Unterseite. Optional kannst du eine gezahnte Wandaufhängung auf der Rückseite für 1 EUR Aufpreis wählen (Standard: Nein). Der Gesamtpreis beträgt dann in der Standardhöhe 56 EUR für den Holzsockel mit Gravur bzw. 51 EUR für den kompakten Holzsockel ohne Gravur, jeweils inklusive Versand innerhalb Deutschlands. Die Option gilt nicht für den Rahmen. Form und Position der Aufhängung und Schutzfüße in der Online-Vorschau sind illustrativ.',
   },
   {
     title: 'Bestellablauf und Vertragsschluss',

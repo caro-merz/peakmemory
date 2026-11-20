@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { terrainPlan, terrainGrid, sampleTiles, decodeHeight, surfaceHeight, routePaths, GRID_SIZE, MAX_TILES, MAX_DRAW_POINTS, TERRAIN_TILE_SIZE } from '../src/shared/geometry.js';
+import { terrainPlan, terrainGrid, sampleTiles, decodeHeight, surfaceHeight, routePaths, limitedElevationScale, GRID_SIZE, MAX_TILES, MAX_DRAW_POINTS, TERRAIN_TILE_SIZE } from '../src/shared/geometry.js';
 
 const route = {segments: [[{lat:48.1,lon:9.1}, {lat:48.12,lon:9.14}]]};
 function fixture(plan) {
@@ -122,6 +122,21 @@ test('height scaling preserves footprint and base while scaling terrain and rout
   assert.equal(original.x, scaled.x);
   assert.equal(original.z, scaled.z);
   assert.ok(Math.abs(scaled.y - 0.048 - (original.y - 0.048) * 8) < 1e-10);
+});
+test('height caps include the relief base and route without changing terrain shape', () => {
+  for (const withRoute of [false, true]) for (const limit of [16, 28, 78, 128]) {
+    const grid = fixture(terrainPlan(route, 0.1));
+    if (!withRoute) grid.plan.coordinates = [];
+    grid.heights.fill(grid.minimum + 10000);
+    grid.heights[0] = grid.minimum;
+    const scale = limitedElevationScale(grid, 8, limit);
+    grid.elevationScale = scale;
+    const terrainHeightMm = (surfaceHeight(grid, 0.5, 0.5) - 0.02) * 100;
+    const routeAllowanceMm = withRoute ? 0.88 : 0;
+    assert.ok(terrainHeightMm + routeAllowanceMm <= limit + 1e-8);
+    assert.ok(Math.abs(terrainHeightMm + routeAllowanceMm - limit) < 1e-8);
+    assert.equal(limitedElevationScale(grid, scale / 2, limit), scale / 2);
+  }
 });
 test('large point sets and very long routes keep tile and route budgets', () => {
   const segments = [Array.from({length:100000}, (_, i) => ({lat:48 + (i%2)*0.01,lon:9 + (i%3)*0.01}))];

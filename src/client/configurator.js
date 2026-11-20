@@ -6,7 +6,7 @@ import { terrainPlan, areaPlan } from '../shared/geometry.js';
 import { describeArea } from '../shared/area.js';
 import { loadTerrain } from './terrain.js';
 import sampleXml from './sample.gpx';
-import { getProduct, formatPrice, configurationPrice } from '../shared/product.js';
+import { getProduct, formatPrice, configurationPrice, RELIEF_HEIGHT_LIMITS_MM } from '../shared/product.js';
 import { initializeCheckout } from './checkout.js';
 
 const get = id => document.getElementById(id);
@@ -21,11 +21,13 @@ let source = 'gpx', confirmedArea = null, candidateArea = null, mapError = '', a
 let uthRoute = '', uthRevision = 0;
 const routeExample = get('engraving').value;
 const areaExample = 'Deine Landschaft';
+const heightLimit = () => get('product').value === 'frame'
+  ? RELIEF_HEIGHT_LIMITS_MM.frame : Number(get('heightLimit').value);
 
 function configuration() {
   if (source === 'area' && !confirmedArea) return null;
   return parseConfiguration({
-    version: 7, source, product: get('product').value,
+    version: 8, source, product: get('product').value, heightLimitMm: heightLimit(),
     wallMount: get('product').value !== 'frame' && get('wallMount').value === 'yes',
     engraving: getProduct(get('product').value).engraving ? get('engraving').value : '',
     elevationScale: Number(get('elevationScale').value),
@@ -44,8 +46,12 @@ function summary() {
   }
   get('wallMountControls').hidden = product.id === 'frame';
   get('wallMount').disabled = sending || product.id === 'frame';
+  get('heightLimitControls').hidden = product.id === 'frame';
+  get('heightLimit').disabled = sending || product.id === 'frame';
+  get('heightLimitHint').hidden = product.id === 'frame';
+  get('frameHeightHint').hidden = product.id !== 'frame';
   get('modelPrice').textContent = formatPrice(configurationPrice({
-    version: 7, product: product.id, wallMount: product.id !== 'frame' && get('wallMount').value === 'yes',
+    version: 8, product: product.id, heightLimitMm: heightLimit(), wallMount: product.id !== 'frame' && get('wallMount').value === 'yes',
   }));
   get('orderProduct').textContent = product.name;
   get('orderSupport').textContent = product.support;
@@ -69,7 +75,7 @@ function summary() {
   }
   get('configurationSummary').textContent = `${product.name} · ${product.dimensions} · ${source === 'area'
     ? confirmedArea ? describeArea(confirmedArea) : 'Bitte Kartenausschnitt bestätigen'
-    : `Rand ${Math.round(settings.margin * 100)} %`} · Höhen ${settings.elevationScale}× · Gravur: ${settings.engraving || 'keine'}${product.id !== 'frame' ? ` · Wandaufhängung: ${get('wallMount').value === 'yes' ? 'ja (+1 €)' : 'nein'} · 4 transparente Schutzfüße` : ''}`;
+    : `Rand ${Math.round(settings.margin * 100)} %`} · Höhen ${settings.elevationScale}× · Reliefhöhe max. ${heightLimit()} mm · Gravur: ${settings.engraving || 'keine'}${product.id !== 'frame' ? ` · Wandaufhängung: ${get('wallMount').value === 'yes' ? 'ja (+1 €)' : 'nein'} · 4 transparente Schutzfüße` : ''}`;
   get('elevationValue').textContent = `${settings.elevationScale}×`;
   get('elevationNote').textContent = `${settings.elevationScale}-fach`;
   get('marginValue').textContent = `${Math.round(Number(get('margin').value))} %`;
@@ -94,6 +100,7 @@ function invalidate() {
   controller?.abort();
   clearTimeout(marginTimer);
   viewer?.clear();
+  get('heightCapped').hidden = true;
   preview = 'unavailable';
   get('placeholder').hidden = false;
   get('viewer').setAttribute('aria-busy', 'false');
@@ -147,7 +154,8 @@ async function renderPreview() {
     }
     activeController.signal.throwIfAborted();
     const latest = configuration();
-    viewer.show(grid, latest.elevationScale, latest.engraving, true, latest.product, latest.wallMount);
+    const effectiveScale = viewer.show(grid, latest.elevationScale, latest.engraving, true, latest.product, latest.wallMount, latest.heightLimitMm);
+    get('heightCapped').hidden = effectiveScale >= latest.elevationScale;
     get('placeholder').hidden = true;
     preview = 'ready';
     get('previewBadge').textContent = source === 'area' ? 'Ohne Route' : sample ? 'Beispielroute' : files.length > 1 ? 'Deine Routen' : 'Deine Route';
@@ -290,7 +298,15 @@ get('product').addEventListener('change', () => {
   get('engraving').disabled = sending || !getProduct(get('product').value).engraving;
   if (summary() && preview === 'ready') {
     const settings = configuration();
-    viewer?.personalize(settings.engraving, settings.product, settings.wallMount);
+    const effectiveScale = viewer?.setHeightSettings(settings.elevationScale, settings.engraving, settings.product, settings.wallMount, settings.heightLimitMm);
+    get('heightCapped').hidden = effectiveScale >= settings.elevationScale;
+  }
+});
+get('heightLimit').addEventListener('change', () => {
+  if (summary() && preview === 'ready') {
+    const settings = configuration();
+    const effectiveScale = viewer?.setHeightSettings(settings.elevationScale, settings.engraving, settings.product, settings.wallMount, settings.heightLimitMm);
+    get('heightCapped').hidden = effectiveScale >= settings.elevationScale;
   }
 });
 get('wallMount').addEventListener('change', () => {
@@ -308,7 +324,9 @@ for (const link of document.querySelectorAll('[data-configurator-product]')) {
 }
 get('elevationScale').addEventListener('input', () => {
   if (summary() && preview === 'ready') {
-    viewer?.setElevationScale(configuration().elevationScale, configuration().engraving);
+    const settings = configuration();
+    const effectiveScale = viewer?.setHeightSettings(settings.elevationScale, settings.engraving, settings.product, settings.wallMount, settings.heightLimitMm);
+    get('heightCapped').hidden = effectiveScale >= settings.elevationScale;
   }
 });
 get('margin').addEventListener('input', () => {

@@ -1,4 +1,4 @@
-import { getProduct } from './product.js';
+import { getProduct, RELIEF_HEIGHT_LIMITS_MM } from './product.js';
 import { parseArea } from './area.js';
 
 export function validateEngraving(value, productId = 'base') {
@@ -23,7 +23,7 @@ export function parseConfiguration(value) {
     throw new Error('Die Konfiguration ist kein gültiges JSON.');
   }
   if (!configuration || Array.isArray(configuration) || typeof configuration !== 'object'
-    || ![1, 2, 3, 4, 5, 6, 7].includes(configuration.version)
+    || ![1, 2, 3, 4, 5, 6, 7, 8].includes(configuration.version)
     || !(configuration.version >= 3 ? ['base', 'compact', 'frame'] : ['base', 'frame']).includes(configuration.product)
     || (configuration.version === 2 && (configuration.product !== 'base'
       || typeof configuration.elevationScale !== 'number' || !Number.isFinite(configuration.elevationScale)
@@ -41,6 +41,13 @@ export function parseConfiguration(value) {
     || (configuration.product === 'frame' && configuration.wallMount)))
     || (configuration.version < 4 && Object.hasOwn(configuration, 'wallMount'))) {
     throw new Error('Ungültige Auswahl der Wandaufhängung.');
+  }
+  if (configuration.version >= 8
+    ? !(configuration.product === 'frame'
+      ? configuration.heightLimitMm === RELIEF_HEIGHT_LIMITS_MM.frame
+      : [RELIEF_HEIGHT_LIMITS_MM.standard, RELIEF_HEIGHT_LIMITS_MM.tall, RELIEF_HEIGHT_LIMITS_MM.extraTall].includes(configuration.heightLimitMm))
+    : Object.hasOwn(configuration, 'heightLimitMm')) {
+    throw new Error('Ungültige Auswahl der Reliefhöhe.');
   }
   const engraving = validateEngraving(configuration.engraving, configuration.product);
   if (configuration.version >= 6 && (!['gpx', 'area'].includes(configuration.source)
@@ -62,5 +69,6 @@ export function parseConfiguration(value) {
     preview: configuration.preview,
     ...(configuration.version >= 2 ? { elevationScale: configuration.elevationScale } : {}),
     ...(configuration.version >= 4 ? { wallMount: configuration.wallMount } : {}),
+    ...(configuration.version >= 8 ? { heightLimitMm: configuration.heightLimitMm } : {}),
   };
 }

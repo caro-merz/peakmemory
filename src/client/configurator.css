@@ -35,6 +35,17 @@
 .configurator .source-option input:disabled+.source-card{opacity:.5}
 @media(hover:hover){.configurator .source-option input:not(:disabled):hover+.source-card{border-color:var(--accent)}}
 @media(max-width:560px){.configurator .source-options{grid-template-columns:1fr;gap:12px}.configurator .source-card{flex-direction:row;gap:12px;padding:12px 36px 12px 12px}.configurator .source-card img{width:88px;height:88px;flex-shrink:0}.configurator .source-card-copy{text-align:left}.configurator .source-card-copy strong{font-size:.95rem}.configurator .source-card-check{right:10px;top:10px;width:20px;height:20px}}
+.configurator .area-search{margin:0 0 18px;max-width:680px}
+.configurator .area-search label{margin-top:0}
+.configurator .area-search-row{display:flex;gap:8px;align-items:stretch}
+.configurator .area-search-row input{min-width:0;flex:1}
+.configurator .area-search-row button{flex-shrink:0}
+.configurator .area-search #areaSearchStatus:not(:empty){margin:8px 0;font-size:.88rem}
+.configurator .area-search #areaSearchStatus:empty{display:none}
+.configurator .area-search-results{list-style:none;padding:0;margin:8px 0 0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.configurator .area-search-results li+li{border-top:1px solid var(--line)}
+.configurator .area-search-results button{width:100%;text-align:left;background:white;color:var(--text);border-radius:0;font-weight:500;overflow-wrap:anywhere}
+.configurator .area-search-results button:focus-visible{outline-offset:-3px}
 .configurator .area-map-wrap{position:relative;overflow:hidden;border-radius:12px;isolation:isolate}
 .configurator .area-map{height:440px;background:var(--surface);z-index:0;touch-action:none}
 .configurator .area-frame{position:absolute;width:min(340px,calc(100% - 88px));aspect-ratio:1;top:50%;left:50%;transform:translate(-50%,-50%);border:3px solid var(--accent);box-shadow:0 0 0 2000px rgb(26 26 26 / .25);pointer-events:none;z-index:1}

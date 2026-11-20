@@ -406,6 +406,8 @@ async function openMap() {
       if (source !== 'area') return;
       areaPicker = createAreaPicker({
         container: get('areaMap'), frame: get('areaFrame'),
+        searchForm: get('areaSearchForm'), searchInput: get('areaSearch'),
+        searchButton: get('areaSearchButton'), searchStatus: get('areaSearchStatus'), searchResults: get('areaSearchResults'),
         onMoving: () => {
           candidateArea = null;
           mapError = 'Die Karte wird verschoben …';
@@ -437,6 +439,7 @@ for (const input of document.querySelectorAll('input[name=terrainSource]')) {
   input.addEventListener('change', async () => {
     if (!input.checked || sending) return;
     source = input.value;
+    if (source !== 'area') areaPicker?.cancelSearch();
     invalidate();
     get('routeControls').hidden = source === 'area';
     get('areaControls').hidden = source !== 'area';

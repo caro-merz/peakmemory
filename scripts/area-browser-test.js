@@ -21,12 +21,30 @@ try {
   const context = await browser.newContext({ viewport: { width: 1365, height: 950 }, reducedMotion: 'reduce', hasTouch: true });
   const page = await context.newPage();
   const errors = [], checkouts = [], inquiries = [], referrers = [];
-  let mapRequests = 0, mapFailure = false, terrainFailure = false;
+  let mapRequests = 0, mapFailure = false, terrainFailure = false, searchRequests = 0, searchMode = 'results';
   page.on('pageerror', error => errors.push(error.message));
   await page.route('https://tile.openstreetmap.org/**', async route => {
     mapRequests++;
     referrers.push(route.request().headers().referer);
     await route.fulfill(mapFailure ? { status: 503, body: 'unavailable' } : { contentType: 'image/png', body: mapTile });
+  });
+  await page.route('https://photon.komoot.io/**', async route => {
+    searchRequests++;
+    const requestUrl = new URL(route.request().url());
+    assert.equal(requestUrl.searchParams.get('limit'), '5');
+    assert.equal(route.request().headers().referer, undefined);
+    if (searchMode === 'slow') await new Promise(resolve => setTimeout(resolve, 500));
+    const features = searchMode === 'empty' ? [] : [{
+      type: 'Feature', geometry: { type: 'Point', coordinates: [10.5, 47.55] },
+      properties: { name: 'Testberg <img>', city: 'Testort', country: 'Deutschland' },
+    }];
+    try {
+      await route.fulfill(searchMode === 'failure'
+        ? { status: 503, headers: { 'Access-Control-Allow-Origin': '*' } }
+        : { status: 200, headers: { 'Access-Control-Allow-Origin': '*' }, json: { type: 'FeatureCollection', features } });
+    } catch (error) {
+      if (searchMode !== 'slow') throw error;
+    }
   });
   await page.route('**/shop-status**', route => route.fulfill({ json: { enabled: true, mode: 'test', testMode: true } }));
   await page.route('**/terrain/**', route => route.fulfill(terrainFailure
@@ -45,6 +63,7 @@ try {
   await page.goto(url + '/#konfigurator');
   await page.waitForFunction(() => document.documentElement.dataset.checkoutMode === 'test');
   assert.equal(mapRequests, 0, 'GPX default must not contact OSM');
+  assert.equal(searchRequests, 0, 'Place search must not run before an explicit request');
   const sourceCards = page.locator('#sourceControls .source-option');
   const gpxSource = page.locator('input[name=terrainSource][value=gpx]');
   const areaSource = page.locator('input[name=terrainSource][value=area]');
@@ -136,6 +155,51 @@ try {
   }
   assert.equal(new Set(screenshots.map(bytes => bytes.toString('base64'))).size, 3,
     'the top and two diagonal captures show distinct viewpoints');
+  const search = page.locator('#areaSearch');
+  await search.fill('B');
+  await page.locator('#areaSearchButton').click();
+  assert.match(await page.locator('#areaSearchStatus').innerText(), /mindestens zwei/);
+  assert.equal(searchRequests, 0);
+  searchMode = 'empty';
+  await search.fill('Unbekannter Ort');
+  assert.equal(searchRequests, 0, 'Typing does not contact the search provider');
+  await search.press('Enter');
+  await page.waitForFunction(() => document.getElementById('areaSearchStatus').textContent.includes('Kein Ort gefunden'));
+  assert.equal(await page.locator('#previewBadge').innerText(), 'Ohne Route');
+  assert.equal(await page.locator('#checkoutAcceptance').isChecked(), true);
+  searchMode = 'failure';
+  await search.fill('Fehler');
+  await search.press('Enter');
+  await page.waitForFunction(() => document.getElementById('areaSearchStatus').textContent.includes('nicht verfügbar'));
+  assert.equal(await page.locator('#previewBadge').innerText(), 'Ohne Route');
+  searchMode = 'slow';
+  await search.fill('Alter Ort');
+  await search.press('Enter');
+  await page.waitForFunction(() => document.getElementById('areaSearchStatus').textContent.includes('gesucht'));
+  await search.fill('Testberg');
+  await page.waitForTimeout(600);
+  assert.equal(await page.locator('#areaSearchResults').isHidden(), true, 'Edited queries discard stale responses');
+  searchMode = 'results';
+  await search.press('Enter');
+  await page.waitForFunction(() => !document.getElementById('areaSearchResults').hidden);
+  assert.equal(await page.locator('#areaSearchResults button').count(), 1);
+  assert.equal(await page.locator('#areaSearchResults img').count(), 0, 'Place names are rendered as text');
+  assert.match(await page.locator('#areaSearchResults button').innerText(), /Testberg <img>, Testort, Deutschland/);
+  assert.equal(await page.locator('#previewBadge').innerText(), 'Ohne Route', 'Searching alone preserves the selection');
+  await page.locator('#areaSearchResults button').click();
+  await page.waitForFunction(() => {
+    const match = /Nordwest: [-\d.]+, ([-\d.]+) · Südost: [-\d.]+, ([-\d.]+)/.exec(document.getElementById('areaDescription').textContent);
+    return match && Math.abs((Number(match[1]) + Number(match[2])) / 2 - 10.5) < 0.003;
+  });
+  assert.equal(await page.locator('#previewBadge').innerText(), 'Ausschnitt bestätigen');
+  assert.equal(await page.locator('#checkoutAcceptance').isChecked(), false);
+  assert.equal(await page.locator('#submitCheckout').isDisabled(), true);
+  assert.match(await page.locator('#areaSearchStatus').innerText(), /Ort auf der Karte angezeigt/);
+  await page.locator('[data-lang-toggle="en"]').click();
+  assert.equal(await page.locator('label[for=areaSearch]').innerText(), 'Search for a place or landscape');
+  assert.match(await page.locator('#areaSearchStatus').innerText(), /Place shown on the map/);
+  await page.locator('[data-lang-toggle="de"]').click();
+  await confirm();
   await page.locator('#areaMap').focus();
   await page.keyboard.press('ArrowRight');
   await page.waitForFunction(() => document.getElementById('previewBadge').textContent === 'Ausschnitt bestätigen');

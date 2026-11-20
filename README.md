@@ -36,6 +36,10 @@ Datei und kein exaktes Fertigungsbild.
   Ansicht geladen, ohne Vorabladen oder Offline-Download. Der einzelne Bildabruf
   nutzt `strict-origin-when-cross-origin`, auch bei der restriktiveren Seitenvorgabe,
   damit die OSM-Nutzungsrichtlinie einen Herkunftshinweis erhält.
+  Eine optionale Ortssuche sendet den Suchbegriff erst nach ausdrücklichem
+  Start direkt an den öffentlichen Photon-Dienst von komoot; dabei sieht der
+  Anbieter auch die IP-Adresse. Ergebnisse bewegen die Karte, bestätigen aber
+  keinen Ausschnitt. Der öffentliche Dienst bietet keine Verfügbarkeitsgarantie.
   Für hohes Verkehrsaufkommen ist ein anderer Kartenanbieter zu prüfen.
   Produkte, Preise, Gravur, Höhenüberhöhung und Checkout gelten für beide Eingaben.
   Bei einem Checkout werden zusätzlich Ansichten von oben und aus zwei diagonalen

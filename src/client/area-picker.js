@@ -2,7 +2,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { parseArea, describeArea, geographicPoint } from '../shared/area.js';
 
-export function createAreaPicker({ container, frame, onChange, onMoving }) {
+export function createAreaPicker({ container, frame, searchForm, searchInput, searchButton, searchStatus, searchResults, onChange, onMoving }) {
   const map = L.map(container, {
     center: [47.55, 10.3], zoom: 11, zoomSnap: 0, zoomDelta: 1,
     minZoom: 3, maxZoom: 18, worldCopyJump: true,
@@ -16,6 +16,80 @@ export function createAreaPicker({ container, frame, onChange, onMoving }) {
   });
   let busy = false, loading = true, failed = false, side = frame.getBoundingClientRect().width;
   let latestArea = null, alignedArea = null, resizing = false, moving = false, width = 0, height = 0;
+  let searchController = null, searchRevision = 0;
+  function cancelSearch() {
+    searchRevision += 1;
+    searchController?.abort();
+    searchController = null;
+    searchResults.replaceChildren();
+    searchResults.hidden = true;
+    searchStatus.textContent = '';
+    searchStatus.className = '';
+    searchButton.disabled = busy;
+  }
+  async function search(event) {
+    event.preventDefault();
+    if (busy) return;
+    cancelSearch();
+    const query = searchInput.value.trim();
+    if (query.length < 2) {
+      searchStatus.textContent = 'Bitte mindestens zwei Zeichen eingeben.';
+      searchStatus.className = 'error';
+      return;
+    }
+    const revision = searchRevision, controller = new AbortController();
+    searchController = controller;
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    searchButton.disabled = true;
+    searchStatus.textContent = 'Orte werden gesucht …';
+    try {
+      const url = new URL('https://photon.komoot.io/api/');
+      url.searchParams.set('q', query);
+      url.searchParams.set('limit', '5');
+      url.searchParams.set('lang', document.documentElement.lang === 'en' ? 'en' : 'de');
+      const response = await fetch(url, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
+      if (!response.ok) throw new Error('search unavailable');
+      const data = await response.json();
+      if (!Array.isArray(data.features)) throw new Error('invalid search response');
+      if (revision !== searchRevision) return;
+      for (const feature of data.features.slice(0, 5)) {
+        const [lon, lat] = feature?.geometry?.coordinates ?? [];
+        const properties = feature?.properties;
+        if (!Number.isFinite(lat) || Math.abs(lat) > 85.05112878 || !Number.isFinite(lon) || Math.abs(lon) > 180
+          || !properties || typeof properties !== 'object') continue;
+        const parts = [properties.name, properties.city, properties.state, properties.country]
+          .filter(part => typeof part === 'string' && part.trim());
+        const label = [...new Set(parts)].join(', ');
+        if (!label) continue;
+        const item = document.createElement('li'), button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = label;
+        button.addEventListener('click', () => {
+          if (busy) return;
+          map.setView([lat, lon], map.getZoom(), { animate: false });
+          searchInput.value = label;
+          cancelSearch();
+          searchStatus.textContent = 'Ort auf der Karte angezeigt. Prüfe und bestätige den Ausschnitt.';
+          container.focus({ preventScroll: true });
+        });
+        item.append(button);
+        searchResults.append(item);
+      }
+      searchResults.hidden = !searchResults.children.length;
+      searchStatus.textContent = searchResults.hidden ? 'Kein Ort gefunden. Versuche einen anderen Suchbegriff.' : 'Wähle einen Ort aus den Suchergebnissen.';
+    } catch {
+      if (revision !== searchRevision) return;
+      searchStatus.className = 'error';
+      searchStatus.textContent = 'Die Ortssuche ist nicht verfügbar. Bitte versuche es erneut oder verschiebe die Karte.';
+    } finally {
+      clearTimeout(timeout);
+      if (revision === searchRevision) { searchController = null; searchButton.disabled = busy; }
+    }
+  }
+  searchForm.addEventListener('submit', search);
+  searchInput.addEventListener('input', cancelSearch);
+  searchInput.disabled = false;
+  searchButton.disabled = false;
   function selection() {
     if (resizing || moving) return;
     try {
@@ -93,12 +167,23 @@ export function createAreaPicker({ container, frame, onChange, onMoving }) {
     retry() { failed = false; tiles.redraw(); selection(); },
     setBusy(value) {
       busy = value;
+      if (value) cancelSearch();
+      searchInput.disabled = value;
+      searchButton.disabled = value;
       container.inert = value;
       for (const handler of [map.dragging, map.touchZoom, map.doubleClickZoom, map.scrollWheelZoom, map.boxZoom, map.keyboard]) {
         if (value) handler.disable(); else handler.enable();
       }
       if (!value) resize();
     },
-    dispose() { observer.disconnect(); container.removeEventListener('keydown', keyboard, true); map.remove(); },
+    cancelSearch,
+    dispose() {
+      cancelSearch();
+      searchForm.removeEventListener('submit', search);
+      searchInput.removeEventListener('input', cancelSearch);
+      observer.disconnect();
+      container.removeEventListener('keydown', keyboard, true);
+      map.remove();
+    },
   };
 }
